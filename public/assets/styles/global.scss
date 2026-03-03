@@ -1,0 +1,45 @@
+// 引入tailwind
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// 重置样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// 自定义变量
+:root {
+  --primary-color: #1890ff;
+  --secondary-color: #52c41a;
+  --error-color: #ff4d4f;
+  --text-color: #333;    
+  --border-color: #d9d9d9;
+  --background-color: #f5f5f5;
+}
+
+// 设备像素比为1.5
+// @media only screen and (){
+//   --base-size: 1.05px;
+// } 

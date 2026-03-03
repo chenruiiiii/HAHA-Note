@@ -1,0 +1,32 @@
+// 导入顺序很重要
+@import 'tailwind';
+@import 'variables';
+@import 'mixins';
+@import 'animations';
+
+// 全局样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  // CSS 变量
+  --primary-color: #{$primary-color};
+  --success-color: #{$success-color};
+  --error-color: #{$error-color};
+  --background-color: #{$background-color};
+}
+
+body {
+  font-family: $font-family;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// // 导入组件样式
+// @import 'components/button';
+// @import 'components/card';
+// @import 'components/editor';
+// @import 'components/layout';
