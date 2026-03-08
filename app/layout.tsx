@@ -1,6 +1,6 @@
 import React from 'react';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import '@/assets/styles/global.css';
+import '@/assets/styles/global.scss';
 
 const RootLayout = ({ children }: React.PropsWithChildren) => (
   <html lang="en">

@@ -4,12 +4,7 @@ const nextConfig = {
   sassOptions: {
     includePaths: ['./src/styles'],
     prependData: `
-      @import "@/styles/variables.scss";
-      @import "@/styles/mixins.scss";
-      @import "@/styles/animation.scss";
-      @import "@/styles/global.scss";
-      @import "@/styles/index.scss";
-      @import "@/styles/tailwind.scss";
+
     `,
   },
   swcMinify: true,

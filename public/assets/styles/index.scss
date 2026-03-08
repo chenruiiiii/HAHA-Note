@@ -1,8 +1,8 @@
 // 导入顺序很重要
-@import 'tailwind';
-@import 'variables';
-@import 'mixins';
-@import 'animations';
+@import "tailwindcss";
+@import './var.scss';
+@import './mixins.scss';
+@import './animation.scss';
 
 // 全局样式
 * {
