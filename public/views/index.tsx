@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import {
   DesktopOutlined,
   FileOutlined,
@@ -10,7 +10,6 @@ import type { MenuProps } from 'antd';
 import { Breadcrumb, Layout, theme } from 'antd';
 import SideBar from 'public/components/layout/components/SideBar';
 import React, { useState } from 'react';
-import index from '../components/layout/index';
 
 const { Header, Content, Sider } = Layout;
 
@@ -20,7 +19,7 @@ function getItem(
   label: React.ReactNode,
   key: React.Key,
   icon?: React.ReactNode,
-  children?: MenuItem[],
+  children?: MenuItem[]
 ): MenuItem {
   return {
     key,
