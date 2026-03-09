@@ -30,15 +30,12 @@ function getItem(
 }
 
 const items: MenuItem[] = [
-  getItem('Option 1', '1', <PieChartOutlined />),
-  getItem('Option 2', '2', <DesktopOutlined />),
-  getItem('User', 'sub1', <UserOutlined />, [
-    getItem('Tom', '3'),
-    getItem('Bill', '4'),
-    getItem('Alex', '5'),
-  ]),
-  getItem('Team', 'sub2', <TeamOutlined />, [getItem('Team 1', '6'), getItem('Team 2', '8')]),
-  getItem('Files', '9', <FileOutlined />),
+  getItem('开始', '1', <PieChartOutlined />),
+  getItem('AI写作', '2', <DesktopOutlined />),
+  getItem('小记', '3', <UserOutlined />),
+  getItem('收藏', '4', <TeamOutlined />),
+  getItem('逛逛', '5', <FileOutlined />),
+  getItem('知识库', 'sub1', <FileOutlined />, [getItem('web前端', '1')]),
 ];
 
 const App: React.FC = () => {
