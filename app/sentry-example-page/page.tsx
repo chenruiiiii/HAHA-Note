@@ -11,12 +11,12 @@ class SentryExampleFrontendError extends Error {
   }
 }
 
-export default function Page() {
+export default function App() {
   const [hasSentError, setHasSentError] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
 
   useEffect(() => {
-    Sentry.logger.info("Sentry example page loaded");
+    Sentry.logger.info("Sentry example App loaded");
     async function checkConnectivity() {
       const result = await Sentry.diagnoseSdkConnectivity();
       setIsConnected(result !== "sentry-unreachable");
@@ -27,7 +27,7 @@ export default function Page() {
   return (
     <div>
       <Head>
-        <title>sentry-example-page</title>
+        <title>sentry-example-App</title>
         <meta name="description" content="Test Sentry for your Next.js app!" />
       </Head>
 
@@ -46,7 +46,7 @@ export default function Page() {
             fill="currentcolor"
           />
         </svg>
-        <h1>sentry-example-page</h1>
+        <h1>sentry-example-App</h1>
 
         <p className="description">
           Click the button below, and view the sample error on the Sentry{" "}
@@ -55,7 +55,7 @@ export default function Page() {
             rel="noopener"
             href="https://cb276019559e.sentry.io/issues/?project=4511014830735440"
           >
-            Issues Page
+            Issues App
           </a>
           . For more details about setting up Sentry,{" "}
           <a
@@ -85,7 +85,7 @@ export default function Page() {
               },
             );
             throw new SentryExampleFrontendError(
-              "This error is raised on the frontend of the example page.",
+              "This error is raised on the frontend of the example App.",
             );
           }}
           disabled={!isConnected}

@@ -1,0 +1,19 @@
+.f-sb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+}
+.f-left {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+.f-right {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+}
+.font-color-white {
+  color: #fff;
+}

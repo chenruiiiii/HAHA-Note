@@ -1,0 +1,75 @@
+{
+  "projectOverview": {
+    "name": "个人笔记管理系统",
+    "stack": "Next.js 14 + TypeScript + Ant Design + Redux Toolkit",
+    "author": "大三前端实习生",
+    "goal": "打造高质量的 SSR/CSR 混合渲染项目"
+  },
+
+  "codeConventions": {
+    "naming": {
+      "files": "kebab-case，如：note-editor.tsx",
+      "components": "PascalCase，如：NoteEditor",
+      "variables": "camelCase，布尔值以 is/has/can 开头",
+      "constants": "UPPER_SNAKE_CASE",
+      "types": "接口 I 前缀，类型别名 T 前缀"
+    },
+
+    "structure": {
+      "pages": "使用 .page.tsx 后缀，如：index.page.tsx",
+      "components": "复杂组件使用文件夹：ComponentName/index.tsx",
+      "styles": "SCSS 模块化，与组件同名",
+      "api": "API 路由：pages/api/[resource]/[id].ts"
+    },
+
+    "quality": {
+      "functionLength": "函数不超过 300 行",
+      "componentResponsibility": "单一职责原则",
+      "typeSafety": "避免 any，使用明确类型",
+      "errorHandling": "异步操作必须有 try-catch"
+    }
+  },
+
+  "gitWorkflow": {
+    "branches": {
+      "main": "生产分支",
+      "develop": "开发分支",
+      "feature": "功能分支：feature/功能名称",
+      "bugfix": "修复分支：bugfix/问题描述",
+      "hotfix": "紧急修复：hotfix/紧急问题"
+    },
+
+    "commits": {
+      "format": "<type>(<scope>): <subject>",
+      "types": ["feat", "fix", "docs", "style", "refactor", "test", "chore"],
+      "examples": [
+        "feat(editor): 添加 Markdown 实时预览",
+        "fix(auth): 修复登录 token 验证",
+        "docs(readme): 更新项目启动说明"
+      ]
+    }
+  },
+
+  "nextjsSpecific": {
+    "ssrPages": ["公开笔记", "用户主页", "博客文章", "介绍页"],
+    "csrPages": ["笔记编辑器", "个人列表", "设置页面"],
+    "dataFetching": {
+      "ssr": "使用 getServerSideProps",
+      "static": "使用 getStaticProps 和 getStaticPaths",
+      "csr": "使用 SWR 或 React Query"
+    }
+  },
+
+  "projectFeatures": {
+    "core": ["知识库管理", "Markdown 编辑器", "自动保存"],
+    "ai": ["AI 摘要生成", "智能搜索", "内容推荐"],
+    "sharing": ["二维码分享", "公开链接", "权限控制"],
+    "performance": ["性能监控 SDK", "代码分割", "图片优化"]
+  },
+
+  "learningGoals": {
+    "technical": ["SSR/CSR 混合渲染", "TypeScript 高级类型", "状态管理"],
+    "engineering": ["代码规范", "Git 协作", "性能优化"],
+    "product": ["用户体验", "功能设计", "项目部署"]
+  }
+}
