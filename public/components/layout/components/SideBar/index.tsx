@@ -56,9 +56,11 @@ export default function SideBar() {
           <Avatar size={32} src="../../../../assets/images/avatar.png" />
         </div>
       </div>
-      <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_UP} />
+      <div className="menu-content">
+        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_UP} />
       <div className="space"></div>
       <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_DOWN} />
+      </div>
     </>
   );
 }
