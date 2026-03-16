@@ -1,15 +1,15 @@
 'use client';
-import SideBar from '@/components/layout/components/SideBar';
 import { Layout } from 'antd';
 import React, { useState } from 'react';
+import SideBar from 'src/components/layout/components/SideBar';
 
-const {Content, Sider: Aside } = Layout;
+const { Content, Sider: Aside } = Layout;
 const aside_style = {
   flex: '0 0 var(--width-sidebar)',
   maxWidth: 'var(--width-sidebar)',
   minWidth: 'var(--width-sidebar)',
   width: 'var(--width-sidebar)',
-}
+};
 
 const App: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -20,7 +20,7 @@ const App: React.FC = () => {
         collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
-        style={ aside_style }
+        style={aside_style}
       >
         <SideBar></SideBar>
       </Aside>

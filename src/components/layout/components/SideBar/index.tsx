@@ -39,17 +39,17 @@ const ITEMS_DOWN: MenuItem[] = [
 ];
 const LOGO = {
   key: 'logo',
-  icon: "../../../../assets/images/logo.ico",
+  icon: '../../../../../public/logo.ico',
   title: 'haha',
-}
+};
 
 export default function SideBar() {
   return (
     <>
       <div className="f-sb font-color-white sidebar">
         <div className="f-left">
-          <img src={ LOGO.icon } alt={ LOGO.key } />
-          <div className="logo-title">{ LOGO.title }</div>
+          <img src={LOGO.icon} alt={LOGO.key} />
+          <div className="logo-title">{LOGO.title}</div>
         </div>
         <div className="f-right">
           <i className="iconfont icon-icon-yichang"></i>
@@ -58,8 +58,8 @@ export default function SideBar() {
       </div>
       <div className="menu-content">
         <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_UP} />
-      <div className="space"></div>
-      <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_DOWN} />
+        <div className="space"></div>
+        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_DOWN} />
       </div>
     </>
   );
