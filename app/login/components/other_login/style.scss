@@ -1,0 +1,45 @@
+.other-login {
+  margin-top: 30px;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 20px;
+
+  .title {
+    color: #999;
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .methods {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+
+    .method-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #eee;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #3c9cff;
+        background: #f0f7ff;
+
+        svg {
+          color: #3c9cff;
+        }
+      }
+
+      svg {
+        color: #666;
+        font-size: 20px;
+      }
+    }
+  }
+}

@@ -6,7 +6,6 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { Menu, type MenuProps } from 'antd';
-import Avatar from 'antd/es/avatar/Avatar';
 import './index.scss';
 
 type MenuItem = Required<MenuProps>['items'][number];
@@ -37,16 +36,12 @@ const ITEMS_DOWN: MenuItem[] = [
     getItem('web前端', '6'),
   ]),
 ];
-const LOGO = {
-  key: 'logo',
-  icon: '../../../../../public/logo.ico',
-  title: 'haha',
-};
+const LOGO: MenuItem[] = [getItem('', 'logo', <i className="iconfont icon-icon-yichang" />, [])];
 
 export default function SideBar() {
   return (
     <>
-      <div className="f-sb font-color-white sidebar">
+      {/* <div className="f-sb font-color-white sidebar">
         <div className="f-left">
           <img src={LOGO.icon} alt={LOGO.key} />
           <div className="logo-title">{LOGO.title}</div>
@@ -55,11 +50,17 @@ export default function SideBar() {
           <i className="iconfont icon-icon-yichang"></i>
           <Avatar size={32} src="../../../../assets/images/avatar.png" />
         </div>
-      </div>
+      </div> */}
       <div className="menu-content">
-        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_UP} />
+        <Menu items={LOGO} />
+        <Menu defaultSelectedKeys={['1']} mode="inline" items={ITEMS_UP} />
         <div className="space"></div>
-        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={ITEMS_DOWN} />
+        <Menu
+          defaultSelectedKeys={['1']}
+          defaultOpenKeys={['sub1']}
+          mode="inline"
+          items={ITEMS_DOWN}
+        />
       </div>
     </>
   );

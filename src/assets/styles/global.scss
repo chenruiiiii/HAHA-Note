@@ -48,7 +48,8 @@ a {
   --border-color: #d9d9d9;
   --background-color: #f5f5f5;
   --width-sidebar: 14%; // 侧边栏宽度
-  --max-width-sidebar:280px;
+  --max-width-sidebar: 280px;
+  --min-width-sidebar: 200px;
 }
 
 // 设备像素比为1.5
@@ -56,12 +57,22 @@ a {
 //   --base-size: 1.05px;
 // }
 
-.ant-layout-sider {
-  flex: 0 0 var(--width-sidebar)!important;
-  width: var(--width-sidebar) !important;
-  max-width: var(--max-width-sidebar) !important;
-}
+// .ant-layout-sider {
+//   flex: 0 0 var(--width-sidebar) !important;
+//   width: var(--min-width-sidebar) !important;
+//   max-width: var(--max-width-sidebar) !important;
+// }
 
-.ant-layout-sider-trigger{
-  width: var(--width-sidebar) !important;
+// .ant-layout-sider-trigger {
+//   width: var(--min-width-sidebar) !important;
+// }
+.css-var-_R_4lrlb_.ant-layout-sider {
+  // 覆盖ant-design样式
+  --ant-layout-header-bg: #fff !important;
+  --ant-layout-color-bg-header: #fff !important;
+  --ant-layout-sider-bg: #fff !important;
+  --ant-layout-trigger-bg: #fff !important;
+}
+.anticon {
+  color: #333 !important;
 }

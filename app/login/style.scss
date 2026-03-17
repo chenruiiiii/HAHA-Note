@@ -1,0 +1,141 @@
+@use "../../src/assets/styles/var.scss";
+
+// 覆盖样式
+.phone > .css-dev-only-do-not-override-1enej14 {
+  width: 100%;
+  font-size: var.$font-size-sm !important;
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f6f6f6;
+  padding: 20px;
+
+  .login-card {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 40px 30px;
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 32px;
+
+      .logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 16px;
+
+        .icon {
+          width: 32px;
+          height: 32px;
+          background: linear-gradient(135deg, #3c9cff, #0069ff);
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          svg {
+            color: white;
+            font-size: 20px;
+          }
+        }
+
+        .title {
+          color: var.$success-color;
+          font-size: 24px;
+          font-weight: 600;
+          background: linear-gradient(135deg, var.$success-color, var.$success-color);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+      }
+
+      .description {
+        color: #666;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+    }
+
+    .form-section {
+      font-size: var.$font-size-sm !important;
+
+      .ant-form-item {
+        margin-bottom: 20px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      .phone-input {
+        width: 100%;
+
+        .ant-select-selector {
+          border: 1px solid #d9d9d9;
+          border-radius: 6px;
+        }
+      }
+      .phone {
+        width: 100%;
+
+        .countrySelect {
+          width: 35%;
+        }
+      }
+
+      .verification-code {
+        display: flex;
+        gap: 8px;
+
+        .ant-input {
+          flex: 1;
+        }
+
+        .code-btn {
+          min-width: 90px;
+          font-size: var.$font-size-sm;
+        }
+      }
+
+      .login-btn {
+        width: 100%;
+        height: 40px;
+        font-size: 16px;
+        font-weight: 500;
+        background: linear-gradient(135deg, #3c9cff, #0069ff);
+        border: none;
+        border-radius: 6px;
+        margin-top: 8px;
+
+        &:hover {
+          opacity: 0.9;
+        }
+      }
+    }
+
+    .agreement {
+      margin-top: 20px;
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+
+      a {
+        color: #0066ff;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}

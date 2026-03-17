@@ -4,20 +4,17 @@ export default {
   mode: 'jit',
 
   // 文件扫描路径
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
 
   // 自定义主题配置
   theme: {
     // 屏幕断点
     screens: {
-      'xs': '480px',
-      'sm': '640px',
-      'md': '768px',
-      'lg': '1024px',
-      'xl': '1280px',
+      xs: '480px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
       '2xl': '1536px',
     },
 
@@ -25,25 +22,25 @@ export default {
     spacing: {
       px: '1px',
       0: '0',
-      0.5: '0.125rem',    // 2px
-      1: '0.25rem',      // 4px
-      1.5: '0.375rem',   // 6px
-      2: '0.5rem',       // 8px
-      2.5: '0.625rem',   // 10px
-      3: '0.75rem',      // 12px
-      3.5: '0.875rem',   // 14px
-      4: '1rem',         // 16px
-      5: '1.25rem',      // 20px
-      6: '1.5rem',      // 24px
-      7: '1.75rem',     // 28px
-      8: '2rem',        // 32px
-      9: '2.25rem',    // 36px
-      10: '2.5rem',    // 40px
-      12: '3rem',      // 48px
-      16: '4rem',      // 64px
-      20: '5rem',      // 80px
-      24: '6rem',      // 96px
-      32: '8rem',      // 128px
+      0.5: '0.125rem', // 2px
+      1: '0.25rem', // 4px
+      1.5: '0.375rem', // 6px
+      2: '0.5rem', // 8px
+      2.5: '0.625rem', // 10px
+      3: '0.75rem', // 12px
+      3.5: '0.875rem', // 14px
+      4: '1rem', // 16px
+      5: '1.25rem', // 20px
+      6: '1.5rem', // 24px
+      7: '1.75rem', // 28px
+      8: '2rem', // 32px
+      9: '2.25rem', // 36px
+      10: '2.5rem', // 40px
+      12: '3rem', // 48px
+      16: '4rem', // 64px
+      20: '5rem', // 80px
+      24: '6rem', // 96px
+      32: '8rem', // 128px
     },
 
     // 颜色
@@ -58,7 +55,7 @@ export default {
         200: '#91d5ff',
         300: '#69c0ff',
         400: '#40a9ff',
-        500: '#1890ff',  // Ant Design 主色
+        500: '#1890ff', // Ant Design 主色
         600: '#096dd9',
         700: '#0050b3',
         800: '#003a8c',
@@ -108,15 +105,15 @@ export default {
     },
 
     fontSize: {
-      xs: ['0.75rem', { lineHeight: '1rem' }],      // 12px
-      sm: ['0.875rem', { lineHeight: '1.25rem' }],  // 14px
-      base: ['1rem', { lineHeight: '1.5rem' }],     // 16px
-      lg: ['1.125rem', { lineHeight: '1.75rem' }],  // 18px
-      xl: ['1.25rem', { lineHeight: '1.75rem' }],  // 20px
-      '2xl': ['1.5rem', { lineHeight: '2rem' }],   // 24px
-      '3xl': ['1.875rem', { lineHeight: '2.25rem' }],  // 30px
-      '4xl': ['2.25rem', { lineHeight: '2.5rem' }],    // 36px
-      '5xl': ['3rem', { lineHeight: '1' }],           // 48px
+      xs: ['0.75rem', { lineHeight: '1rem' }], // 12px
+      sm: ['0.875rem', { lineHeight: '1.25rem' }], // 14px
+      base: ['1rem', { lineHeight: '1.5rem' }], // 16px
+      lg: ['1.125rem', { lineHeight: '1.75rem' }], // 18px
+      xl: ['1.25rem', { lineHeight: '1.75rem' }], // 20px
+      '2xl': ['1.5rem', { lineHeight: '2rem' }], // 24px
+      '3xl': ['1.875rem', { lineHeight: '2.25rem' }], // 30px
+      '4xl': ['2.25rem', { lineHeight: '2.5rem' }], // 36px
+      '5xl': ['3rem', { lineHeight: '1' }], // 48px
     },
 
     // 扩展
@@ -143,20 +140,21 @@ export default {
 
       // 阴影
       boxShadow: {
-        'card': '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
+        card: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
         'card-hover': '0 8px 16px 0 rgba(0, 0, 0, 0.08), 0 2px 6px 0 rgba(0, 0, 0, 0.04)',
-        'dropdown': '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+        dropdown:
+          '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
       },
 
       // 圆角
       borderRadius: {
-        'sm': '0.25rem',     // 4px
-        'DEFAULT': '0.375rem', // 6px
-        'md': '0.5rem',      // 8px
-        'lg': '0.75rem',     // 12px
-        'xl': '1rem',        // 16px
-        '2xl': '1.5rem',     // 24px
-        'full': '9999px',
+        sm: '0.25rem', // 4px
+        DEFAULT: '0.375rem', // 6px
+        md: '0.5rem', // 8px
+        lg: '0.75rem', // 12px
+        xl: '1rem', // 16px
+        '2xl': '1.5rem', // 24px
+        full: '9999px',
       },
 
       // 透明度
@@ -169,24 +167,24 @@ export default {
 
       // 高度
       height: {
-        'header': '64px',
+        header: '64px',
         'editor-toolbar': '48px',
-        'sidebar': 'calc(100vh - 64px)',
+        sidebar: 'calc(100vh - 64px)',
       },
 
       // 最小/最大尺寸
       minWidth: {
-        'sidebar': '240px',
-        'editor': '320px',
+        sidebar: '240px',
+        editor: '320px',
       },
       maxWidth: {
-        'content': '800px',
-        'editor': '1200px',
+        content: '800px',
+        editor: '1200px',
       },
 
       // 网格
       gridTemplateColumns: {
-        'editor': '240px 1fr',
+        editor: '240px 1fr',
         'editor-with-preview': '240px 1fr 320px',
       },
     },
@@ -194,16 +192,16 @@ export default {
 
   // 插件
   plugins: [
-    require('@tailwindcss/typography'),  // 用于 Markdown 样式
+    require('@tailwindcss/typography'), // 用于 Markdown 样式
     require('tailwind-scrollbar')({ nocompatible: true }),
-    require('tailwindcss-animate'),       // 动画插件
+    require('tailwindcss-animate'), // 动画插件
   ],
 
   // 暗黑模式
-  darkMode: 'class',  // 通过 .dark 类控制
+  // darkMode: 'class', // 通过 .dark 类控制
 
   // 优化选项
   future: {
     hoverOnlyWhenSupported: true,
   },
-}
+};
