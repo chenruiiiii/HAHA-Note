@@ -16,10 +16,10 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/public/*"],
+      "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
-      "@utils/*": ["src/public/utils/*"],
-      "@hooks/*": ["src/public/hooks/*"]
+      "@utils/*": ["src/utils/*"],
+      "@hooks/*": ["src/hooks/*"]
     },
     "plugins": [
       {
