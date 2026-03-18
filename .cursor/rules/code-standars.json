@@ -1,0 +1,112 @@
+{
+  "projectType": "Next.js + TypeScript 个人笔记项目",
+  "description": "SSR+CSR混合渲染，包含知识库、AI摘要、多语言等功能",
+  "author": "大三前端实习生",
+  "version": "1.0.0",
+  "rules": {
+    "namingConventions": {
+      "files": "使用kebab-case命名，如：note-editor.tsx, user-api.ts",
+      "components": "React组件使用PascalCase，与文件名保持一致",
+      "variables": "使用camelCase，布尔值以is/has/can开头",
+      "constants": "常量使用UPPER_SNAKE_CASE",
+      "interfaces": "接口使用I前缀，如：INote",
+      "types": "类型别名使用T前缀，如：TNoteStatus",
+      "functions": "动词开头的camelCase，如：fetchUserData, handleSubmit",
+      "hooks": "自定义Hook以use开头，如：useNoteList"
+    },
+    "projectStructure": {
+      "pages": "页面文件使用.page.tsx后缀，如：index.page.tsx",
+      "apiRoutes": "API路由放在pages/api/，如：pages/api/notes/[id].ts",
+      "components": "组件放在components/，复杂组件用文件夹组织",
+      "styles": "SCSS文件与组件同名，如：note-editor.scss",
+      "store": "Redux切片放在store/slices/",
+      "utils": "工具函数分类存放，如：utils/date.ts"
+    },
+    "codingStandards": {
+      "functionLength": "函数不超过300行，过长需拆分",
+      "componentResponsibility": "组件职责单一，复杂逻辑用自定义Hook",
+      "importOrder": [
+        "React/第三方库",
+        "项目内部组件",
+        "工具函数和类型",
+        "样式文件"
+      ],
+      "typeScript": "使用严格模式，明确所有类型",
+      "errorHandling": "异步操作使用try-catch，统一错误处理"
+    },
+    "gitWorkflow": {
+      "branchTypes": [
+        "main - 生产分支",
+        "develop - 开发分支",
+        "feature/* - 新功能",
+        "bugfix/* - 问题修复",
+        "hotfix/* - 紧急修复",
+        "release/* - 版本发布"
+      ],
+      "commitFormat": "<type>(<scope>): <subject>",
+      "commitTypes": [
+        "feat - 新功能",
+        "fix - 修复bug",
+        "docs - 文档更新",
+        "style - 代码格式",
+        "refactor - 代码重构",
+        "test - 测试相关",
+        "chore - 构建工具",
+        "perf - 性能优化"
+      ],
+      "commitExamples": [
+        "feat(editor): 添加Markdown实时预览",
+        "fix(auth): 修复登录token验证问题",
+        "docs(readme): 更新项目启动说明"
+      ]
+    },
+    "reactNextBestPractices": {
+      "ssrPages": ["公开笔记页面", "用户主页", "介绍页", "博客文章"],
+      "csrPages": ["笔记编辑器", "个人笔记列表", "设置页面", "后台管理"],
+      "dataFetching": "SSR页面用getServerSideProps，静态页面用getStaticProps",
+      "stateManagement": "全局状态用Redux Toolkit，局部状态用useState/useReducer",
+      "performance": ["图片懒加载", "组件动态导入", "列表虚拟滚动", "代码分割"]
+    },
+    "projectSpecific": {
+      "features": [
+        "知识库系统（分组->文档）",
+        "Markdown编辑器（自动保存）",
+        "文档导入导出",
+        "AI生成摘要（接入千问）",
+        "二维码分享文档",
+        "手机号登录（Node.js后端转发）",
+        "多语言支持（i18n）",
+        "多模态支持",
+        "性能检测SDK"
+      ],
+      "techStack": [
+        "Next.js (SSR/CSR混合)",
+        "TypeScript",
+        "SCSS + styled-components",
+        "Ant Design",
+        "Redux Toolkit",
+        "Axios",
+        "WebSocket",
+        "Vite (开发构建)"
+      ],
+      "deployment": "Vercel部署"
+    }
+  },
+  "recommendations": {
+    "forIntern": "作为实习生项目，注重代码清晰度和可维护性",
+    "learningPoints": [
+      "SSR/CSR混合渲染实践",
+      "TypeScript类型安全",
+      "状态管理（Redux Toolkit）",
+      "性能优化技巧",
+      "项目部署流程"
+    ],
+    "codeReviewFocus": [
+      "函数是否过长（超过300行）",
+      "组件职责是否单一",
+      "TypeScript类型是否完善",
+      "错误处理是否完备",
+      "代码是否有明显性能问题"
+    ]
+  }
+}

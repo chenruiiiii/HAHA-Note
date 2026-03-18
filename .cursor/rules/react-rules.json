@@ -1,0 +1,24 @@
+{
+  "reactRules": {
+    "components": {
+      "useFunctional": "使用函数组件而非类组件",
+      "hooksFirst": "优先使用 Hooks 而非 HOC",
+      "exportDefault": "使用 export default 导出组件",
+      "propTypes": "使用 TypeScript interface 而非 PropTypes"
+    },
+
+    "stateManagement": {
+      "localState": "简单状态使用 useState",
+      "complexState": "复杂状态使用 useReducer",
+      "globalState": "全局状态使用 Redux Toolkit",
+      "serverState": "服务端状态使用 SWR/React Query"
+    },
+
+    "performance": {
+      "memoization": "必要时使用 React.memo",
+      "callbacks": "使用 useCallback 避免重复创建函数",
+      "effects": "useEffect 依赖项要完整",
+      "lazyLoading": "大组件使用 React.lazy"
+    }
+  }
+}
