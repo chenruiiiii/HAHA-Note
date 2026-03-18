@@ -4,6 +4,16 @@
   align-items: center;
   padding: 0 16px;
 }
+.f-jc-c{
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.f-jc-s{
+  display: flex;
+  justify-content: start;
+}
 .f-left {
   display: flex;
   justify-content: start;
@@ -16,4 +26,7 @@
 }
 .font-color-white {
   color: #fff;
+}
+.cursor-pointer {
+  cursor: pointer;
 }

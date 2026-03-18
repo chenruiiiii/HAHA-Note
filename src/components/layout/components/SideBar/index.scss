@@ -1,4 +1,4 @@
-@import "@/assets/styles/var.scss";
+@use "@/assets/styles/var.scss";
 .sidebar {
   padding: 16px 10px;
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
@@ -10,7 +10,7 @@
       border-radius: 16px;
     }
     .logo-title {
-      color: $text-color;
+      color: var.$text-color;
     }
   }
 }

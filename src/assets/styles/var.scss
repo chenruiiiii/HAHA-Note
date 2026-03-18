@@ -8,6 +8,7 @@ $info-color: #1890ff;
 $text-color: rgba(0, 0, 0, 0.85);
 $text-color-secondary: rgba(0, 0, 0, 0.45);
 $text-color-disabled: rgba(0, 0, 0, 0.25);
+$text-title-color: #262626;
 
 $background-color: #f0f2f5;
 $border-color: #d9d9d9;
@@ -31,14 +32,18 @@ $font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier
 $font-size-xs: 0.75rem;
 $font-size-sm: 0.875rem;
 $font-size-md: 1rem;
+$font-size-lg: 1.25rem;
+$font-title: 1.225rem;
 
-// 断点
-$breakpoint-xs: 480px;
-$breakpoint-sm: 640px;
-$breakpoint-md: 768px;
-$breakpoint-lg: 1024px;
-$breakpoint-xl: 1280px;
-$breakpoint-2xl: 1536px;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-bold: 600;
+
+// 边框
+$border-color: #E7E9E8;
+$border-radius: 10px;
+$border: 1px solid $border-color;
+
 
 // 阴影
 $shadow-card:

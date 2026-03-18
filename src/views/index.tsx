@@ -1,4 +1,5 @@
 'use client';
+import MainContent from '@/components/layout/components/MainContent';
 import { Layout } from 'antd';
 import React, { useState } from 'react';
 import SideBar from 'src/components/layout/components/SideBar';
@@ -25,8 +26,7 @@ const App: React.FC = () => {
         <SideBar></SideBar>
       </Aside>
       <Layout>
-        {/* <Header style={{ padding: 0, background: colorBgContainer }} /> */}
-        <Content style={{ margin: '0 16px' }}></Content>
+          <MainContent></MainContent>
       </Layout>
     </Layout>
   );
