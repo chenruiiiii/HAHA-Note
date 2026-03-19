@@ -26,8 +26,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+i {
+  font-size: $font-size-md !important;
+}
+
 // // 导入组件样式
 // @import 'components/button';
 // @import 'components/card';
 // @import 'components/editor';
 // @import 'components/layout';
+
+.css-var-_R_4lrlb_ {
+  // 覆盖ant-design样式 divider
+  --ant-margin-lg: 14px !important;
+}

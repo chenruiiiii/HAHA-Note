@@ -1,7 +1,4 @@
-// 引入tailwind
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@use "var.scss";
 
 // 重置样式
 * {
@@ -52,27 +49,43 @@ a {
   --min-width-sidebar: 200px;
 }
 
+// 字体图标
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 // 设备像素比为1.5
 // @media only screen and (){
 //   --base-size: 1.05px;
 // }
 
-// .ant-layout-sider {
-//   flex: 0 0 var(--width-sidebar) !important;
-//   width: var(--min-width-sidebar) !important;
-//   max-width: var(--max-width-sidebar) !important;
-// }
-
-// .ant-layout-sider-trigger {
-//   width: var(--min-width-sidebar) !important;
-// }
-.css-var-_R_4lrlb_.ant-layout-sider {
+.ant-layout-sider-children {
   // 覆盖ant-design样式
-  --ant-layout-header-bg: #fff !important;
-  --ant-layout-color-bg-header: #fff !important;
-  --ant-layout-sider-bg: #fff !important;
-  --ant-layout-trigger-bg: #fff !important;
+  --ant-layout-header-bg: #fafafa !important;
+  --ant-layout-color-bg-header: #fafafa !important;
+  --ant-layout-sider-bg: #fafafa !important;
+  --ant-layout-trigger-bg: #fafafa !important;
 }
 .anticon {
   color: #333 !important;
+}
+
+.ant-layout-sider,
+.ant-layout-sider-trigger {
+  border-right: 0.05px solid var.$border-color;
+  box-shadow: var.$shadow-sidebar;
+}
+
+.ant-layout-sider-trigger {
+  border-top: 0.05px solid var.$border-color;
+  box-shadow: var.$shadow-sidebar;
+}
+
+// ant  space
+.ant-space-item {
+  color: var.$text-color !important;
 }

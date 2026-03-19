@@ -1,12 +1,5 @@
-import {
-  DesktopOutlined,
-  FileOutlined,
-  PieChartOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
 import { Menu, type MenuProps } from 'antd';
-import './index.scss';
+import './style.scss';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -25,14 +18,14 @@ function getItem(
 }
 
 const ITEMS_UP: MenuItem[] = [
-  getItem('开始', '1', <PieChartOutlined />),
-  getItem('AI写作', '2', <DesktopOutlined />),
-  getItem('小记', '3', <UserOutlined />),
-  getItem('收藏', '4', <TeamOutlined />),
-  getItem('逛逛', '5', <FileOutlined />),
+  getItem('开始', '1', <i className="iconfont icon-zhukongtai" style={{ color: '#FBC91A' }}></i>),
+  getItem('AI写作', '2', <i className="iconfont icon-aixiezuo" style={{ color: '#49CA72' }}></i>),
+  getItem('小记', '3', <i className="iconfont icon-xiaoji" style={{ color: '#36AFA2' }}></i>),
+  getItem('收藏', '4', <i className="iconfont icon-shoucang1" style={{ color: '#4E30DC' }}></i>),
+  getItem('逛逛', '5', <i className="iconfont icon-guangguang1" style={{ color: '#FF3A0C' }}></i>),
 ];
 const ITEMS_DOWN: MenuItem[] = [
-  getItem('知识库', 'sub1', <i className="iconfont icon-icon-yichang" />, [
+  getItem('知识库', 'sub1', <i className="iconfont icon-zhishiku" style={{ color: '#0062FF' }} />, [
     getItem('web前端', '6'),
   ]),
 ];
@@ -41,16 +34,6 @@ const LOGO: MenuItem[] = [getItem('', 'logo', <i className="iconfont icon-icon-y
 export default function SideBar() {
   return (
     <>
-      {/* <div className="f-sb font-color-white sidebar">
-        <div className="f-left">
-          <img src={LOGO.icon} alt={LOGO.key} />
-          <div className="logo-title">{LOGO.title}</div>
-        </div>
-        <div className="f-right">
-          <i className="iconfont icon-icon-yichang"></i>
-          <Avatar size={32} src="../../../../assets/images/avatar.png" />
-        </div>
-      </div> */}
       <div className="menu-content">
         <Menu items={LOGO} />
         <Menu defaultSelectedKeys={['1']} mode="inline" items={ITEMS_UP} />

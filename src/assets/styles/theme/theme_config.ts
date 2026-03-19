@@ -7,12 +7,19 @@ const theme_config: ThemeConfig = {
   token: {
     colorPrimary: '#ff5500',
     colorInfo: '#ff5500',
-    colorBgBase: '#ffffff', // 明确指定背景色为白色
-    colorTextBase: '#000000', // 明确指定文字色为黑色
+    colorBgBase: '#fafafa', // 明确指定背景色为白色
+    colorTextBase: '#0D0D0D', // 明确指定文字色为黑色
   },
   components: {
+    Layout: {
+      headerBg: '#fafafa',
+      siderBg: '#fafafa',
+      triggerBg: '#fafafa',
+    },
+
     Menu: {
-      algorithm: true,
+      itemSelectedColor: '#ff5500',
+      itemSelectedBg: '#fff2e8',
     },
   },
 };
