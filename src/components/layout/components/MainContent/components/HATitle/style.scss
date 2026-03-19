@@ -1,0 +1,8 @@
+@use "@/assets/styles/var.scss";
+
+.ha-title{
+  font-size: var.$font-title;
+  color: var.$text-title-color;
+  font-weight: var.$font-weight-bold;
+  padding: 0 0 20px 0;
+}
