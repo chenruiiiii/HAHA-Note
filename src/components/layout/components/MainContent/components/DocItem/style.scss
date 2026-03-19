@@ -1,0 +1,22 @@
+@use "@/assets/styles/var";
+
+.doc-item {
+  padding: 0 10px;
+  &:hover {
+    background-color: var.$bg-shallow-color;
+  }
+
+  .title {
+    font-size: var.$font-size-md;
+  }
+
+  .f-center-3,
+  .f-right-3 {
+    color: var.$text-color-shallow;
+  }
+
+  i {
+    font-size: var.$font-size-lg;
+    margin-right: 20px;
+  }
+}

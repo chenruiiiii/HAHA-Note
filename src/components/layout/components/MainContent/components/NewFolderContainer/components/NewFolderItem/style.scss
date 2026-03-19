@@ -1,38 +1,46 @@
 @use "@/assets/styles/var.scss";
+
 .new-folder-item {
-  gap:20px;
+  gap: 20px;
   border: var.$border;
   border-radius: var.$border-radius;
   padding: 10px 16px;
   min-width: 260px;
-  .f-left{
+  background-color: var.$background-color;
+  .f-left {
     max-width: 10%;
     font-size: var.$font-size-lg;
   }
   .f-right {
     display: flex;
     gap: 15px;
-    .desc{
+    .desc {
       display: flex;
-    flex-wrap: nowrap;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: start;
+      flex-wrap: nowrap;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: start;
     }
-    .top{
+    .top {
       letter-spacing: 0.5px;
     }
 
-    .down{
+    .down {
       color: #aaa;
       font-size: var.$font-size-xs;
     }
-    i{
+    i {
       color: var.$text-color;
       transition: all 0.3s ease-in-out;
+      font-size: var.$font-size-lg;
+      margin-right: 10px;
     }
-    i:hover{
+    i:hover {
       transform: rotate(-180deg);
     }
   }
+}
+
+.drop-down:hover i {
+  transform: rotate(-180deg);
 }

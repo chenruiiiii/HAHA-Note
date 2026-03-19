@@ -5,12 +5,22 @@ $warning-color: #faad14;
 $error-color: #ff4d4f;
 $info-color: #1890ff;
 
+// 字体颜色
 $text-color: rgba(0, 0, 0, 0.85);
 $text-color-secondary: rgba(0, 0, 0, 0.45);
 $text-color-disabled: rgba(0, 0, 0, 0.25);
+$text-color-shallow: #999;
 $text-title-color: #262626;
 
-$background-color: #f0f2f5;
+// 字体大小
+$font-size-xs: 0.75rem;
+$font-size-sm: 0.875rem;
+$font-size-md: 1rem;
+$font-size-lg: 1.25rem;
+$font-title: 1.225rem;
+
+$background-color: #fafafa;
+$bg-shallow-color: rgba(0, 0, 0, 0.04);
 $border-color: #d9d9d9;
 
 // 间距
@@ -28,27 +38,19 @@ $font-family:
 
 $font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
 
-// 字体大小
-$font-size-xs: 0.75rem;
-$font-size-sm: 0.875rem;
-$font-size-md: 1rem;
-$font-size-lg: 1.25rem;
-$font-title: 1.225rem;
-
 $font-weight-normal: 400;
 $font-weight-medium: 500;
 $font-weight-bold: 600;
 
 // 边框
-$border-color: #E7E9E8;
+$border-color: #e7e9e8;
 $border-radius: 10px;
 $border: 1px solid $border-color;
 
-
 // 阴影
-$shadow-card:
-  0 1px 2px 0 rgba(0, 0, 0, 0.03),
-  0 1px 6px -1px rgba(0, 0, 0, 0.02),
+$shadow-sidebar:
+  0 1px 20px 0 rgba(0, 0, 0, 0.08),
+  0 1px 10px -1px rgba(0, 0, 0, 0.02),
   0 2px 4px 0 rgba(0, 0, 0, 0.02);
 $shadow-card-hover:
   0 8px 16px 0 rgba(0, 0, 0, 0.08),

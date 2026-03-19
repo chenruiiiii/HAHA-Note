@@ -4,13 +4,13 @@
   align-items: center;
   padding: 0 16px;
 }
-.f-jc-c{
+.f-jc-c {
   display: flex;
   justify-content: center;
   gap: 20px;
 }
 
-.f-jc-s{
+.f-jc-s {
   display: flex;
   justify-content: start;
 }
@@ -29,4 +29,20 @@
 }
 .cursor-pointer {
   cursor: pointer;
+}
+
+// 3份flex布局
+.f-left-3 {
+  flex: 2;
+  display: flex;
+  flex-wrap: nowrap;
+}
+.f-center-3 {
+  flex: 2;
+  display: flex;
+  justify-content: start;
+}
+.f-right-3 {
+  flex: 1;
+  display: flex;
 }
