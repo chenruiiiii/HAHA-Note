@@ -1,13 +1,24 @@
 @use "@/assets/styles/var";
 
 .doc-item {
-  padding: 0 10px;
+  padding: 10px 15px 0 15px;
   &:hover {
     background-color: var.$bg-shallow-color;
+    .edit {
+      display: block;
+    }
   }
 
   .title {
     font-size: var.$font-size-md;
+  }
+
+  .edit {
+    color: var.$text-color-shallow;
+    margin-left: 15px;
+    margin-top: 5px;
+    font-size: var.$font-size-xs !important;
+    display: none;
   }
 
   .f-center-3,

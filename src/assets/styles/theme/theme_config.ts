@@ -11,8 +11,15 @@ const theme_config: ThemeConfig = {
     colorTextBase: '#000000', // 明确指定文字色为黑色
   },
   components: {
+    Layout: {
+      headerBg: '#fafafa',
+      siderBg: '#fafafa',
+      triggerBg: '#fafafa',
+    },
+
     Menu: {
-      algorithm: true,
+      itemSelectedColor: '#ff5500',
+      itemSelectedBg: '#fff2e8',
     },
   },
 };

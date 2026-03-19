@@ -8,7 +8,7 @@ function HASkeleton({ num }: SkeletonProps) {
   return (
     <>
       {Array.from({ length: num }).map((_, index) => (
-        <Skeleton />
+        <Skeleton key={index} />
       ))}
     </>
   );

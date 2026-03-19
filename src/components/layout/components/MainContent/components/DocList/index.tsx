@@ -7,6 +7,7 @@ import './style.scss';
 
 const list: DocListItems[] = [
   {
+    id: '1',
     type: '文档',
     title: 'string',
     creator: 'string',
@@ -14,6 +15,7 @@ const list: DocListItems[] = [
     repository: 'string', // 知识库名
   },
   {
+    id: '2',
     type: '表格',
     title: 'string',
     creator: 'string',
@@ -21,6 +23,7 @@ const list: DocListItems[] = [
     repository: 'string', // 知识库名
   },
   {
+    id: '3',
     type: '数据表',
     title: 'string',
     creator: 'string',
@@ -32,9 +35,9 @@ const list: DocListItems[] = [
 const handleLoading = (isLoading: boolean, list: DocListItems[]) => {
   if (isLoading) return <HASkeleton num={5}></HASkeleton>;
   return list.map((item, index) => (
-    <div key={item.time} className="doc-item">
+    <div key={item.id} className="doc-item">
       <DocItem {...item}></DocItem>
-      {index !== list.length - 1 && <Divider />}
+      <Divider />
     </div>
   ));
 };

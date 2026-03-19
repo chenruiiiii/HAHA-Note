@@ -15,12 +15,18 @@ const handleIcon = (type: string) => {
       return <i className="iconfont icon-wendang" style={{ color: '#3B8EE3' }}></i>;
   }
 };
-function DocItem({ type, title, creator, time, repository }: DocListItems) {
+function DocItem({ id, type, title, creator, time, repository }: DocListItems) {
+  // 编辑文档信息
+  const handleEdit = () => {
+    console.log('编辑', id);
+  };
+
   return (
-    <div className="f-sb">
+    <div className="f-sb cursor-pointer">
       <div className="f-left-3">
         {handleIcon(type)}
         <div className="title">{title}</div>
+        <i className="iconfont icon-bianji edit cursor-pointer" onClick={handleEdit}></i>
       </div>
       <div className="f-center-3">
         {creator} / {repository}
