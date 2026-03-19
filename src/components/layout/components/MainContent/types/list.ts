@@ -1,4 +1,5 @@
 export interface DocListItems {
+  id: string;
   type: string;
   title: string;
   creator: string;

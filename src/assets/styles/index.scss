@@ -26,6 +26,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+i {
+  font-size: $font-size-md !important;
+}
+
 // // 导入组件样式
 // @import 'components/button';
 // @import 'components/card';
