@@ -30,7 +30,7 @@ let finalConfig = nextConfig;
 if (process.env.NODE_ENV === 'production') {
   finalConfig = withSentryConfig(nextConfig, {
     org: 'cb276019559e',
-    project: 'javascript-nextjs',
+    project: 'haha-note',
     silent: !process.env.CI,
     widenClientFileUpload: true,
     tunnelRoute: '/monitoring',
