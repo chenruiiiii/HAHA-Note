@@ -1,3 +1,11 @@
+// 首页几种路由的最外层布局
+.main-content {
+  padding: 20px 30px;
+  background-color: #fff;
+  height: 100vh;
+  min-width: 72rem;
+}
+
 .f-sb {
   display: flex;
   justify-content: space-between;
