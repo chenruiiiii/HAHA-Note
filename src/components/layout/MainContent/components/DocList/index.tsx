@@ -1,3 +1,4 @@
+'use client';
 import HASkeleton from '@/components/common/HASkeleton';
 import { Divider } from 'antd';
 import { useEffect, useState } from 'react';

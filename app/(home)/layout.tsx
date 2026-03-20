@@ -1,8 +1,13 @@
 'use client';
-import MainContent from '@/components/layout/components/MainContent';
+import 'antd/dist/reset.css';
+import '@/assets/styles/var.scss';
+import '@/assets/styles/global.scss';
+import '@/assets/iconfont/index.css';
+import '@/assets/styles/index.scss'; // 必须在reset.css之后引入
+// 更改ant-design 主题'
 import { Layout } from 'antd';
-import React, { useState } from 'react';
-import SideBar from 'src/components/layout/components/SideBar';
+import { ReactNode, useState } from 'react';
+import SideBar from '@/components/layout/SideBar';
 
 const { Sider: Aside } = Layout;
 const aside_style = {
@@ -12,7 +17,7 @@ const aside_style = {
   width: 'var(--width-sidebar)',
 };
 
-const App: React.FC = () => {
+function Home({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -25,11 +30,9 @@ const App: React.FC = () => {
       >
         <SideBar></SideBar>
       </Aside>
-      <Layout>
-        <MainContent></MainContent>
-      </Layout>
+      <Layout>{children}</Layout>
     </Layout>
   );
-};
+}
 
-export default App;
+export default Home;

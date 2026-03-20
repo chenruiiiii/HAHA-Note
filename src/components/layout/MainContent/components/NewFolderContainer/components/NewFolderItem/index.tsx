@@ -1,3 +1,4 @@
+'use client';
 import { NEW_DOCUMENT_OPTIONS } from '@/constants/config.ts/start';
 import type { MenuProps } from 'antd';
 import { Dropdown, message } from 'antd';
