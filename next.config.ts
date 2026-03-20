@@ -1,6 +1,9 @@
 import { withSentryConfig } from '@sentry/nextjs';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 禁用 Pages Router
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+
   reactStrictMode: true,
   sassOptions: {
     includePaths: ['./src/styles'],
