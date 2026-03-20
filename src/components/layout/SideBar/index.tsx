@@ -29,7 +29,17 @@ const ITEMS_DOWN: MenuItem[] = [
     getItem('web前端', '6'),
   ]),
 ];
-const LOGO: MenuItem[] = [getItem('', 'logo', <i className="iconfont icon-icon-yichang" />, [])];
+const LOGO: MenuItem[] = [
+  getItem(
+    'HAHA-Note',
+    'logo',
+    <img
+      src="../../../../assets/images/logo.png
+    "
+      alt=""
+    />
+  ),
+];
 
 export default function SideBar() {
   return (

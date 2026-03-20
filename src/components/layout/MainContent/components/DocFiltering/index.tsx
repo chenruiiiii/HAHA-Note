@@ -1,3 +1,4 @@
+'use client';
 import { FILTER_INFO } from '@/constants/config.ts/start';
 import { DownOutlined } from '@ant-design/icons';
 import { Dropdown, Segmented, Space } from 'antd';
