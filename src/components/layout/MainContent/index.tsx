@@ -1,19 +1,18 @@
-import DocFiltering from './components/DocFiltering'
-import DocList from './components/DocList'
-import HATitle from './components/HATitle'
-import NewFolderContainer from './components/NewFolderContainer'
-import './style.scss'
-
-function MainContent() {
-  return (
-    <div className='main-content'>
-      <HATitle title="开始"></HATitle>
-      <NewFolderContainer></NewFolderContainer>
-      <HATitle title="文档"></HATitle>
-      <DocFiltering></DocFiltering>
-      <DocList></DocList>
-    </div>
-  )
+'use client';
+import { ReactNode, useEffect, useState } from 'react';
+import HALoading from '../../common/HALoading';
+interface MainContentProps {
+  children: ReactNode;
 }
 
-export default MainContent
+function MainContent({ children }: MainContentProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+  });
+  return <div className="main-content">{isLoading ? <HALoading /> : children}</div>;
+}
+
+export default MainContent;
