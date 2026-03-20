@@ -1,5 +1,4 @@
-import MainContent from 'app/(home)/components/MainContent';
-import React from 'react';
+import MainContent from '@/components/layout/Start';
 
 function Home() {
   return <MainContent />;

@@ -1,8 +1,13 @@
 import React from 'react';
 import './style.scss';
+import MainContent from '../MainContent';
 
 function AIWriting() {
-  return <div>AIWriting</div>;
+  return (
+    <MainContent>
+      <div className="main-content">AIWriting</div>
+    </MainContent>
+  );
 }
 
 export default AIWriting;

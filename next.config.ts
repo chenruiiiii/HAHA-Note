@@ -6,17 +6,22 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   sassOptions: {
     includePaths: ['./src/styles'],
-    prependData: ``,
+    // prependData 在 Next.js 16 中需要改为 additionalData
+    additionalData: ``,
   },
   compiler: {
-    styledComponents: true,
+    // styledComponents 在 Next.js 16 中需要更详细的配置
+    styledComponents: {
+      ssr: true,
+      displayName: process.env.NODE_ENV !== 'production',
+    },
   },
   env: {
-    APP_ENV: process.env.APP_ENV,
+    APP_ENV: process.env.NODE_ENV,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['sass'],
-  },
+  // 修改这里：移除 experimental.serverComponentsExternalPackages
+  // 使用 serverExternalPackages
+  serverExternalPackages: ['sass'],
 };
 
 // 根据环境决定是否启用 Sentry
