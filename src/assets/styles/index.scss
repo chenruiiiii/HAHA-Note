@@ -40,3 +40,7 @@ i {
   // 覆盖ant-design样式 divider
   --ant-margin-lg: 14px !important;
 }
+
+.ant-input-outlined {
+  border-radius: $border-radius-lg;
+}

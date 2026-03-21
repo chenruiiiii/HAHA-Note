@@ -1,9 +1,12 @@
-import React from 'react'
+import MainContent from '@/components/layout/MainContent';
+import React from 'react';
 
 function SubtotalPage() {
   return (
-    <div>SubtotalPage</div>
-  )
+    <MainContent>
+      <div>SubtotalPage</div>
+    </MainContent>
+  );
 }
 
-export default SubtotalPage
+export default SubtotalPage;

@@ -1,9 +1,12 @@
-import React from 'react'
+import MainContent from '@/components/layout/MainContent';
+import React from 'react';
 
 function CollectPage() {
   return (
-    <div>CollectPage</div>
-  )
+    <MainContent>
+      <div>CollectPage</div>
+    </MainContent>
+  );
 }
 
-export default CollectPage
+export default CollectPage;

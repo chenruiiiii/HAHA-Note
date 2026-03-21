@@ -1,0 +1,61 @@
+@use "@/assets/styles/var.scss";
+.chat-input-container {
+  position: relative;
+  display: flex;
+  width: 50%;
+  min-height: 150px;
+  // border: var.$border;
+  border-radius: var.$border-radius-lg;
+  margin: auto;
+  box-shadow: var.$shadow-sidebar;
+
+  .input-area {
+    width: 100%;
+    .chat-textarea {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100% !important;
+    }
+  }
+
+  .input-actions {
+    position: absolute;
+    bottom: 0;
+    padding: 10px;
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    .actions-l,
+    .actions-r {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+    }
+    .circle {
+      width: 30px;
+      border-radius: calc(50%);
+      border: var.$border;
+      margin: auto;
+      text-align: center;
+      i {
+        color: var.$text-color-shallow;
+      }
+
+      &:hover {
+        border-color: var.$theme-color;
+        i {
+          color: var.$theme-color;
+        }
+      }
+    }
+    .drop-down {
+      min-width: 100px;
+    }
+    .circle-post {
+      s .drop-down {
+        min-width: 80px;
+      }
+    }
+  }
+}

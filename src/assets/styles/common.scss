@@ -1,3 +1,4 @@
+@use "./var.scss" as *;
 // 首页几种路由的最外层布局
 .main-content {
   padding: 20px 30px;
@@ -53,4 +54,40 @@
 .f-right-3 {
   flex: 1;
   display: flex;
+}
+
+// :hover变色 - 主题色
+.hover-theme-color:hover {
+  color: $theme-color;
+}
+
+// 标签
+.tag {
+  border: $border;
+  border-radius: $border-radius-md;
+  padding: 1px 8px;
+  display: flex;
+  gap: 5px;
+  font-size: $font-size-xs;
+  vertical-align: bottom;
+  transition: color 0.2s ease-in-out;
+  color: $text-color-shallow;
+
+  i {
+    // margin-top: -2px;
+    font-size: $font-size-md;
+  }
+
+  .name {
+    margin-top: 2px;
+  }
+  &:hover {
+    border-color: $theme-color;
+    color: $theme-color;
+  }
+}
+
+// 过渡
+.transition-all {
+  transition: all 0.3s ease-in-out;
 }

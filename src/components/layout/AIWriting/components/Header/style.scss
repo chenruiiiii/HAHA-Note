@@ -1,0 +1,19 @@
+.header-container {
+  margin: auto;
+  width: 100%;
+  .header-center {
+    width: 100%;
+    margin-top: 80px;
+    .title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    .tags {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px auto;
+    }
+  }
+}

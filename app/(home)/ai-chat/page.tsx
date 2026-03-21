@@ -1,8 +1,7 @@
-import AIWriting from '@/components/layout/AIWriting';
 import React from 'react';
 
-function AIChatPage() {
-  return <AIWriting />;
-}
+const AIChat = () => {
+  return <div className="ai-chat">聊天页面</div>;
+};
 
-export default AIChatPage;
+export default AIChat;
