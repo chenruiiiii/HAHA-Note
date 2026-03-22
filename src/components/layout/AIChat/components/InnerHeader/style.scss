@@ -1,0 +1,21 @@
+@use "@/assets/styles/var.scss";
+.inner-header {
+  i {
+    color: var.$text-color-shallow;
+    font-size: var.$font-size-lg !important;
+  }
+
+  .opt-btn i {
+    color: var.$text-color;
+  }
+  .space {
+    margin: 0 10px;
+    color: rgba(0, 0, 0, 0.1);
+  }
+
+  .share {
+    i {
+      color: #efefef;
+    }
+  }
+}

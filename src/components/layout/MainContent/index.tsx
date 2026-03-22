@@ -1,6 +1,7 @@
 'use client';
 import { ReactNode, useEffect, useState } from 'react';
 import HALoading from '../../common/HALoading';
+import './style.scss';
 interface MainContentProps {
   children: ReactNode;
 }

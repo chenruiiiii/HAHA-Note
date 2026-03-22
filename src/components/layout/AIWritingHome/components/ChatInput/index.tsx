@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import './style.scss';
 import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState('');
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSend = () => {
     if (inputValue.trim()) {
@@ -19,8 +20,10 @@ const ChatInput = () => {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      router.push('/ai-chat');
-      handleSend();
+      if (pathname === '/ai-chat-home') {
+        router.push('/ai-chat');
+        handleSend();
+      }
     }
   };
 

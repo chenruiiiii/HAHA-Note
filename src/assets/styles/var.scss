@@ -1,10 +1,11 @@
 $theme-color: #ff5500;
+$theme-color-shallow: #fcecb6;
 
 // SCSS 变量
 $primary-color: #1890ff;
 $success-color: #52c41a;
 $warning-color: #faad14;
-$error-color: #ff4d4f;
+$error-color: #ff4d4d;
 $info-color: #1890ff;
 
 // 字体颜色
@@ -47,7 +48,7 @@ $font-weight-bold: 600;
 // 边框
 $border-color: #e7e9e8;
 $border-radius-md: 10px;
-$border-radius-lg: 15px;
+$border-radius-lg: 25px;
 $border: 1px solid $border-color;
 
 // 阴影
