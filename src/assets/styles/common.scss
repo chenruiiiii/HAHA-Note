@@ -3,7 +3,7 @@
 .main-content {
   padding: 20px 30px;
   background-color: #fff;
-  height: 100vh;
+  height: 100%;
   min-width: 72rem;
 }
 
@@ -90,4 +90,20 @@
 // 过渡
 .transition-all {
   transition: all 0.3s ease-in-out;
+}
+
+.logo-link {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+// 阴影
+.shadow {
+  box-shadow: $shadow-dropdown;
+}
+
+.logo-text {
+  color: $theme-color;
 }

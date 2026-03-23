@@ -1,9 +1,9 @@
 'use client';
-import AIWriting from '@/components/layout/AIWriting';
+import AIWritingHome from '@/components/layout/AIWritingHome';
 import React from 'react';
 
 function AIChatHomePage() {
-  return <AIWriting />;
+  return <AIWritingHome />;
 }
 
 export default AIChatHomePage;

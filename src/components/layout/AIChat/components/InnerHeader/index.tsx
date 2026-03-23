@@ -1,0 +1,45 @@
+import React from 'react';
+import styles from './style.module.scss';
+import { Button, Space, Tooltip } from 'antd';
+import HABack from '@/components/common/HABack';
+import HACollect from '@/components/common/HACollect';
+interface InnerHeaderProps {
+  title: string;
+}
+
+const InnerHeader = ({ title }: InnerHeaderProps) => {
+  return (
+    <div className={[styles['inner-header'], 'f-sb'].join(' ')}>
+      <div className="f-left">
+        <Space>
+          <div className={styles['opt-btn']}>
+            <Tooltip title="任务列表">
+              <i className="iconfont icon--_renwuliebiao cursor-pointer"></i>
+            </Tooltip>
+          </div>
+          <div className={styles['opt-btn']}>
+            <Tooltip title="新对话">
+              <i className="iconfont icon-tianjia1 cursor-pointer"></i>
+            </Tooltip>
+          </div>
+          <span className={styles.space}>|</span>
+          <HABack></HABack>
+          <div className={styles['folder-title']}>{title}</div>
+        </Space>
+      </div>
+      <div className="f-right">
+        <Space size={20}>
+          <HACollect isCollect={false}></HACollect>
+          <Button
+            type="primary"
+            className={[styles.share, 'cursor-pointer', 'transition-all'].join(' ')}
+          >
+            <i className="iconfont icon-zhuanfa"></i>分享
+          </Button>
+        </Space>
+      </div>
+    </div>
+  );
+};
+
+export default InnerHeader;

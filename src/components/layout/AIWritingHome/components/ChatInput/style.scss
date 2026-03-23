@@ -1,11 +1,13 @@
 @use "@/assets/styles/var.scss";
+
 .chat-input-container {
   position: relative;
   display: flex;
-  width: 50%;
+  width: 100%;
+  min-width: 500px;
   min-height: 150px;
   // border: var.$border;
-  border-radius: var.$border-radius-lg;
+  border-radius: var.$border-radius-lg !important;
   margin: auto;
   box-shadow: var.$shadow-sidebar;
 
@@ -15,6 +17,8 @@
       width: 100% !important;
       height: 100% !important;
       max-height: 100% !important;
+      padding: 10px 15px;
+      border-radius: var.$border-radius-lg !important;
     }
   }
 

@@ -1,3 +1,5 @@
+@use "@/assets/styles/var.scss";
+
 .ha-loading {
   width: 100%;
   height: 100%;
@@ -5,4 +7,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
+
+  .ha-loading-ai {
+    color: var.$theme-color;
+    i {
+      font-size: var.$font-size-lg !important;
+    }
+  }
 }

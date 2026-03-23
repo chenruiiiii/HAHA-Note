@@ -8,6 +8,7 @@ import '@/assets/styles/index.scss'; // 必须在reset.css之后引入
 import { Layout } from 'antd';
 import { ReactNode, useState } from 'react';
 import SideBar from '@/components/layout/SideBar';
+import { Content } from 'antd/es/layout/layout';
 
 const { Sider: Aside } = Layout;
 const aside_style = {
@@ -30,7 +31,9 @@ function Home({ children }: { children: ReactNode }) {
       >
         <SideBar></SideBar>
       </Aside>
-      <Layout>{children}</Layout>
+      <Layout>
+        <Content>{children}</Content>
+      </Layout>
     </Layout>
   );
 }

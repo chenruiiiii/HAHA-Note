@@ -1,0 +1,6 @@
+@use "@/assets/styles/var.scss";
+
+.ask-box {
+  background-color: var.$bg-shallow-color;
+  border-radius: var.$border-radius-chat-r;
+}

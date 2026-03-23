@@ -1,7 +1,8 @@
+import AiChat from '@/components/layout/AIChat';
 import React from 'react';
 
 const AIChat = () => {
-  return <div className="ai-chat">聊天页面</div>;
+  return <AiChat />;
 };
 
 export default AIChat;

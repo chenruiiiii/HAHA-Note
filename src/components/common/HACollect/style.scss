@@ -1,0 +1,9 @@
+@use "@/assets/styles/var.scss";
+.ha-collect {
+  .no-collected {
+    color: var.$text-color-shallow;
+  }
+  .collected {
+    color: var.$theme-color;
+  }
+}
