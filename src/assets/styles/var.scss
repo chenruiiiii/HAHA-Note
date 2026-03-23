@@ -8,6 +8,8 @@ $warning-color: #faad14;
 $error-color: #ff4d4d;
 $info-color: #1890ff;
 
+$white-color: #fff;
+
 // 字体颜色
 $text-color: rgba(0, 0, 0, 0.85);
 $text-color-secondary: rgba(0, 0, 0, 0.45);
@@ -24,6 +26,8 @@ $font-title: 1.225rem;
 
 $background-color: #fafafa;
 $bg-shallow-color: rgba(0, 0, 0, 0.04);
+$bg-shallow-est-color: rgba(0, 0, 0, 0.02);
+$bg-deep-color: rgba(0, 0, 0, 0.08);
 $border-color: #d9d9d9;
 
 // 间距
@@ -49,9 +53,15 @@ $font-weight-bold: 600;
 $border-color: #e7e9e8;
 $border-radius-md: 10px;
 $border-radius-lg: 25px;
+$border-radius-chat-r: 15px 15px 3px 15px;
+$border-radius-chat-l: 15px 15px 15px 3px;
 $border: 1px solid $border-color;
 
 // 阴影
+$shadow-shallow:
+  0 1px 20px 0 rgba(0, 0, 0, 0.02),
+  0 1px 10px -1px rgba(0, 0, 0, 0.02),
+  0 2px 4px 0 rgba(0, 0, 0, 0.02);
 $shadow-sidebar:
   0 1px 20px 0 rgba(0, 0, 0, 0.08),
   0 1px 10px -1px rgba(0, 0, 0, 0.02),

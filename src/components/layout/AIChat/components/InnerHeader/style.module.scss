@@ -1,5 +1,7 @@
 @use "@/assets/styles/var.scss";
+
 .inner-header {
+  min-width: 500px;
   i {
     color: var.$text-color-shallow;
     font-size: var.$font-size-lg !important;
@@ -11,6 +13,10 @@
   .space {
     margin: 0 10px;
     color: rgba(0, 0, 0, 0.1);
+  }
+
+  .folder-title {
+    font-size: var.$font-size-md !important;
   }
 
   .share {

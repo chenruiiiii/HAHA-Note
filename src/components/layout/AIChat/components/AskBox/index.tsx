@@ -1,5 +1,5 @@
 import React from 'react';
-import './style.scss';
+import styles from './style.module.scss';
 import TextArea from 'antd/es/input/TextArea';
 
 interface AskBoxProps {
@@ -7,11 +7,7 @@ interface AskBoxProps {
 }
 
 const AskBox = ({ value }: AskBoxProps) => {
-  return (
-    <div className="ask-box">
-      <TextArea id={`ask-box-textarea-${Date.now()}}`} value={value}></TextArea>
-    </div>
-  );
+  return <div className={styles['ask-box']}>问题{value}</div>;
 };
 
 export default AskBox;

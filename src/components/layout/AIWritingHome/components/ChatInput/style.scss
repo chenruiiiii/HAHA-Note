@@ -1,8 +1,10 @@
 @use "@/assets/styles/var.scss";
+
 .chat-input-container {
   position: relative;
   display: flex;
-  width: 50%;
+  width: 100%;
+  min-width: 500px;
   min-height: 150px;
   // border: var.$border;
   border-radius: var.$border-radius-lg !important;

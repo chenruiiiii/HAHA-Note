@@ -1,8 +1,51 @@
-.chat-bottom {
-  width: 90%;
-  position: absolute;
-  bottom: 40px;
-  .chat-box {
-    max-width: 60vw;
+@use "@/assets/styles/var.scss";
+
+.ai-chat-container {
+  position: relative;
+  height: 100%;
+  background-color: var.$background-color;
+}
+
+.header {
+  background-color: #fff;
+  padding: 12px 30px;
+  box-shadow: var.$shadow-sidebar;
+}
+
+.chat-box {
+  padding: 20px 30px;
+  // max-width: 40% !important;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: start;
+  min-width: 500px;
+  width: 50vw;
+
+  .ask-box {
+    align-self: end;
+    & > div {
+      font-size: var.$font-size-md;
+      padding: 15;
+    }
   }
+  .answer-box {
+    align-self: start;
+    & > div {
+      font-size: var.$font-size-md;
+      padding: 15;
+    }
+  }
+}
+
+.chat-bottom {
+  position: absolute;
+  align-self: center;
+  min-width: 500px;
+  bottom: 40px;
+  width: 55%;
+  margin: auto;
+  padding: 15px;
+  left: calc(50% - 55% / 2);
 }

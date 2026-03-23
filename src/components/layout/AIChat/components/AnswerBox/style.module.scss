@@ -1,0 +1,7 @@
+@use "@/assets/styles/var.scss";
+
+.answer-box {
+  background-color: var.$white-color;
+  border-radius: var.$border-radius-chat-l;
+  box-shadow: var.$shadow-shallow;
+}
