@@ -57,9 +57,32 @@
       min-width: 100px;
     }
     .circle-post {
-      s .drop-down {
-        min-width: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 32px;
+      height: 32px;
+      margin-left: 10px;
+      i {
+        font-size: 25px !important;
+        transition: all 0.3s ease-in-out;
+      }
+      .icon-jijianfasong {
+        color: var.$theme-color !important;
+      }
+      .icon-loading-solid {
+        animation: rotate infinite ease 0;
+        color: var.$bg-deep-color;
       }
     }
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }

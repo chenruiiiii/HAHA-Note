@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './style.module.scss';
 import HALoading from '@/components/common/HALoading';
-import useTyping from '@/hooks/useTyping';
 interface AnswerBoxProps {
   value?: string;
 }
@@ -13,7 +12,7 @@ const AnswerBox = ({ value }: AnswerBoxProps) => {
   const fullAnswer =
     value ||
     '能用，但有重大风险！​ 虽然技术上可以用，但强烈不推荐在 React/Next.js 项目中直接使用 innerHTML';
-  const { typingText } = useTyping({ fullAnswer });
+  // const { typingText } = useTyping({ fullAnswer });
 
   useEffect(() => {
     setTimeout(() => {
@@ -26,7 +25,7 @@ const AnswerBox = ({ value }: AnswerBoxProps) => {
         <HALoading type="ai" />
       ) : (
         <div className={styles['answer-box']} ref={textRef}>
-          {typingText}
+          {/* {typingText} */}
         </div>
       )}
     </>

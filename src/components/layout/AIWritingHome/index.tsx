@@ -11,7 +11,9 @@ function AIWriting() {
   return (
     <MainContent>
       <Header></Header>
-      <ChatInput></ChatInput>
+      <div className="input">
+        <ChatInput></ChatInput>
+      </div>
       <CaseContainer></CaseContainer>
       {isShowInput && (
         <div className="input">
