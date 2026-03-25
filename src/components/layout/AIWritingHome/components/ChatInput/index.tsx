@@ -10,9 +10,9 @@ import useMessage from '@/hooks/useMessage';
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');
   const [isPosting, setIsPosting] = useState<boolean>(false);
+  const { warningMessage, contextHolder } = useMessage();
   const router = useRouter();
   const pathname = usePathname();
-  const { warningMessage, contextHolder } = useMessage();
 
   // 通知兄弟组件发送消息并展示流式数据内容
   const handleSendMessage = () => {

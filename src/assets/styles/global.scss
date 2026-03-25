@@ -84,6 +84,7 @@ a {
 .ant-layout-sider-trigger {
   border-top: 0.05px solid var.$border-color;
   box-shadow: var.$shadow-sidebar;
+  position: relative !important; // 取消默认fixed
 }
 
 // ant  space

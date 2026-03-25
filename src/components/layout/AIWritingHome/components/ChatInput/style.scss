@@ -1,5 +1,20 @@
 @use "@/assets/styles/var.scss";
 
+@property --range {
+  initial-value: 0deg;
+  inherits: false;
+  syntax: "<angle>";
+}
+
+@keyframes rotating {
+  from {
+    --range: 0deg;
+  }
+  to {
+    --range: 360deg;
+  }
+}
+
 .chat-input-container {
   position: relative;
   display: flex;
@@ -13,12 +28,40 @@
 
   .input-area {
     width: 100%;
+    position: relative;
     .chat-textarea {
       width: 100% !important;
       height: 100% !important;
       max-height: 100% !important;
       padding: 10px 15px;
       border-radius: var.$border-radius-lg !important;
+    }
+    // 发光特效
+    &::before {
+      content: "";
+      position: absolute;
+      left: -0.25%;
+      top: -0.5%;
+      background: repeating-conic-gradient(
+        from var(--range),
+        #fff,
+        #fff,
+        #fff,
+        var.$theme-color,
+        #fff,
+        #fff,
+        #fff,
+        #fff,
+        var.$theme-color,
+        #fff,
+        #fff,
+        #fff
+      );
+      animation: rotating 3s infinite linear;
+      width: 100.5%;
+      height: 101%;
+      display: block;
+      border-radius: var.$border-radius-lg;
     }
   }
 
