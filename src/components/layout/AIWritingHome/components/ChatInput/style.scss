@@ -1,20 +1,5 @@
 @use "@/assets/styles/var.scss";
 
-@property --range {
-  initial-value: 0deg;
-  inherits: false;
-  syntax: "<angle>";
-}
-
-@keyframes rotating {
-  from {
-    --range: 0deg;
-  }
-  to {
-    --range: 360deg;
-  }
-}
-
 .chat-input-container {
   position: relative;
   display: flex;
@@ -114,18 +99,11 @@
         color: var.$theme-color !important;
       }
       .icon-loading-solid {
-        animation: rotate infinite ease 0;
         color: var.$bg-deep-color;
+        &::before {
+          animation: rotating 3s infinite linear;
+        }
       }
     }
-  }
-}
-
-@keyframes rotate {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
   }
 }

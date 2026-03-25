@@ -1,0 +1,16 @@
+@use "@/assets/styles/var.scss";
+
+.chat-bottom {
+  position: fixed;
+  align-self: center;
+  min-width: 500px;
+  width: 100%;
+  bottom: 0;
+  margin: auto;
+  padding: 0 15px 15px 0;
+  background-color: var.$background-color;
+  .container {
+    width: 50%;
+    margin: auto calc(20%);
+  }
+}

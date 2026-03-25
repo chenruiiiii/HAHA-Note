@@ -1,0 +1,18 @@
+@use "@/assets/styles/var.scss";
+
+.subtotal {
+  display: flex;
+  width: 100%;
+  // padding: 15px;
+
+  .sub-left {
+    flex: 4;
+    background-color: var.$white-color;
+    padding: 20px 30px;
+  }
+  .sub-right {
+    flex: 7;
+    background-color: var.$background-color;
+    padding: 20px 40px;
+  }
+}

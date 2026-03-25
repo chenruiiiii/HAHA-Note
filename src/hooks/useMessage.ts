@@ -1,36 +1,27 @@
 import { message } from 'antd';
 
 export default function useMessage() {
-  const [messageApi, contextHolder] = message.useMessage();
+  const [contextHolder] = message.useMessage();
   const successMessage = (content: string) => {
-    messageApi.open({
-      type: 'success',
-      content,
-    });
+    message.destroy();
+    message.success(content);
   };
   const errorMessage = (content: string) => {
-    messageApi.open({
-      type: 'error',
-      content,
-    });
+    message.destroy();
+    message.error(content);
   };
   const infoMessage = (content: string) => {
-    messageApi.open({
-      type: 'info',
-      content,
-    });
+    message.destroy();
+    message.info(content);
   };
   const warningMessage = (content: string) => {
-    messageApi.open({
-      type: 'warning',
-      content,
-    });
+    message.destroy();
+    message.warning(content);
   };
   return {
     successMessage,
     errorMessage,
     infoMessage,
     warningMessage,
-    contextHolder,
   };
 }

@@ -1,16 +1,11 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import InnerHeader from './components/InnerHeader';
 import ChatInput from '../AIWritingHome/components/ChatInput';
 import './style.scss';
-import AskBox from './components/AskBox';
-import AnswerBox from './components/AnswerBox';
 import { useChat } from '@ai-sdk/react';
 import emitter from '@/utils/mitt';
-
-interface ChatEvent {
-  'chat-message': string;
-}
+import ChatBottom from '../AIWritingHome/components/ChatBottom';
 
 const AiChat = () => {
   const { messages, sendMessage } = useChat();
@@ -21,7 +16,7 @@ const AiChat = () => {
     parts.map((part, i) => {
       // 通知兄弟组件，流式数据即将结束，可以打开发送按钮
       if (i === parts.length - 1) {
-        emitter.emit('chat-quit', false);
+        emitter.emit('chat-quit');
       }
       switch (part.type) {
         case 'text':
@@ -66,11 +61,7 @@ const AiChat = () => {
           {messages.map((message) => handleContent(message.id, message.role, message.parts))}
         </div>
       </div>
-      <div className="chat-bottom">
-        <div className="container">
-          <ChatInput></ChatInput>
-        </div>
-      </div>
+      <ChatBottom></ChatBottom>
     </div>
   );
 };

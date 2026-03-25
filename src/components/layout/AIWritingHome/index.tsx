@@ -5,21 +5,16 @@ import Header from './components/OuterHeader';
 import ChatInput from './components/ChatInput';
 import CaseContainer from './components/CaseContainer';
 import { useState } from 'react';
+import ChatBottom from './components/ChatBottom';
 
 function AIWriting() {
   const [isShowInput, setIsShowInput] = useState(false);
   return (
     <MainContent>
       <Header></Header>
-      <div className="input">
-        <ChatInput></ChatInput>
-      </div>
-      <CaseContainer></CaseContainer>
-      {isShowInput && (
-        <div className="input">
-          <ChatInput></ChatInput>
-        </div>
-      )}
+
+      {/* <CaseContainer></CaseContainer> */}
+      <ChatBottom></ChatBottom>
     </MainContent>
   );
 }
