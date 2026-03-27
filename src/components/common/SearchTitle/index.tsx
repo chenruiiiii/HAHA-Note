@@ -1,6 +1,5 @@
-import React from 'react';
 import './style.scss';
-import { GetProps, Input, Tooltip } from 'antd';
+import { Input } from 'antd';
 import { SearchProps } from 'antd/es/input';
 
 const SearchTitle = () => {

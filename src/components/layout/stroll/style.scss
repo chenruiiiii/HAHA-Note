@@ -1,0 +1,14 @@
+@use "@/assets/styles/var.scss";
+
+.stroll-container {
+  width: 85%;
+  margin: auto;
+  min-height: 100%;
+  .left {
+    flex: 8;
+    border-right: var.$border;
+  }
+  .right {
+    flex: 4;
+  }
+}

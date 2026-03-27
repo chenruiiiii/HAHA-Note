@@ -1,10 +1,11 @@
 import MainContent from '@/components/layout/MainContent';
+import StrollContainer from '@/components/layout/stroll';
 import React from 'react';
 
 function StrollPage() {
   return (
     <MainContent>
-      <div>StrollPage</div>
+      <StrollContainer />
     </MainContent>
   );
 }
