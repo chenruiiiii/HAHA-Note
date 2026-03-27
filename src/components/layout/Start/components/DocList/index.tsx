@@ -49,7 +49,7 @@ function DocList() {
     // ...
     setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 500);
   }, []);
   return <div className="doc-list">{handleLoading(isLoading, list)}</div>;
 }

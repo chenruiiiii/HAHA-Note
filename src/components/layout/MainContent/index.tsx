@@ -11,7 +11,7 @@ function MainContent({ children }: MainContentProps) {
   useEffect(() => {
     setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 500);
   });
   return <div className="main-content">{isLoading ? <HALoading type="simple" /> : children}</div>;
 }

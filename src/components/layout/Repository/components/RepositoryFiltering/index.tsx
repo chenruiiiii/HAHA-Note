@@ -2,6 +2,7 @@
 import { Key } from 'react';
 import styles from './style.module.scss';
 import { Segmented, Table, TableColumnsType, TableProps } from 'antd';
+import DocList from '@/components/layout/Start/components/DocList';
 
 const RepositoryFiltering = () => {
   // const filtering_options = [
@@ -76,12 +77,7 @@ const RepositoryFiltering = () => {
         />
       </div>
       <div className="file-table">
-        <Table<DataType>
-          columns={columns}
-          dataSource={data}
-          // onChange={onChange}
-          showSorterTooltip={{ target: 'sorter-icon' }}
-        />
+        <DocList></DocList>
       </div>
     </>
   );
