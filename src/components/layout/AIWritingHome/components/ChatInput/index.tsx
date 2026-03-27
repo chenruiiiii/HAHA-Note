@@ -5,12 +5,12 @@ import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import emitter from '@/utils/mitt';
-import useMessage from '@/hooks/useMessage';
+import { warningMessage } from '@/utils/message_reminder';
+import { nanoid } from 'nanoid';
 
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');
   const [isPosting, setIsPosting] = useState<boolean>(false);
-  const { warningMessage } = useMessage();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -20,7 +20,8 @@ const ChatInput = () => {
     // 先发消息，再路由跳转，避免信息丢失
     emitter.emit('chat-message', inputValue);
     if (pathname === '/ai-chat-home') {
-      router.push('/ai-chat');
+      const id = nanoid();
+      router.push(`/ai-chat/${id}`);
     }
     setInputValue('');
   };

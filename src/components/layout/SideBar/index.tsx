@@ -32,11 +32,11 @@ const ITEMS_UP: MenuItem[] = [
     '/ai-chat-home"',
     <i className="iconfont icon-aixiezuo" style={{ color: '#49CA72' }}></i>
   ),
-  getItem(
-    <Link href="/subtotal">小记</Link>,
-    '/subtotal',
-    <i className="iconfont icon-xiaoji" style={{ color: '#36AFA2' }}></i>
-  ),
+  // getItem(
+  //   <Link href="/subtotal">小记</Link>,
+  //   '/subtotal',
+  //   <i className="iconfont icon-xiaoji" style={{ color: '#36AFA2' }}></i>
+  // ),
   getItem(
     <Link href="/collect">收藏</Link>,
     '/collect',
@@ -48,10 +48,15 @@ const ITEMS_UP: MenuItem[] = [
     <i className="iconfont icon-guangguang1" style={{ color: '#FF3A0C' }}></i>
   ),
 ];
+
+const id = '1';
 const ITEMS_DOWN: MenuItem[] = [
-  getItem('知识库', 'sub1', <i className="iconfont icon-zhishiku" style={{ color: '#0062FF' }} />, [
-    getItem('web前端', '6'),
-  ]),
+  getItem(
+    <Link href="/repository">知识库</Link>,
+    'sub1',
+    <i className="iconfont icon-zhishiku" style={{ color: '#0062FF' }} />,
+    [getItem(<Link href={`/repo-detail/${id}`}>Web前端</Link>, '6')]
+  ),
 ];
 
 export default function SideBar() {
@@ -88,7 +93,7 @@ export default function SideBar() {
         <div className="space"></div>
         <Menu
           defaultSelectedKeys={['1']}
-          defaultOpenKeys={['sub1']}
+          defaultOpenKeys={[getSelectedKey() || '/']}
           mode="inline"
           items={ITEMS_DOWN}
         />

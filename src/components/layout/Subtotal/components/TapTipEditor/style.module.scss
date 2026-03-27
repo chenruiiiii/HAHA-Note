@@ -1,3 +1,16 @@
-.tap-tip-editor{
-  
+@use "@/assets/styles/var.scss";
+
+.tap-tip-editor {
+  .ProseMirror {
+    border: var.$border;
+  }
+
+  .post {
+    display: flex;
+    gap: 30px;
+    margin: 20px 0;
+    button + span {
+      margin-top: 6px;
+    }
+  }
 }

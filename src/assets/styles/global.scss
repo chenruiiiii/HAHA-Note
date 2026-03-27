@@ -91,3 +91,8 @@ a {
 .ant-space-item {
   color: var.$text-color !important;
 }
+
+// 覆盖tiptap编辑器样式
+.tiptap + .ProseMirror-focused {
+  border-color: transparent !important;
+}
