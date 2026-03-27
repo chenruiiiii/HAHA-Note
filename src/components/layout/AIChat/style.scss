@@ -2,29 +2,41 @@
 
 .ai-chat-container {
   position: relative;
-  height: 100%;
   background-color: var.$background-color;
 }
 
 .header {
+  width: 100%;
+  position: fixed;
+  top: 0;
   background-color: #fff;
   padding: 12px 30px;
   box-shadow: var.$shadow-sidebar;
 }
 
 .chat-box {
-  padding: 20px 30px;
-  // max-width: 40% !important;
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: start;
-  align-items: start;
-  min-width: 500px;
-  width: 50vw;
+  height: 82vh;
+  overflow-y: scroll;
+  width: 100%;
+
+  .container {
+    padding: 20px 30px;
+    min-width: 100vh;
+    margin: 50px auto 0;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    min-width: 500px;
+    width: 50vw;
+  }
 
   .ask-box {
     align-self: end;
+    background-color: var.$bg-shallow-color;
+    border-radius: var.$border-radius-chat-r;
+    margin: 15px;
     & > div {
       font-size: var.$font-size-md;
       padding: 15;
@@ -32,6 +44,7 @@
   }
   .answer-box {
     align-self: start;
+    border-radius: var.$border-radius-chat-l;
     & > div {
       font-size: var.$font-size-md;
       padding: 15;
@@ -40,12 +53,16 @@
 }
 
 .chat-bottom {
-  position: absolute;
+  position: fixed;
   align-self: center;
   min-width: 500px;
-  bottom: 40px;
-  width: 55%;
+  width: 100%;
+  bottom: 0;
   margin: auto;
-  padding: 15px;
-  left: calc(50% - 55% / 2);
+  padding: 0 15px 15px 0;
+  background-color: var.$background-color;
+  .container {
+    width: 50%;
+    margin: auto calc(20%);
+  }
 }

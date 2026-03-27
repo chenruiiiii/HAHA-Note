@@ -1,0 +1,35 @@
+@use "@/assets/styles/var.scss";
+
+.common-use {
+  background-color: var.$bg-shallow-color;
+  border-radius: var.$border-radius-md;
+  padding: 15px;
+  color: var.$text-color;
+  width: 100%;
+  .title {
+    padding-bottom: 10px;
+    font-size: var.$font-size-md;
+  }
+
+  .list {
+    display: flex;
+    gap: 20px 10px;
+    flex-wrap: wrap;
+    .list-item {
+      display: flex;
+      gap: 10px;
+      min-width: 26vw;
+      background-color: var.$white-color;
+      border-radius: var.$border-radius-md;
+      padding: 12px 15px;
+      .name {
+        display: flex;
+        gap: 10px;
+        font-size: var.$font-size-md;
+        i {
+          margin-top: 2px;
+        }
+      }
+    }
+  }
+}

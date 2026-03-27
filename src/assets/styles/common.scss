@@ -2,9 +2,9 @@
 // 首页几种路由的最外层布局
 .main-content {
   padding: 20px 30px;
-  background-color: #fff;
+  background-color: #fafafa;
   height: 100%;
-  min-width: 72rem;
+  min-width: 55rem;
 }
 
 .f-sb {
@@ -54,6 +54,13 @@
 .f-right-3 {
   flex: 1;
   display: flex;
+}
+
+// 文字一行显示，超出用...省略
+.ellipse-one-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // :hover变色 - 主题色
@@ -106,4 +113,20 @@
 
 .logo-text {
   color: $theme-color;
+}
+
+// 旋转效果
+@property --range {
+  initial-value: 0deg;
+  inherits: false;
+  syntax: "<angle>";
+}
+
+@keyframes rotating {
+  from {
+    --range: 0deg;
+  }
+  to {
+    --range: 360deg;
+  }
 }

@@ -20,14 +20,14 @@ function Header() {
       </div>
       <div className="header-center common.f-center">
         <div className="title">{AI_CHAT_HEADER.title}</div>
-        <div className="tags cursor-pointer">
+        {/* <div className="tags cursor-pointer">
           {AI_CHAT_HEADER.tags.map((tag, index) => (
             <div className="tag .hover-theme-color" key={index}>
               <i className={`iconfont ${tag.icon}`}></i>
               <span className="name">{tag.name}</span>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
     </header>
   );

@@ -1,0 +1,27 @@
+@use "@/assets/styles/var.scss";
+
+.ha-tip-tap-editor {
+  border: var.$border;
+  border-radius: var.$border-radius-md;
+  padding: 15px 20px;
+  min-height: 500px;
+
+  .editor-tools {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 30px;
+    .editor-tool-item {
+      i {
+        font-style: bold !important;
+      }
+    }
+  }
+
+  .content {
+    padding-top: 20px;
+    height: 100%;
+    min-height: 500px;
+
+  }
+}

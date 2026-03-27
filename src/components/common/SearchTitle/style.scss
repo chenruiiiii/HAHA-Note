@@ -1,0 +1,16 @@
+@use "@/assets/styles/var.scss";
+
+.search-title {
+  display: flex;
+  justify-content: end;
+  margin: 20px 0;
+  i {
+    color: var.$theme-color;
+    font-size: var.$font-size-lg !important;
+  }
+  .search-box {
+    border: var.$border;
+    border-radius: var.$border-radius-md;
+    border-color: var.$theme-color;
+  }
+}
