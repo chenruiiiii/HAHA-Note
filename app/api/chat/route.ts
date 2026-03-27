@@ -1,5 +1,5 @@
 import { streamText, UIMessage, convertToModelMessages } from 'ai';
-import { createDeepSeek, deepseek } from '@ai-sdk/deepseek';
+import { createDeepSeek } from '@ai-sdk/deepseek';
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();

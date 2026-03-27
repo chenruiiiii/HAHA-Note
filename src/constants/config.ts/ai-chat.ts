@@ -1,5 +1,5 @@
 export const AI_CHAT_HEADER = {
-  title: '与 千问 智能体一起办公、学习',
+  title: '与 DeepSeek 智能体一起办公、学习',
   tags: [
     {
       name: 'PPT',

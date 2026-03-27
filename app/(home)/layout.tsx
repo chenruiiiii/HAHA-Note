@@ -1,14 +1,11 @@
 'use client';
 import 'antd/dist/reset.css';
-import '@/assets/styles/var.scss';
-import '@/assets/styles/global.scss';
-import '@/assets/iconfont/index.css';
-import '@/assets/styles/index.scss'; // 必须在reset.css之后引入
 // 更改ant-design 主题'
 import { Layout } from 'antd';
 import { ReactNode, useState } from 'react';
 import SideBar from '@/components/layout/SideBar';
 import { Content } from 'antd/es/layout/layout';
+import emitter from '@/utils/mitt'; // event-bus引入
 
 const { Sider: Aside } = Layout;
 const aside_style = {

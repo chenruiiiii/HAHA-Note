@@ -1,78 +1,122 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './style.scss';
 import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
+import emitter from '@/utils/mitt';
+import { warningMessage } from '@/utils/message_reminder';
+import { nanoid } from 'nanoid';
 
 const ChatInput = () => {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState<string>('');
+  const [isPosting, setIsPosting] = useState<boolean>(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleSend = () => {
-    if (inputValue.trim()) {
-      console.log('发送消息:', inputValue);
-      setInputValue('');
+  // 通知兄弟组件发送消息并展示流式数据内容
+  const handleSendMessage = () => {
+    setIsPosting(true);
+    // 先发消息，再路由跳转，避免信息丢失
+    emitter.emit('chat-message', inputValue);
+    if (pathname === '/ai-chat-home') {
+      const id = nanoid();
+      router.push(`/ai-chat/${id}`);
+    }
+    setInputValue('');
+  };
+
+  // 发送按钮点击事件
+  const handleSendClick = () => {
+    if (isPosting) {
+      handlePostStatus();
+      warningMessage('已停止消息输出，若需重新开始再次输入！');
+    } else {
+      if (inputValue.trim() === '') {
+        warningMessage('请输入内容！');
+        return;
+      } else {
+        handleSendMessage();
+      }
     }
   };
 
+  // 输入框回车事件
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (inputValue.trim() === '') {
+      warningMessage('请输入内容！');
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (pathname === '/ai-chat-home') {
-        router.push('/ai-chat');
-        handleSend();
-      }
+      handleSendMessage();
     }
   };
 
   const dropdownItems: MenuProps['items'] = [
     {
       key: '1',
-      label: '千问',
+      label: 'deepseek v3.2',
     },
   ];
 
-  return (
-    <div className="chat-input-container">
-      <div className="input-area">
-        <Input.TextArea
-          id="chat-input"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="做一个贪吃蛇游戏，带积分榜数据库"
-          autoSize={{ minRows: 1, maxRows: 4 }}
-          className="chat-textarea"
-        />
-      </div>
+  //只要触发这个事件就是停止发送
+  const handlePostStatus = () => {
+    setIsPosting(false);
+  };
 
-      <div className="input-actions">
-        <div className="actions-l">
-          <div className="circle cursor-pointer transition-all">
-            <i className="iconfont icon-tianjia1"></i>
-          </div>
-          <div className="circle cursor-pointer transition-all">
-            <i className="iconfont icon-aite"></i>
-          </div>
+  useEffect(() => {
+    emitter.on('chat-quit', handlePostStatus);
+    return () => {
+      emitter.off('chat-quit', handlePostStatus);
+    };
+  });
+
+  return (
+    <>
+      <div className="chat-input-container">
+        <div className="input-area">
+          <Input.TextArea
+            id="chat-input"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="做一个贪吃蛇游戏，带积分榜数据库"
+            autoSize={{ minRows: 1, maxRows: 4 }}
+            className="chat-textarea"
+          />
         </div>
-        <div className="actions-r">
-          <div className="drop-down cursor-pointer transition-all">
-            <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
-              <Space>
-                <img src="../../../../../assets/images/avatar.png" alt="" />
-                deepseek v2.0
-                <DownOutlined />
-              </Space>
-            </Dropdown>
+
+        <div className="input-actions">
+          <div className="actions-l">
+            <div className="circle cursor-pointer transition-all">
+              <i className="iconfont icon-tianjia1"></i>
+            </div>
+            {/* <div className="circle cursor-pointer transition-all">
+              <i className="iconfont icon-aite"></i>
+            </div> */}
           </div>
-          <div className="circle circle-post">
-            <i className="iconfont icon-jijianfasong"></i>
+          <div className="actions-r">
+            <div className="drop-down cursor-pointer transition-all">
+              <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
+                <Space>
+                  <img src="../../../../../assets/images/avatar.png" alt="" />
+                  deepseek v3.2
+                  <DownOutlined />
+                </Space>
+              </Dropdown>
+            </div>
+            <div className="circle-post" onClick={handleSendClick}>
+              {isPosting ? (
+                <i className="iconfont icon-loading-solid"></i>
+              ) : (
+                <i className="iconfont icon-jijianfasong"></i>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
