@@ -1,0 +1,18 @@
+@use "@/assets/styles/var.scss";
+
+.right-stroll {
+  display: flex;
+  flex-wrap: wrap;
+  width: 80%;
+  .recommend-title {
+    width: 100%;
+    .left {
+      padding: 20px 10px;
+      font-size: var.$font-size-lg;
+    }
+    .garden,
+    .right {
+      color: var.$theme-color;
+    }
+  }
+}

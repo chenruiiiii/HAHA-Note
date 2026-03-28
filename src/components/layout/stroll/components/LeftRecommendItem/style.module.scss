@@ -1,0 +1,60 @@
+@use "@/assets/styles/var.scss";
+
+.recommend-item {
+  display: flex;
+  flex-wrap: wrap;
+  .user-title {
+    padding: 10px 0;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 15px;
+    .username {
+      color: var.$text-color;
+    }
+  }
+  .content {
+    padding-left: 30px;
+    display: flex;
+    flex-wrap: nowrap;
+    .left {
+      gap: 20px;
+      .content-title {
+        font-size: var.$font-size-md;
+        font-weight: 600;
+        padding-bottom: 10px;
+      }
+      .content-desc {
+        color: var.$text-color-shallow-deeper;
+      }
+    }
+    .img {
+      max-width: 100px;
+      max-height: 60px;
+      background-color: var.$background-color;
+    }
+  }
+
+  .func {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 20px;
+    padding: 10px 30px;
+
+    .like,
+    .detail {
+      display: flex;
+      gap: 5px;
+      color: var.$text-color-shallow;
+
+      span {
+        margin-top: 2px;
+      }
+    }
+    .detail {
+      margin-top: 1px;
+      &:hover{
+        color: var.$theme-color;
+      }
+    }
+  }
+}

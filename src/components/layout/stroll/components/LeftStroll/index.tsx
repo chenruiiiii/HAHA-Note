@@ -11,7 +11,7 @@ const LeftStroll = () => {
       key: 'follow',
       children: (
         <HAVirtualScroll>
-          <RecommendList />
+          <RecommendList isLeft={true} />
         </HAVirtualScroll>
       ),
     },
@@ -20,7 +20,7 @@ const LeftStroll = () => {
       key: 'recommend',
       children: (
         <HAVirtualScroll>
-          <RecommendList></RecommendList>
+          <RecommendList isLeft={true} />
         </HAVirtualScroll>
       ),
     },
@@ -30,8 +30,7 @@ const LeftStroll = () => {
   };
   return (
     <div className={styles['left-stroll']}>
-      {/* <div className="title">关注、推荐</div> */}
-      <Tabs defaultActiveKey="follow" items={tabs} onChange={onChange} />
+      <Tabs defaultActiveKey="recommend" items={tabs} onChange={onChange} />
     </div>
   );
 };

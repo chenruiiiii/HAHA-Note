@@ -40,6 +40,11 @@
   cursor: pointer;
 }
 
+// icon 为theme-color颜色
+.icon-theme-color {
+  color: $theme-color;
+}
+
 // 3份flex布局
 .f-left-3 {
   flex: 2;
@@ -61,6 +66,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// 文字显示两行，超出用...省略
+.ellipse-two-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 // :hover变色 - 主题色
