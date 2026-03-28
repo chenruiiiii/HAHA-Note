@@ -102,9 +102,7 @@ const RecommendList = ({ isLeft }: RecommendListProps) => {
   ));
 
   const right_items = rightRecommendData.map((item, index) => (
-    <>
-      <RightRecommendItem key={item.id} {...item} />
-    </>
+    <RightRecommendItem key={item.id} {...item} />
   ));
 
   return <div className={styles['recommend-list']}>{isLeft ? left_items : right_items}</div>;
