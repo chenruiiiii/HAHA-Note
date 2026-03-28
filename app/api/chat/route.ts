@@ -3,7 +3,7 @@ import { createDeepSeek } from '@ai-sdk/deepseek';
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
-  const deeepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
+  const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
 
   const result = streamText({
     model: deepseek('deepseek-chat'),
