@@ -3,17 +3,14 @@ import styles from './style.module.scss';
 import HAVirtualScroll from '@/components/common/HAVirtualScroll';
 import RecommendList from '../RecommendList';
 import { Tabs, TabsProps } from 'antd';
+import HAEmpty from '@/components/common/HAEmpty';
 
 const LeftStroll = () => {
   const tabs: TabsProps['items'] = [
     {
       label: '关注',
       key: 'follow',
-      children: (
-        <HAVirtualScroll>
-          <RecommendList isLeft={true} />
-        </HAVirtualScroll>
-      ),
+      children: <HAEmpty />,
     },
     {
       label: '推荐',

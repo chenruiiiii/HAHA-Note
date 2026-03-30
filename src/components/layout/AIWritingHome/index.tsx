@@ -12,7 +12,6 @@ function AIWriting() {
   return (
     <MainContent>
       <Header></Header>
-
       {/* <CaseContainer></CaseContainer> */}
       <ChatBottom></ChatBottom>
     </MainContent>

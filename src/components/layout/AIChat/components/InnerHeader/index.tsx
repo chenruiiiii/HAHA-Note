@@ -1,13 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styles from './style.module.scss';
 import { Button, Space, Tooltip } from 'antd';
 import HABack from '@/components/common/HABack';
 import HACollect from '@/components/common/HACollect';
+import { setTempValueAction } from '@/store/modules/temp';
+import { useAppDispatch } from '@/store';
 interface InnerHeaderProps {
   title: string;
 }
 
 const InnerHeader = ({ title }: InnerHeaderProps) => {
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    return () => {
+      // 组件销毁前清除temp信息
+      dispatch(setTempValueAction(''));
+    };
+  }, []);
   return (
     <div className={[styles['inner-header'], 'f-sb'].join(' ')}>
       <div className="f-left">
