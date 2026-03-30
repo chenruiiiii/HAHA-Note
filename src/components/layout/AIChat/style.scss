@@ -30,6 +30,12 @@
     align-items: start;
     min-width: 500px;
     width: 50vw;
+
+    .ai-loading-box {
+      i {
+        color: var.$theme-color !important;
+      }
+    }
   }
 
   .ask-box {

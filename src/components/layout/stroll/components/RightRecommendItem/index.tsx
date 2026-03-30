@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './style.module.scss';
-import HAAvatar from '@/components/ui/HAAvatar';
+import HAAvatar from '@/components/common/HAAvatar';
 import { RightRecommendItemType } from '../../types/recommend';
 
 const RightRecommendItem = ({

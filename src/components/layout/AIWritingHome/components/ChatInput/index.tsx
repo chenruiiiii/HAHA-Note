@@ -1,36 +1,28 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import './style.scss';
 import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { usePathname, useRouter } from 'next/navigation';
-import emitter from '@/utils/mitt';
 import { warningMessage } from '@/utils/message_reminder';
-import { nanoid } from 'nanoid';
+import { useHaChat } from '@/hooks/useHaChat';
+import emitter from '@/utils/mitt';
 
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');
-  const [isPosting, setIsPosting] = useState<boolean>(false);
-  const router = useRouter();
-  const pathname = usePathname();
+  const { isPosting, handleSend, handlePostingClose } = useHaChat();
 
   // 通知兄弟组件发送消息并展示流式数据内容
   const handleSendMessage = () => {
-    setIsPosting(true);
-    // 先发消息，再路由跳转，避免信息丢失
-    emitter.emit('chat-message', inputValue);
-    if (pathname === '/ai-chat-home') {
-      const id = nanoid();
-      router.push(`/ai-chat/${id}`);
-    }
+    handleSend(inputValue);
     setInputValue('');
   };
 
   // 发送按钮点击事件
   const handleSendClick = () => {
     if (isPosting) {
-      handlePostStatus();
       warningMessage('已停止消息输出，若需重新开始再次输入！');
+      emitter.emit('stop-send-message');
+      handlePostingClose();
     } else {
       if (inputValue.trim() === '') {
         warningMessage('请输入内容！');
@@ -43,12 +35,12 @@ const ChatInput = () => {
 
   // 输入框回车事件
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (inputValue.trim() === '') {
-      warningMessage('请输入内容！');
-      return;
-    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      if (inputValue.trim() === '') {
+        warningMessage('请输入内容！');
+        return;
+      }
       handleSendMessage();
     }
   };
@@ -59,18 +51,6 @@ const ChatInput = () => {
       label: 'deepseek v3.2',
     },
   ];
-
-  //只要触发这个事件就是停止发送
-  const handlePostStatus = () => {
-    setIsPosting(false);
-  };
-
-  useEffect(() => {
-    emitter.on('chat-quit', handlePostStatus);
-    return () => {
-      emitter.off('chat-quit', handlePostStatus);
-    };
-  });
 
   return (
     <>
@@ -106,7 +86,7 @@ const ChatInput = () => {
                 </Space>
               </Dropdown>
             </div>
-            <div className="circle-post" onClick={handleSendClick}>
+            <div className="circle-post cursor-pointer" onClick={handleSendClick}>
               {isPosting ? (
                 <i className="iconfont icon-loading-solid"></i>
               ) : (
