@@ -1,0 +1,40 @@
+@use "@/assets/styles/var.scss";
+
+@keyframes rotating {
+  0% {
+    left: -10px;
+  }
+  100% {
+    left: 20px;
+  }
+}
+
+.posting-box {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin: 10px 0;
+
+  .icon::before {
+    position: absolute;
+    content: "";
+    display: inline-block;
+    transform: rotate(-45deg);
+    transition: all 0.3s ease;
+    animation: rotating 1s linear infinite;
+    width: 8px;
+    height: 20px;
+    filter: blur(3px);
+    background-color: var.$background-color;
+    overflow: hidden;
+  }
+  i {
+    color: var.$theme-color !important;
+    font-size: var.$font-size-lg !important;
+  }
+  span {
+    font-size: var.$font-size-sm !important;
+    margin-top: 10px;
+  }
+}

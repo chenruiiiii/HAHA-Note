@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
   },
   env: {
     APP_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(), // 添加构建时间，防止vercel缓存导致代码不是最新
   },
   // 修改这里：移除 experimental.serverComponentsExternalPackages
   // 使用 serverExternalPackages

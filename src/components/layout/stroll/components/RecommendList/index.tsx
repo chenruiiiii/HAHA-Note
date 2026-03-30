@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import styles from './style.module.scss';
 import { LeftRecommendItemType, RightRecommendItemType } from '../../types/recommend';
 import LeftRecommendItem from '../LeftRecommendItem';
 import { Divider } from 'antd';
 import RightRecommendItem from '../RightRecommendItem';
+import { handleEmpty } from '@/utils/empty';
 
 interface RecommendListProps {
   isLeft: boolean;
@@ -105,7 +106,13 @@ const RecommendList = ({ isLeft }: RecommendListProps) => {
     <RightRecommendItem key={item.id} {...item} />
   ));
 
-  return <div className={styles['recommend-list']}>{isLeft ? left_items : right_items}</div>;
+  return (
+    <div className={styles['recommend-list']}>
+      {isLeft
+        ? handleEmpty(leftRecommendData, left_items)
+        : handleEmpty(rightRecommendData, right_items)}
+    </div>
+  );
 };
 
 export default RecommendList;

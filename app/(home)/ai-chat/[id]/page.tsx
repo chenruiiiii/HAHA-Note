@@ -1,8 +1,12 @@
-import AiChat from '@/components/layout/AIChat';
+import AiChatPage from '@/components/layout/AIChat';
 import React from 'react';
 
-const AIChat = () => {
-  return <AiChat />;
+interface AIChatProps {
+  id: string;
+}
+
+const AIChat = ({ id }: AIChatProps) => {
+  return <AiChatPage id={id} />;
 };
 
 export default AIChat;
