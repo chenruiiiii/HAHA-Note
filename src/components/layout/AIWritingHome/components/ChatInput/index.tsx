@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { KeyboardEvent, useState } from 'react';
 import './style.scss';
 import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
@@ -34,7 +34,7 @@ const ChatInput = () => {
   };
 
   // 输入框回车事件
-  const handleKeyPress = (e: KeyboardEvent) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (inputValue.trim() === '') {
