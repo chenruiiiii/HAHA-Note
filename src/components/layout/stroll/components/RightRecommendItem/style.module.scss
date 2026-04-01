@@ -1,6 +1,7 @@
 @use "@/assets/styles/var.scss";
 
 .recommend-item {
+  width: 280px;
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
@@ -15,17 +16,21 @@
     gap: 10px;
   }
   .right {
+    width: 100%;
     margin-top: -3px;
     .username {
+      width: 200px;
       font-size: var.$font-size-sm;
       font-weight: bold;
     }
     .signature {
+      width: 200px;
       font-size: var.$font-size-xs;
     }
   }
 
   .recommend-title {
-    font-size: var.$font-title;
+    width: 250px;
+    font-size: var.$font-size-sm;
   }
 }

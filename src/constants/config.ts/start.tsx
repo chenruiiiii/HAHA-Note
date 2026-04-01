@@ -25,14 +25,6 @@ export const NEW_INFO = [
     description: '从模版中获取灵感',
     drop: false,
   },
-  {
-    title: 'AI帮你写',
-    icon: 'icon-wuguan',
-    color: '#1FC594',
-    type: 'project',
-    description: '团队、项目',
-    drop: false,
-  },
 ];
 
 // 新建文档下拉框内容

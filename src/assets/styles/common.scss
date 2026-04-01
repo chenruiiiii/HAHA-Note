@@ -23,21 +23,35 @@
   display: flex;
   justify-content: start;
 }
+
 .f-left {
   display: flex;
   justify-content: start;
   align-items: center;
 }
+
 .f-right {
   display: flex;
   justify-content: end;
   align-items: center;
 }
+
 .font-color-white {
   color: #fff;
 }
+
+// 鼠标悬停
 .cursor-pointer {
   cursor: pointer;
+}
+
+// 鼠标悬停 + 颜色
+.cursor-pointer-hover {
+  transition: all 0.08s ease-in-out;
+  cursor: pointer;
+  &:hover {
+    color: $theme-color;
+  }
 }
 
 // icon 为theme-color颜色

@@ -2,15 +2,17 @@
 import { useRouter } from 'next/navigation';
 import './style.scss';
 import { Tooltip } from 'antd';
+import { ReactNode } from 'react';
 
-const HABack = () => {
+const HABack = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   return (
-    <div className="ha-back" onClick={() => router.push('/ai-chat-home')}>
-      <Tooltip title="返回">
+    <Tooltip title="返回">
+      <div className="ha-back cursor-pointer" onClick={() => router.push('/ai-chat-home')}>
         <i className="iconfont icon-arrow-left-double-line cursor-pointer"></i>
-      </Tooltip>
-    </div>
+        <span className="back-node">{children}</span>
+      </div>
+    </Tooltip>
   );
 };
 

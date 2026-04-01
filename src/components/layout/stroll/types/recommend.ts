@@ -7,7 +7,7 @@ export interface LeftRecommendItemType {
   content: {
     title: string;
     description: string;
-    image?: string; // 图片可选
+    image?: string;
   };
   likNum: number;
   detail_url: string;
@@ -21,4 +21,25 @@ export interface RightRecommendItemType {
     signature?: string;
   };
   recommend_title: string;
+}
+
+export interface RecommendDetailType {
+  id: string;
+  source: {
+    platform: 'yuque' | 'community';
+    title: string;
+    avatar?: string;
+  };
+  author: {
+    name: string;
+    avatar?: string;
+  };
+  title_html: string;
+  description_html: string;
+  content_html: string;
+  quality_level: 'featured' | 'normal';
+  like_count: number;
+  comment_count: number;
+  word_count: number;
+  source_url: string;
 }

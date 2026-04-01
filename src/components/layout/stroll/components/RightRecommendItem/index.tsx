@@ -1,25 +1,46 @@
-import React from 'react';
+'use client';
 import styles from './style.module.scss';
 import HAAvatar from '@/components/common/HAAvatar';
 import { RightRecommendItemType } from '../../types/recommend';
+import { useRouter } from 'next/navigation';
 
 const RightRecommendItem = ({
   id,
   user: { avatar, username },
   recommend_title,
 }: RightRecommendItemType) => {
+  const router = useRouter();
+  const handleToDetail = () => {
+    router.push(`/stroll-recommend/${id}`);
+  };
   return (
-    <div className={styles['recommend-item']}>
+    <div className={[styles['recommend-item']].join(' ')}>
       <div className={styles['info']}>
         <HAAvatar size="middle" url={avatar} />
         <div className={styles['right']}>
-          <div className={styles['username']}>{username} </div>
-          <div className={[styles['signature'], 'ellipse-one-line'].join(' ')}>
+          <div
+            className={[styles['username'], 'ellipse-one-line', 'cursor-pointer-hover'].join(' ')}
+            onClick={handleToDetail}
+          >
+            {username}{' '}
+          </div>
+          <div
+            className={[styles['signature'], 'ellipse-one-line', 'cursor-pointer-hover'].join(' ')}
+            onClick={handleToDetail}
+          >
+            {recommend_title}
             {recommend_title}
           </div>
         </div>
       </div>
-      <div className="recommend-title">{recommend_title}</div>
+      <div
+        className={[styles['recommend-title'], 'ellipse-one-line', 'cursor-pointer-hover'].join(
+          ' '
+        )}
+        onClick={handleToDetail}
+      >
+        {recommend_title}
+      </div>
     </div>
   );
 };

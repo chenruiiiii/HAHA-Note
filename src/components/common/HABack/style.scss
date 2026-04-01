@@ -1,2 +1,19 @@
+@use "@/assets/styles/var.scss";
+
 .ha-back {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  .icon-arrow-left-double-line {
+    color: var.$text-color-shallow;
+  }
+  .back-node {
+    margin-top: 5px;
+  }
+  &:hover {
+    .icon-arrow-left-double-line,
+    .back-node {
+      color: var.$theme-color !important;
+    }
+  }
 }

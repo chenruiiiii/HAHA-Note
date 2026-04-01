@@ -1,8 +1,9 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styles from './style.module.scss';
 import HAAvatar from '@/components/common/HAAvatar';
 import { LeftRecommendItemType } from '../../types/recommend';
+import { useRouter } from 'next/navigation';
 
 const RecommendItem = ({
   id,
@@ -11,26 +12,27 @@ const RecommendItem = ({
   likNum,
   detail_url,
 }: LeftRecommendItemType) => {
-  const [isLike, setIsLike] = useState<Boolean>(false);
-  const [likeNumReadOnly, setLikeNumReadOnly] = useState<number>(0);
+  const [isLike, setIsLike] = useState<boolean>(false);
+  const [likeNumReadOnly, setLikeNumReadOnly] = useState<number>(likNum);
+  const router = useRouter();
+  // 点赞 （乐观更新）
   const handleLikeClick = () => {
-    setIsLike(!isLike);
-
-    if (isLike) {
-      // 采用 --乐观更新-- 策略
-      // 通知父组件，添加like的帖子id
-    } else {
-      // 删除like的帖子id
-    }
+    setIsLike((prev) => {
+      const next = !prev;
+      setLikeNumReadOnly((count) => count + (next ? 1 : -1));
+      return next;
+    });
   };
 
-  useEffect(() => {
-    setLikeNumReadOnly((prev) => (isLike ? prev + 1 : prev - 1));
-  }, [isLike]);
+  // 跳转详情页
+  const handleToDetail = () => {
+    router.push(`/stroll-recommend/${id}`);
+  };
 
-  useEffect(() => {
-    setLikeNumReadOnly(likNum);
-  }, []);
+  const handleOpenSource = () => {
+    window.open(detail_url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className={styles['recommend-item']}>
       <div className={styles['user-title']}>
@@ -39,16 +41,29 @@ const RecommendItem = ({
       </div>
       <div className={styles['content']}>
         <div className={styles['left']}>
-          <div className={styles['content-title']}>{title}</div>
-          <div className={[styles['content-desc'], 'ellipse-two-line'].join(' ')}>
+          <div
+            className={[styles['content-title'], 'cursor-pointer-hover'].join(' ')}
+            onClick={handleToDetail}
+          >
+            {title}
+          </div>
+          <div
+            className={[styles['content-desc'], 'ellipse-two-line', 'cursor-pointer-hover'].join(
+              ' '
+            )}
+            onClick={handleToDetail}
+          >
             {description}
           </div>
         </div>
         <div className={styles['img right']}>
-          <img
-            src="https://cdn.nlark.com/yuque/0/2023/png/29609/1689529079649-f7f7f7f7-f7f7f7f7-f7f7f7f7-f7f7f7f7-f7f7f7f7.png"
-            alt=""
-          />
+          {image && (
+            <div
+              className={styles['img-cover']}
+              aria-hidden="true"
+              style={{ backgroundImage: `url(${image})` }}
+            />
+          )}
         </div>
       </div>
       <div className={styles['func']}>
@@ -63,7 +78,7 @@ const RecommendItem = ({
           )}
           <span>{likeNumReadOnly}</span>
         </div>
-        <div className={[styles['detail'], 'cursor-pointer'].join(' ')}>
+        <div className={[styles['detail'], 'cursor-pointer'].join(' ')} onClick={handleOpenSource}>
           <i className="iconfont icon-gengduo1"></i>
           <span>查看原文</span>
         </div>

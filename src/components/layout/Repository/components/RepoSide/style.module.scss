@@ -1,8 +1,9 @@
-@use "@/assets/styles/var.scss" as *;
+@use "@/assets/styles/var.scss";
 
 .repo-aside {
-  width: 100%;
-  min-height: 100vh;
+  min-width: 300px;
+  max-height: 100vh;
+  height: 100%;
   padding: 12px 10px 20px;
   background: #fff;
   border-right: 1px solid #f0f1f3;
