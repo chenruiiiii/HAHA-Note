@@ -1,0 +1,24 @@
+@use "@/assets/styles/var.scss";
+
+.chat-list-modal {
+  position: absolute;
+  top: 60px;
+  max-width: 290px;
+  max-height: 600px;
+  border: var.$border;
+  padding: 15px;
+  border-radius: var.$border-radius-md;
+  box-shadow: var.$shadow-sidebar;
+  background-color: var.$white-color;
+  .list {
+    min-height: 30rem;
+    .chat-list-item {
+      min-width: 180px;
+      padding: 8px;
+      border-radius: var.$border-radius-md;
+      &:hover {
+        background-color: #f2f3f4;
+      }
+    }
+  }
+}

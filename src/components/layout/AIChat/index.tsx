@@ -9,6 +9,7 @@ import { useAppSelector } from '@/store';
 import { useHaChat } from '@/hooks/useHaChat';
 import { useOneRequest } from '@/hooks/useOneRequest';
 import PostingBox from './components/PostingBox';
+import { formatTime } from '@/utils/timeFormatter';
 
 interface AiChatProps {
   id: string;
@@ -49,6 +50,7 @@ const AiChat = ({ id }: AiChatProps) => {
     (id: string, role: string, parts: Array<any>) => (
       <div className={[role === 'user' ? 'ask-box' : 'answer-box'].join('')} key={id}>
         {handleParts(id, parts, role)}
+        {role === 'user' && <div className="chat-time-user">{formatTime(Date.now())}</div>}
       </div>
     ),
     [handleParts]
@@ -56,7 +58,6 @@ const AiChat = ({ id }: AiChatProps) => {
 
   // 处理页面滚动
   const handleScroll = useCallback(() => {
-    // chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
@@ -66,7 +67,6 @@ const AiChat = ({ id }: AiChatProps) => {
   useEffect(() => {
     // 再次变为submitted时，说明开始新的请求，新对话滚动到可视窗口最上方
     if (status == 'submitted') {
-      console.log('submitted', chatRef.current?.scrollHeight, chatRef.current?.scrollTop);
       handleScroll();
     }
 
@@ -76,6 +76,7 @@ const AiChat = ({ id }: AiChatProps) => {
       emitter.emit('quit-streaming'); // 发布事件通知posting-box组件停止流式展示
     }
   }, [status]);
+
   // 结束流式传输，停止发送中状态
   useEffect(() => {
     const handler = () => {

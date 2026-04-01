@@ -8,6 +8,7 @@ import { Content } from 'antd/es/layout/layout';
 import emitter from '@/utils/mitt'; // event-bus引入
 import { Provider } from 'react-redux';
 import store from '@/store';
+import ChatListModal from '@/components/layout/ChatListModal';
 
 const { Sider: Aside } = Layout;
 const aside_style = {
@@ -36,6 +37,7 @@ function Home({ children }: { children: ReactNode }) {
           <Content>{children}</Content>
         </Layout>
       </Layout>
+      <div id="portal-root"></div>
     </Provider>
   );
 }

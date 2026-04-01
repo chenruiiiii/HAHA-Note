@@ -12,12 +12,14 @@
   background-color: #fff;
   padding: 12px 30px;
   box-shadow: var.$shadow-sidebar;
+  z-index: 2;
 }
 
 .chat-box {
   height: 82vh;
   overflow-y: scroll;
   width: 100%;
+  padding-bottom: 40px;
 
   .container {
     padding: 20px 30px;
@@ -36,24 +38,35 @@
         color: var.$theme-color !important;
       }
     }
+
+    .chat-time-user {
+      position: absolute;
+      right: 10px;
+    }
+    .chat-time-ai {
+      position: absolute;
+      left: 15px;
+    }
   }
 
   .ask-box {
+    position: relative;
     align-self: end;
-    background-color: var.$bg-shallow-color;
+    background-color: var.$theme-color-shallow;
     border-radius: var.$border-radius-chat-r;
     margin: 15px;
-    & > div {
+    & > div:nth-child(1) {
       font-size: var.$font-size-md;
-      padding: 15;
+      padding: 15px;
     }
   }
   .answer-box {
+    position: relative;
     align-self: start;
     border-radius: var.$border-radius-chat-l;
-    & > div {
+    & > div:nth-child(1) {
       font-size: var.$font-size-md;
-      padding: 15;
+      padding: 15px;
     }
   }
 }
