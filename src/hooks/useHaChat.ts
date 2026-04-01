@@ -46,5 +46,5 @@ export function useHaChat() {
     console.log(error);
   };
 
-  return { isPosting, handlePostingClose, handlePostingOpen, handleSend };
+  return { isPosting, handlePostingClose, handlePostingOpen, handleSend, stopSendMessage };
 }

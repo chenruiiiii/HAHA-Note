@@ -1,16 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './style.module.scss';
 import { Button, Space, Tooltip } from 'antd';
 import HABack from '@/components/common/HABack';
 import HACollect from '@/components/common/HACollect';
 import { setTempValueAction } from '@/store/modules/temp';
 import { useAppDispatch } from '@/store';
+import ChatListModal from '@/components/layout/ChatListModal';
 interface InnerHeaderProps {
   title: string;
 }
 
 const InnerHeader = ({ title }: InnerHeaderProps) => {
+  const [open, setOpen] = useState(false);
   const dispatch = useAppDispatch();
+
+  // 对话列表模态框展示
+  const handleOpenModal = () => {
+    setOpen((prev) => !prev);
+  };
+
   useEffect(() => {
     return () => {
       // 组件销毁前清除temp信息
@@ -21,7 +29,7 @@ const InnerHeader = ({ title }: InnerHeaderProps) => {
     <div className={[styles['inner-header'], 'f-sb'].join(' ')}>
       <div className="f-left">
         <Space>
-          <div className={styles['opt-btn']}>
+          <div className={styles['opt-btn']} onClick={handleOpenModal}>
             <Tooltip title="任务列表">
               <i className="iconfont icon--_renwuliebiao cursor-pointer"></i>
             </Tooltip>
@@ -47,6 +55,7 @@ const InnerHeader = ({ title }: InnerHeaderProps) => {
           </Button>
         </Space>
       </div>
+      {open && <ChatListModal />}
     </div>
   );
 };
