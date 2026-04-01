@@ -34,7 +34,7 @@ const ChatInput = () => {
   };
 
   // 输入框回车事件
-  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (inputValue.trim() === '') {
@@ -60,7 +60,7 @@ const ChatInput = () => {
             id="chat-input"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="做一个贪吃蛇游戏，带积分榜数据库"
             autoSize={{ minRows: 1, maxRows: 4 }}
             className="chat-textarea"
