@@ -40,8 +40,9 @@ const InnerHeader = ({ title }: InnerHeaderProps) => {
             </Tooltip>
           </div>
           <span className={styles.space}>|</span>
-          <HABack></HABack>
-          <div className={styles['folder-title']}>{title}</div>
+          <HABack>
+            <div className={styles['folder-title']}>{title}</div>
+          </HABack>
         </Space>
       </div>
       <div className="f-right">

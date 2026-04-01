@@ -1,9 +1,10 @@
 'use client';
 import { NEW_DOCUMENT_OPTIONS } from '@/constants/config.ts/start';
 import type { MenuProps } from 'antd';
-import { Dropdown, message } from 'antd';
+import { Dropdown, message, Modal } from 'antd';
 import { useState } from 'react';
 import './style.scss';
+import Portal from '@/components/common/Portal';
 
 interface FolderItem {
   title: string;
@@ -44,6 +45,11 @@ function NewFolderItem({ title, icon, color, description, drop }: FolderItem) {
         {drop && <i className="iconfont icon-e_xiangxiajiantou"></i>}
       </div>
     </div>
+  );
+  const NewFileModal = (
+    <Portal>
+      <Modal></Modal>
+    </Portal>
   );
 
   return (
