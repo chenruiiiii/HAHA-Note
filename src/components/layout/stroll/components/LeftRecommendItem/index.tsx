@@ -19,7 +19,14 @@ const RecommendItem = ({
   const handleLikeClick = () => {
     setIsLike((prev) => {
       const next = !prev;
-      setLikeNumReadOnly((count) => count + (next ? 1 : -1));
+      if (next) {
+        // 采用 --乐观更新-- 策略
+        // 通知父组件，添加like的帖子id
+        setLikeNumReadOnly(likeNumReadOnly + 1);
+      } else {
+        // 删除like的帖子id
+        setLikeNumReadOnly(likeNumReadOnly - 1);
+      }
       return next;
     });
   };

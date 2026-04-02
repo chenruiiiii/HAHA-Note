@@ -10,14 +10,11 @@ import theme_config from '@/assets/styles/theme/theme_config';
 import React from 'react';
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
-
   return (
     <html lang="en">
       <body>
         <AntdRegistry>
-          <ConfigProvider theme={theme_config}>
-            {children}
-          </ConfigProvider>
+          <ConfigProvider theme={theme_config}>{children}</ConfigProvider>
         </AntdRegistry>
       </body>
     </html>

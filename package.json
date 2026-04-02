@@ -16,6 +16,9 @@
     "@reduxjs/toolkit": "^2.11.2",
     "@sentry/nextjs": "^10.42.0",
     "@tailwindcss/typography": "^0.5.19",
+    "@tiptap/pm": "^3.22.1",
+    "@tiptap/react": "^3.22.1",
+    "@tiptap/starter-kit": "^3.22.1",
     "@uiw/react-md-editor": "^4.0.11",
     "ai": "^6.0.134",
     "antd": "^6.2.2",
@@ -33,6 +36,7 @@
     "scss": "^0.2.4",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss-animate": "^1.0.7",
+    "vditor": "^3.11.2",
     "ws": "^8.19.0",
     "zod": "^4.3.6"
   },

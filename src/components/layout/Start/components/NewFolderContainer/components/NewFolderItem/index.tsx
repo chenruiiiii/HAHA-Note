@@ -5,6 +5,7 @@ import { Dropdown, message, Modal } from 'antd';
 import { useState } from 'react';
 import './style.scss';
 import Portal from '@/components/common/Portal';
+import NewFileModal from '../NewFileModal';
 
 interface FolderItem {
   title: string;
@@ -15,17 +16,22 @@ interface FolderItem {
   drop: boolean;
 }
 
-const handleMenuClick: MenuProps['onClick'] = (e) => {
-  message.info('Click on menu item.');
-  console.log('click', e);
-};
-
-const menuProps = {
-  items: NEW_DOCUMENT_OPTIONS,
-  onClick: handleMenuClick,
-};
 function NewFolderItem({ title, icon, color, description, drop }: FolderItem) {
+  const [isModalOpen, setIsModalOpen] = useState(false); // 控制新建文件模态框展示
   const [_, setIsShow] = useState(false);
+  const handleMenuClick: MenuProps['onClick'] = (e) => {
+    console.log('click', e.key);
+    switch (e.key) {
+      case '1':
+        // 新建文件
+        setIsModalOpen(true);
+        break;
+    }
+  };
+  const menuProps = {
+    items: NEW_DOCUMENT_OPTIONS,
+    onClick: handleMenuClick,
+  };
 
   // 下拉框内容
   const content = (
@@ -46,11 +52,6 @@ function NewFolderItem({ title, icon, color, description, drop }: FolderItem) {
       </div>
     </div>
   );
-  const NewFileModal = (
-    <Portal>
-      <Modal></Modal>
-    </Portal>
-  );
 
   return (
     <>
@@ -61,6 +62,20 @@ function NewFolderItem({ title, icon, color, description, drop }: FolderItem) {
       ) : (
         content
       )}
+      <Portal>
+        <Modal
+          title="新建文件"
+          cancelText="取消"
+          okText="确定"
+          open={isModalOpen}
+          onCancel={() => setIsModalOpen(false)}
+          style={{
+            minWidth: '300px',
+          }}
+        >
+          <NewFileModal />
+        </Modal>
+      </Portal>
     </>
   );
 }

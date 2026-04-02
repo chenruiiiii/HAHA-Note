@@ -19,10 +19,10 @@ const RightRecommendItem = ({
         <HAAvatar size="middle" url={avatar} />
         <div className={styles['right']}>
           <div
-            className={[styles['username'], 'ellipse-one-line', 'cursor-pointer-hover'].join(' ')}
+            className={[styles['username'], 'ellipse-one-line', 'cursor-pointer'].join(' ')}
             onClick={handleToDetail}
           >
-            {username}{' '}
+            {username}
           </div>
           <div
             className={[styles['signature'], 'ellipse-one-line', 'cursor-pointer-hover'].join(' ')}
