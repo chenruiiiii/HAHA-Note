@@ -1,4 +1,5 @@
 export interface RepoDetailType {
+  id: string;
   name: string;
   isPublic: boolean;
   description: string;

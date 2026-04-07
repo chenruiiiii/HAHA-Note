@@ -10,12 +10,8 @@ import { repoDetailMock } from '@/components/layout/Repository/data';
 const RepoDetail = ({ children }: { children: ReactNode }) => {
   return (
     <div className="repo-detail">
-      {/* <Layout style={{display:'flex',flexWrap:'nowrap'}}> */}
-      {/* <Sider width={300} theme="light" style={{ maxHeight: '100vh' }}> */}
       <RepoSide {...repoDetailMock} />
-      {/* </Sider> */}
       <Content>{children}</Content>
-      {/* </Layout> */}
     </div>
   );
 };

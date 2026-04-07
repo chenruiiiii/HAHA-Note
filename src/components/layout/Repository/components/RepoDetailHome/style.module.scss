@@ -1,11 +1,9 @@
-@use "@/assets/styles/var.scss" as *;
+@use "@/assets/styles/var.scss";
 
 .repo-detail-home {
-  min-height: 100vh;
-  padding: 32px 28px 40px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 175, 95, 0.08), transparent 28%),
-    linear-gradient(180deg, #fbfbfc 0%, #f6f7f9 100%);
+  // min-height: 100vh;
+  height: 100%;
+  padding-top: 32px;
 }
 
 .repo-card {
@@ -17,7 +15,10 @@
   background: #fff;
   border: 1px solid #f0f1f4;
   border-radius: 18px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.04);
+  box-shadow: var.$shadow-sidebar;
+  background:
+    radial-gradient(circle at top left, rgba(255, 175, 95, 0.08), transparent 28%),
+    linear-gradient(180deg, #fbfbfc 0%, #f6f7f9 100%);
 }
 
 .hero-section {

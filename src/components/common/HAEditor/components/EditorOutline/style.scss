@@ -1,0 +1,66 @@
+.ha-editor-outline {
+  position: sticky;
+  top: 110px;
+  padding: 46px 28px 24px 0;
+}
+
+.ha-editor-outline-title {
+  margin-bottom: 12px;
+  color: #1f2329;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ha-editor-outline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ha-editor-outline-item {
+  padding-left: 14px;
+  border-left: 2px solid transparent;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+
+  &.is-active {
+    color: #111827;
+    border-left-color: #d1d5db;
+  }
+
+  &.level-1 {
+    margin-left: 0;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  &.level-2 {
+    margin-left: 10px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  &.level-3 {
+    margin-left: 18px;
+    font-size: 13px;
+  }
+
+  &.level-4 {
+    margin-left: 26px;
+    font-size: 13px;
+    color: #667085;
+  }
+
+  &.level-5 {
+    margin-left: 34px;
+    font-size: 12px;
+    color: #7b8592;
+  }
+
+  &.level-6 {
+    margin-left: 42px;
+    font-size: 12px;
+    color: #8c93a0;
+  }
+}

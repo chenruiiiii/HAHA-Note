@@ -3,7 +3,7 @@ import logoImg from '@/assets/images/logo.png';
 import { Tooltip } from 'antd';
 import styles from './style.module.scss';
 import { RepoDetailType } from '../../types';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import HABack from '@/components/common/HABack';
 
 const mainMenuList = [
@@ -23,10 +23,20 @@ const mainMenuList = [
 
 const RepoSide = ({ name, repo_list, avatar }: RepoDetailType) => {
   const router = useRouter();
+  const params = useParams();
+  const repoId = params.repoId as string;
 
   // 详细文档内容跳转
   const handleToDetail = (id: string) => {
-    router.push(`/repo-detail/${id}`);
+    router.push(`/repo-detail/${repoId}/${id}`);
+  };
+
+  const handleToHome = (isHome: boolean) => {
+    if (isHome) {
+      router.push(`/repo-detail/${repoId}/home`);
+    } else {
+      router.push('/repository');
+    }
   };
 
   return (
@@ -35,7 +45,7 @@ const RepoSide = ({ name, repo_list, avatar }: RepoDetailType) => {
         <div className={styles['repo-header-main']}>
           <img className={styles['repo-logo']} src={logoImg.src} alt="logo" />
           <div className={styles['repo-title-group']}>
-            <HABack>
+            <HABack onClick={() => handleToHome(false)}>
               <div className={[styles['repo-owner']].join(' ')}>个人知识库</div>
             </HABack>
             <div className={styles['repo-title-row']}>
@@ -57,6 +67,7 @@ const RepoSide = ({ name, repo_list, avatar }: RepoDetailType) => {
             className={['cursor-pointer', styles['menu-item'], styles['menu-item-active']].join(
               ' '
             )}
+            onClick={() => handleToHome(true)}
           >
             {item.type === 'home' && (
               <Tooltip title="首页">
@@ -89,6 +100,11 @@ const RepoSide = ({ name, repo_list, avatar }: RepoDetailType) => {
               onClick={() => handleToDetail(item.id)}
             >
               <span className={`${styles['repo-item-name']} ellipse-one-line`}>{item.name}</span>
+              <Tooltip title="目录操作">
+                <button type="button" className={styles['ghost-action']} aria-label="目录操作">
+                  <i className="iconfont icon-gengduo"></i>
+                </button>
+              </Tooltip>
             </div>
           ))}
         </div>

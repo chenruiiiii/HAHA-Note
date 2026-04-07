@@ -12,19 +12,19 @@ export const NEW_INFO = [
   {
     title: '新建知识库',
     icon: 'icon-xinjianzhishiku',
-    type: 'folder',
+    type: 'repo',
     color: '#46C870',
     description: '使用知识库整理知识',
     drop: false,
   },
-  {
-    title: '模板中心',
-    icon: 'icon-mobanzhongxin',
-    type: 'team',
-    color: '#ED831A',
-    description: '从模版中获取灵感',
-    drop: false,
-  },
+  // {
+  //   title: '模板中心',
+  //   icon: 'icon-mobanzhongxin',
+  //   type: 'team',
+  //   color: '#ED831A',
+  //   description: '从模版中获取灵感',
+  //   drop: false,
+  // },
 ];
 
 // 新建文档下拉框内容

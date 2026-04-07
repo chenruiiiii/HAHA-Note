@@ -1,6 +1,7 @@
 import { RepoDetailType } from './types';
 
 export const repoDetailMock: RepoDetailType = {
+  id: '99999',
   name: 'web前端',
   isPublic: true,
   description: '前端学习与知识沉淀',

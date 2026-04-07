@@ -9,7 +9,7 @@ interface HASearchBoxProps {
   type?: SearchType;
 }
 
-const HASearchBox = ({ placeholder = '搜索一下', type = 'default' }) => {
+const HASearchBox = ({ placeholder = '搜索一下', type = 'default' }: HASearchBoxProps) => {
   const [searchValue, setSearchValue] = useState<string>('');
   // 搜索统一处理函数
   const handleSearch = () => {

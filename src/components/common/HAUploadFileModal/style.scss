@@ -1,0 +1,38 @@
+.ha-upload-file-modal {
+  .ant-modal-content {
+    padding: 20px 20px 18px;
+    border-radius: 18px;
+  }
+}
+
+.ha-upload-file-dragger {
+  .ant-upload {
+    padding: 28px 16px !important;
+  }
+}
+
+.ha-upload-file-icon {
+  margin-bottom: 8px;
+  color: #1677ff;
+  font-size: 32px;
+}
+
+.ha-upload-file-title {
+  margin-bottom: 6px;
+  color: #1f2329;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ha-upload-file-desc {
+  color: #8c93a0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ha-upload-file-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

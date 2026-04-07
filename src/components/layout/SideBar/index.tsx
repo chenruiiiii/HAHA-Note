@@ -54,7 +54,7 @@ const ITEMS_DOWN: MenuItem[] = [
     <Link href="/repository">知识库</Link>,
     'sub1',
     <i className="iconfont icon-zhishiku" style={{ color: '#0062FF' }} />,
-    [getItem(<Link href={`/repo-detail/home`}>Web前端</Link>, '6')]
+    [getItem(<Link href={`/repo-detail/99999/home`}>Web前端</Link>, '6')]
   ),
 ];
 

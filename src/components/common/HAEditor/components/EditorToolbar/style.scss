@@ -1,0 +1,56 @@
+.ha-editor-toolbar {
+  min-height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid #eef1f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  position: sticky;
+  top: 52px;
+  z-index: 19;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.ha-editor-toolbar-button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  cursor: pointer;
+
+  &:hover {
+    background: #f4f6f8;
+  }
+
+  &.is-active {
+    background: #eef4ff;
+    color: #2563eb;
+  }
+}
+
+.ha-editor-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 8px;
+  background: #e8ebef;
+  flex-shrink: 0;
+}
+
+.ha-editor-toolbar-text {
+  font-size: 16px;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .ha-editor-toolbar {
+    justify-content: flex-start;
+  }
+}

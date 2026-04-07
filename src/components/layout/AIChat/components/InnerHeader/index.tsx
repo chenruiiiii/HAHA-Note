@@ -6,6 +6,7 @@ import HACollect from '@/components/common/HACollect';
 import { setTempValueAction } from '@/store/modules/temp';
 import { useAppDispatch } from '@/store';
 import ChatListModal from '@/components/layout/ChatListModal';
+import { useRouter } from 'next/navigation';
 interface InnerHeaderProps {
   title: string;
 }
@@ -13,10 +14,14 @@ interface InnerHeaderProps {
 const InnerHeader = ({ title }: InnerHeaderProps) => {
   const [open, setOpen] = useState(false);
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   // 对话列表模态框展示
   const handleOpenModal = () => {
     setOpen((prev) => !prev);
+  };
+  const handleBack = () => {
+    router.back();
   };
 
   useEffect(() => {
@@ -40,7 +45,7 @@ const InnerHeader = ({ title }: InnerHeaderProps) => {
             </Tooltip>
           </div>
           <span className={styles.space}>|</span>
-          <HABack>
+          <HABack onClick={handleBack}>
             <div className={styles['folder-title']}>{title}</div>
           </HABack>
         </Space>
