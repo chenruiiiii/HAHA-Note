@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { DocListItems } from '../../types/list';
 import DocItem from '../DocItem';
 import './style.scss';
+import useDoc from '@/hooks/layer/useDoc';
 
 const list: DocListItems[] = [
   {
@@ -34,10 +35,11 @@ const list: DocListItems[] = [
 ];
 
 const handleLoading = (isLoading: boolean, list: DocListItems[]) => {
+  const { handleToDetail } = useDoc();
   if (isLoading) return <HASkeleton num={5}></HASkeleton>;
   return list.map((item, index) => (
     <div key={item.id} className="doc-item">
-      <DocItem {...item}></DocItem>
+      <DocItem {...item} />
       <Divider />
     </div>
   ));

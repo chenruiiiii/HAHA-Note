@@ -1,3 +1,5 @@
+'use client';
+import useDoc from '@/hooks/layer/useDoc';
 import { DocListItems } from '../../types/list';
 import './style.scss';
 
@@ -16,13 +18,14 @@ const handleIcon = (type: string) => {
   }
 };
 function DocItem({ id, type, title, creator, time, repository }: DocListItems) {
+  const { handleToDetail } = useDoc();
   // 编辑文档信息
   const handleEdit = () => {
     console.log('编辑', id);
   };
 
   return (
-    <div className="f-sb cursor-pointer">
+    <div className="f-sb cursor-pointer" onClick={() => handleToDetail(true, id)}>
       <div className="f-left-3">
         {handleIcon(type)}
         <div className="title">{title}</div>

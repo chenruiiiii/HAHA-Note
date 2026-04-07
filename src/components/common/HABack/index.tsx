@@ -1,5 +1,4 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import './style.scss';
 import { Tooltip } from 'antd';
 import { ReactNode } from 'react';

@@ -4,7 +4,7 @@ import './style.scss';
 import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { warningMessage } from '@/utils/message_reminder';
-import { useHaChat } from '@/hooks/useHaChat';
+import { useHaChat } from '@/hooks/common/useHaChat';
 import emitter from '@/utils/mitt';
 
 const ChatInput = () => {

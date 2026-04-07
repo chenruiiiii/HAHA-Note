@@ -6,8 +6,8 @@ import { useChat } from '@ai-sdk/react';
 import emitter from '@/utils/mitt';
 import ChatBottom from '../AIWritingHome/components/ChatBottom';
 import { useAppSelector } from '@/store';
-import { useHaChat } from '@/hooks/useHaChat';
-import { useOneRequest } from '@/hooks/useOneRequest';
+import { useHaChat } from '@/hooks/common/useHaChat';
+import { useOneRequest } from '@/hooks/common/useOneRequest';
 import PostingBox from './components/PostingBox';
 import { formatTime } from '@/utils/timeFormatter';
 

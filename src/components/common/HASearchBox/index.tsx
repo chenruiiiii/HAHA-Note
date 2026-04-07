@@ -13,13 +13,18 @@ const HASearchBox = ({ placeholder = '搜索一下', type = 'default' }: HASearc
   const [searchValue, setSearchValue] = useState<string>('');
   // 搜索统一处理函数
   const handleSearch = () => {
-    //
+    // 根据type类型处理搜索逻辑
+  };
+
+  // 搜索框输入值变化事件
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value);
   };
 
   // enter键触发搜索事件，父组件通过事件监听获取输入值并处理搜索逻辑
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      // handleSearch(e.currentTarget.value);
+      handleSearch();
     }
   };
 
@@ -31,10 +36,11 @@ const HASearchBox = ({ placeholder = '搜索一下', type = 'default' }: HASearc
     <div className="ha-search-box">
       <Input
         prefix={searchIcon}
-        placeholder="请输入搜索内容"
+        placeholder={placeholder}
         style={{ backgroundColor: '#F2F3F4' }}
         onKeyDown={handleKeyDown}
         value={searchValue}
+        onChange={(e) => handleSearchChange(e)}
       />
     </div>
   );
