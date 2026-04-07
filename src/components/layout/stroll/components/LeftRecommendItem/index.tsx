@@ -33,7 +33,7 @@ const RecommendItem = ({
 
   // 跳转详情页
   const handleToDetail = () => {
-    router.push(`/stroll-recommend/${id}`);
+    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${id}`, '_blank');
   };
 
   const handleOpenSource = () => {

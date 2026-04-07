@@ -1,0 +1,351 @@
+@use "@/assets/styles/var.scss" as *;
+
+.personal-center-page {
+  min-height: 100vh;
+  padding: 24px 32px 64px;
+  background:
+    radial-gradient(circle at top left, rgba(107, 232, 128, 0.12), transparent 18%),
+    linear-gradient(180deg, #ffffff 0%, #fdfefe 100%);
+  position: relative;
+}
+
+.personal-center-page__logo {
+  margin-bottom: 34px;
+  width: 60px;
+  .logo {
+    margin-top: -8px;
+    width: 80px;
+  }
+
+  img {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+    display: block;
+  }
+}
+
+.personal-center-page__container {
+  width: min(1020px, calc(100% - 80px));
+  margin: 0 auto;
+}
+
+.personal-center-page__hero {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  margin-bottom: 52px;
+}
+
+.personal-center-page__avatar-wrap {
+  flex: 0 0 auto;
+}
+
+.personal-center-page__avatar {
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.personal-center-page__profile {
+  min-width: 0;
+}
+
+.personal-center-page__name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.personal-center-page__name {
+  margin: 0;
+  color: #111827;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.personal-center-page__verified {
+  color: #2f2a22;
+  font-size: 18px;
+}
+
+.personal-center-page__follow-btn {
+  margin-left: 18px;
+  height: 32px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 8px;
+  background: #08b765;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.personal-center-page__slogan {
+  margin: 0 0 18px;
+  color: #4b5563;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.personal-center-page__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 18px;
+  color: #6b7280;
+  font-size: 16px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.personal-center-page__stats {
+  display: flex;
+  gap: 28px;
+  color: #6b7280;
+  font-size: 16px;
+
+  span {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  strong {
+    color: #374151;
+    font-size: 18px;
+  }
+}
+
+.personal-center-page__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 274px;
+  gap: 28px;
+  align-items: start;
+}
+
+.personal-center-page__main {
+  min-width: 0;
+}
+
+.personal-center-page__section + .personal-center-page__section {
+  margin-top: 70px;
+}
+
+.personal-center-page__section-title {
+  margin: 0 0 18px;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.personal-center-page__message-card {
+  min-height: 104px;
+  padding: 12px 18px;
+  border: 1px solid #e7edf2;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f3f7fa 0%, #f8fafb 45%, #ffffff 100%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.personal-center-page__message-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(80, 165, 214, 0.2), rgba(245, 191, 93, 0.26)),
+    url("../../../assets/images/recommen_bg.png") center/cover no-repeat;
+  flex: 0 0 auto;
+}
+
+.personal-center-page__message-body {
+  h3 {
+    margin: 0 0 10px;
+    color: #111827;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+  }
+}
+
+.personal-center-page__promo {
+  width: 100%;
+  min-height: 140px;
+  padding: 20px;
+  border-radius: 8px;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+}
+
+.personal-center-page__promo-title {
+  max-width: 130px;
+  color: #111;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 800;
+}
+
+.personal-center-page__promo-desc {
+  margin-top: 14px;
+  max-width: 150px;
+  color: rgba(17, 24, 39, 0.8);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.personal-center-page__repo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.personal-center-page__repo-card {
+  width: 320px;
+  border: 1px solid #edf1f4;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.personal-center-page__repo-cover {
+  height: 146px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.1)),
+    linear-gradient(120deg, #739764 0%, #95bc4d 26%, #d8d66e 45%, #84ab51 70%, #92a9a0 100%);
+}
+
+.personal-center-page__repo-icon {
+  position: absolute;
+  left: 28px;
+  top: 118px;
+  width: 48px;
+  height: 48px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: #eef5ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #2f7cf6;
+  font-size: 22px;
+}
+
+.personal-center-page__repo-content {
+  padding: 36px 28px 22px;
+
+  h3 {
+    margin: 0 0 10px;
+    color: #111827;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0 0 28px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  span {
+    color: #6b7280;
+    font-size: 14px;
+  }
+}
+
+.personal-center-page__message-fab {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+}
+
+@media (max-width: 1100px) {
+  .personal-center-page__container {
+    width: min(100%, calc(100% - 24px));
+  }
+}
+
+@media (max-width: 900px) {
+  .personal-center-page {
+    padding: 20px 16px 56px;
+  }
+
+  .personal-center-page__hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .personal-center-page__content {
+    grid-template-columns: 1fr;
+  }
+
+  .personal-center-page__aside {
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .personal-center-page__container {
+    width: 100%;
+  }
+
+  .personal-center-page__avatar {
+    width: 132px;
+    height: 132px;
+  }
+
+  .personal-center-page__name-row {
+    flex-wrap: wrap;
+  }
+
+  .personal-center-page__follow-btn {
+    margin-left: 0;
+  }
+
+  .personal-center-page__repo-card {
+    width: 100%;
+  }
+
+  .personal-center-page__message-fab {
+    right: 18px;
+    bottom: 18px;
+  }
+}

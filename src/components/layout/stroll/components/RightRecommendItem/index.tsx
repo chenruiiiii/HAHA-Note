@@ -11,7 +11,7 @@ const RightRecommendItem = ({
 }: RightRecommendItemType) => {
   const router = useRouter();
   const handleToDetail = () => {
-    router.push(`/stroll-recommend/${id}`);
+    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${id}`, '_blank');
   };
   return (
     <div className={[styles['recommend-item']].join(' ')}>
