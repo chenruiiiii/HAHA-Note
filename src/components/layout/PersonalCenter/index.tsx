@@ -22,11 +22,6 @@ const userProfile = {
   followers: 546,
 };
 
-const featuredMessage = {
-  title: '风里有诗句，园友又来信',
-  description: '平静自然、文明友善 谢谢你的来信',
-};
-
 const repoList = [
   {
     repoId: '111',

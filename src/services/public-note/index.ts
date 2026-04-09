@@ -1,4 +1,4 @@
-import http from '@/utils/http';
+import http from '@/lib/http';
 import { publicNoteMockMap } from '@/constants/config.ts/mock';
 import { PublicNoteDetail } from '@/types/public-note';
 
