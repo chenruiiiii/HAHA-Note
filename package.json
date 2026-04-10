@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:stroll": "npx tsx --env-file=.env.development src/scripts/stroll-recommend.ts"
   },
   "dependencies": {
     "@ai-sdk/deepseek": "^2.0.26",

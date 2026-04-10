@@ -1,5 +1,5 @@
 import MainContent from '@/components/layout/MainContent';
-import StrollContainer from '@/components/layout/stroll';
+import StrollContainer from '@/components/layout/Stroll';
 import React from 'react';
 
 function StrollPage() {
