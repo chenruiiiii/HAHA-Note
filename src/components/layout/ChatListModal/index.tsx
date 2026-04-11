@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import './style.scss';
-import emitter from '@/utils/mitt';
+import emitter from '@/lib/mitt';
 import { Emitter } from 'mitt';
 import { Segmented } from 'antd';
 import HASearchBox from '@/components/common/HASearchBox';

@@ -5,7 +5,7 @@ import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { warningMessage } from '@/utils/message_reminder';
 import { useHaChat } from '@/hooks/common/useHaChat';
-import emitter from '@/utils/mitt';
+import emitter from '@/lib/mitt';
 
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');

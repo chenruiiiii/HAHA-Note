@@ -2,18 +2,19 @@
 import React, { useState } from 'react';
 import styles from './style.module.scss';
 import HAAvatar from '@/components/common/HAAvatar';
-import { LeftRecommendItemType } from '../../types/recommend';
+import { LeftRecommendItemType, RecommendDetailType } from '../../types/recommend';
 import { useRouter } from 'next/navigation';
 
 const RecommendItem = ({
-  id,
-  user: { avatar, username },
-  content: { title, description, image },
-  likNum,
-  detail_url,
-}: LeftRecommendItemType) => {
+  _id,
+  author: { avatar, name },
+  title_html,
+  description_html,
+  source_url,
+  like_count,
+}: RecommendDetailType) => {
   const [isLike, setIsLike] = useState<boolean>(false);
-  const [likeNumReadOnly, setLikeNumReadOnly] = useState<number>(likNum);
+  const [likeNumReadOnly, setLikeNumReadOnly] = useState<number>(like_count);
   const router = useRouter();
   // 点赞 （乐观更新）
   const handleLikeClick = () => {
@@ -33,18 +34,18 @@ const RecommendItem = ({
 
   // 跳转详情页
   const handleToDetail = () => {
-    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${id}`, '_blank');
+    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${_id}`, '_blank');
   };
 
   const handleOpenSource = () => {
-    window.open(detail_url, '_blank', 'noopener,noreferrer');
+    window.open(`/public-note/${_id}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <div className={styles['recommend-item']}>
       <div className={styles['user-title']}>
         <HAAvatar url={avatar} size="small" />
-        <div className={styles['username']}>{username}</div>
+        <div className={styles['username']}>{name}</div>
       </div>
       <div className={styles['content']}>
         <div className={styles['left']}>
@@ -52,7 +53,7 @@ const RecommendItem = ({
             className={[styles['content-title'], 'cursor-pointer-hover'].join(' ')}
             onClick={handleToDetail}
           >
-            {title}
+            {title_html}
           </div>
           <div
             className={[styles['content-desc'], 'ellipse-two-line', 'cursor-pointer-hover'].join(
@@ -60,15 +61,15 @@ const RecommendItem = ({
             )}
             onClick={handleToDetail}
           >
-            {description}
+            {description_html}
           </div>
         </div>
         <div className={styles['img right']}>
-          {image && (
+          {source_url && (
             <div
               className={styles['img-cover']}
               aria-hidden="true"
-              style={{ backgroundImage: `url(${image})` }}
+              style={{ backgroundImage: `url(${source_url})` }}
             />
           )}
         </div>

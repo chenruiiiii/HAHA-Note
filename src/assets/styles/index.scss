@@ -30,6 +30,14 @@ i {
   font-size: $font-size-md !important;
 }
 
+// home 的layout
+.layout {
+  display: flex;
+  flex-wrap: nowrap;
+  height: 100%;
+  // overflow-y: hidden;
+}
+
 // // 导入组件样式
 // @import 'components/button';
 // @import 'components/card';

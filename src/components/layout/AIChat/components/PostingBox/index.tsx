@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import styles from './style.module.scss';
-import emitter from '@/utils/mitt';
+import emitter from '@/lib/mitt';
 
 const PostingBox = () => {
   const [isStreaming, setIsStreaming] = useState(true);

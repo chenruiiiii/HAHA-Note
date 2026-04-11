@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import InnerHeader from './components/InnerHeader';
 import './style.scss';
 import { useChat } from '@ai-sdk/react';
-import emitter from '@/utils/mitt';
+import emitter from '@/lib/mitt';
 import ChatBottom from '../AIWritingHome/components/ChatBottom';
 import { useAppSelector } from '@/store';
 import { useHaChat } from '@/hooks/common/useHaChat';

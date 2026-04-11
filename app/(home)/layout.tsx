@@ -5,7 +5,6 @@ import { Layout } from 'antd';
 import { ReactNode, useState } from 'react';
 import SideBar from '@/components/layout/SideBar';
 import { Content } from 'antd/es/layout/layout';
-import emitter from '@/utils/mitt'; // event-bus引入
 import { Provider } from 'react-redux';
 import store from '@/store';
 import ChatListModal from '@/components/layout/ChatListModal';
@@ -24,7 +23,7 @@ function Home({ children }: { children: ReactNode }) {
 
   return (
     <Provider store={store}>
-      <Layout style={{ minHeight: '100vh' }}>
+      <div className="layout">
         <Aside
           collapsible
           collapsed={collapsed}
@@ -36,7 +35,7 @@ function Home({ children }: { children: ReactNode }) {
         <Layout>
           <Content>{children}</Content>
         </Layout>
-      </Layout>
+      </div>
       <div id="portal-root"></div>
     </Provider>
   );

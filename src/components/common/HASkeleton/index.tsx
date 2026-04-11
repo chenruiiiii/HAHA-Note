@@ -8,10 +8,11 @@ function HASkeleton({ num }: SkeletonProps) {
   return (
     <>
       {Array.from({ length: num }).map((_, index) => (
-        <Skeleton key={index} />
+        <Skeleton active key={index} />
       ))}
     </>
   );
 }
 
 export default HASkeleton;
+

@@ -6,7 +6,7 @@ export const NEW_INFO = [
     icon: 'icon-xinjianwendang',
     type: 'note',
     color: '#1681FF',
-    description: '文档、表格、画板、数据表',
+    description: '',
     drop: true,
   },
   {

@@ -3,7 +3,7 @@ import { setTempValueAction } from '@/store/modules/temp';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { nanoid } from 'nanoid';
-import emitter from '@/utils/mitt';
+import emitter from '@/lib/mitt';
 import { setPostingAction } from '@/store/modules/chat';
 
 export function useHaChat() {

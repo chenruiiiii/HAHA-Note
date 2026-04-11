@@ -6,7 +6,7 @@ interface HAVirtualScrollProps {
 }
 
 function HAVirtualScroll({ children }: HAVirtualScrollProps) {
-  return <div className="ha-virtual-scroll">HAVirtualScroll{children}</div>;
+  return <div className="ha-virtual-scroll">{children}</div>;
 }
 
 export default HAVirtualScroll;

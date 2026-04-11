@@ -24,7 +24,7 @@ export interface RightRecommendItemType {
 }
 
 export interface RecommendDetailType {
-  id: string;
+  _id: string;
   source: {
     platform: 'yuque' | 'community';
     title: string;
@@ -41,5 +41,5 @@ export interface RecommendDetailType {
   like_count: number;
   comment_count: number;
   word_count: number;
-  source_url: string;
+  source_url?: string;
 }
