@@ -5,7 +5,6 @@ import LeftRecommendItem from '../LeftRecommendItem';
 import { Divider } from 'antd';
 import RightRecommendItem from '../RightRecommendItem';
 import { handleEmpty } from '@/utils/empty';
-import { leftRecommendData, rightRecommendData } from '../../data';
 import { useRecommendList } from '../../hooks/useRecommendList';
 import HASkeleton from '@/components/common/HASkeleton';
 
@@ -23,13 +22,13 @@ const RecommendList = ({ isLeft }: RecommendListProps) => {
     list.map((item, index) => (
       <Fragment key={item._id}>
         <LeftRecommendItem {...item} />
-        {index !== leftRecommendData.length - 1 && <Divider size="small" />}
+        {index !== list.length - 1 && <Divider size="small" />}
       </Fragment>
     ));
 
-  const right_items = rightRecommendData.map((item) => (
-    <RightRecommendItem key={item.id} {...item} />
-  ));
+  const right_items = list
+    .slice(0, 3)
+    .map((item) => <RightRecommendItem key={item._id} {...item} />);
 
   useEffect(() => {
     loadData(page, limit);
@@ -38,9 +37,7 @@ const RecommendList = ({ isLeft }: RecommendListProps) => {
 
   return (
     <div className={styles['recommend-list']}>
-      {isLeft
-        ? handleEmpty(leftRecommendData, left_items)
-        : handleEmpty(rightRecommendData, right_items)}
+      {isLeft ? handleEmpty(list, left_items) : handleEmpty(list.slice(0, 3), right_items)}
     </div>
   );
 };

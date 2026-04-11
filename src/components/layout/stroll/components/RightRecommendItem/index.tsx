@@ -1,17 +1,13 @@
 'use client';
 import styles from './style.module.scss';
 import HAAvatar from '@/components/common/HAAvatar';
-import { RightRecommendItemType } from '../../types/recommend';
+import { RecommendDetailType } from '../../types/recommend';
 import { useRouter } from 'next/navigation';
 
-const RightRecommendItem = ({
-  id,
-  user: { avatar, username },
-  recommend_title,
-}: RightRecommendItemType) => {
+const RightRecommendItem = ({ _id, author: { avatar, name }, title_html }: RecommendDetailType) => {
   const router = useRouter();
   const handleToDetail = () => {
-    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${id}`, '_blank');
+    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${_id}`, '_blank');
   };
   return (
     <div className={[styles['recommend-item']].join(' ')}>
@@ -22,14 +18,14 @@ const RightRecommendItem = ({
             className={[styles['username'], 'ellipse-one-line', 'cursor-pointer'].join(' ')}
             onClick={handleToDetail}
           >
-            {username}
+            {name}
           </div>
           <div
             className={[styles['signature'], 'ellipse-one-line', 'cursor-pointer-hover'].join(' ')}
             onClick={handleToDetail}
           >
-            {recommend_title}
-            {recommend_title}
+            {title_html}
+            {title_html}
           </div>
         </div>
       </div>
@@ -39,7 +35,7 @@ const RightRecommendItem = ({
         )}
         onClick={handleToDetail}
       >
-        {recommend_title}
+        {title_html}
       </div>
     </div>
   );
