@@ -1,10 +1,12 @@
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-export const getRepository = async (_id: string): Promise<any> => {
+export async function GET(request: Request): Promise<any> {
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection('repository-item');
+  const { searchParams } = new URL(request.url);
+  const _id = searchParams.get('_id') as string;
 
   try {
     const objectId = new ObjectId(_id);
@@ -13,4 +15,4 @@ export const getRepository = async (_id: string): Promise<any> => {
   } catch (err) {
     return err;
   }
-};
+}

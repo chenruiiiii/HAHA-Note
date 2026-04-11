@@ -474,7 +474,7 @@ async function seedStrollRecommend() {
 
   const operations = recommendSeedData.map((item) => ({
     updateOne: {
-      filter: { id: item.id },
+      filter: { id: item._id },
       update: {
         $set: item,
       },
@@ -485,10 +485,10 @@ async function seedStrollRecommend() {
   const result = await collection.bulkWrite(operations, { ordered: false });
 
   console.log(
-    `[stroll-recommend] seeded ${recommendSeedData.length} docs into ${DATABASE_NAME}.${COLLECTION_NAME}`,
+    `[stroll-recommend] seeded ${recommendSeedData.length} docs into ${DATABASE_NAME}.${COLLECTION_NAME}`
   );
   console.log(
-    `[stroll-recommend] inserted=${result.upsertedCount}, modified=${result.modifiedCount}, matched=${result.matchedCount}`,
+    `[stroll-recommend] inserted=${result.upsertedCount}, modified=${result.modifiedCount}, matched=${result.matchedCount}`
   );
 }
 

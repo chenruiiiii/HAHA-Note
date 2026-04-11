@@ -4,7 +4,7 @@ import type {
   LeftRecommendItemType,
   RecommendDetailType,
   RightRecommendItemType,
-} from '@/components/layout/stroll/types/recommend';
+} from '@/components/layout/Stroll/types/recommend';
 
 const recommendUserSchema = z.object({
   avatar: z.string().optional(),
@@ -47,7 +47,7 @@ export const rightRecommendItemModelSchema: z.ZodType<RightRecommendItemType> = 
 });
 
 export const recommendDetailModelSchema: z.ZodType<RecommendDetailType> = z.object({
-  id: z.string(),
+  _id: z.string(),
   source: recommendSourceSchema,
   author: recommendAuthorSchema,
   title_html: z.string(),
