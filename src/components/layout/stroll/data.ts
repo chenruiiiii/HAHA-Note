@@ -125,7 +125,7 @@ const recommendDetails: RecommendDetailType[] = [
 //   recommend_title: item.title_html.replace(/<[^>]+>/g, ''),
 // }));
 
-// export async function getRecommendDetailById(_id: string): Promise<RecommendDetailType | null> {
-//   await new Promise((resolve) => setTimeout(resolve, 50));
-//   return recommendDetails.find((item) => item._id === _id) ?? null;
-// }
+export async function getRecommendDetailById(_id: string): Promise<RecommendDetailType | null> {
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  return recommendDetails.find((item) => item._id === _id) ?? null;
+}
