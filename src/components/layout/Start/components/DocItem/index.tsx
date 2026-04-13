@@ -1,6 +1,6 @@
 'use client';
 import useDoc from '@/hooks/layer/useDoc';
-import { DocListItems } from '../../types/list';
+import { Repository } from '../../types/list';
 import './style.scss';
 
 const handleIcon = (type: string) => {
@@ -17,15 +17,15 @@ const handleIcon = (type: string) => {
       return <i className="iconfont icon-wendang" style={{ color: '#3B8EE3' }}></i>;
   }
 };
-function DocItem({ id, type, title, creator, time, repository }: DocListItems) {
+function DocItem({ _id, type, title, creator, time, repository }: Repository) {
   const { handleToDetail } = useDoc();
   // 编辑文档信息
   const handleEdit = () => {
-    console.log('编辑', id);
+    console.log('编辑', _id);
   };
 
   return (
-    <div className="f-sb cursor-pointer" onClick={() => handleToDetail(true, id)}>
+    <div className="f-sb cursor-pointer" onClick={() => handleToDetail(true, _id)}>
       <div className="f-left-3">
         {handleIcon(type)}
         <div className="title">{title}</div>
