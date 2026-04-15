@@ -1,5 +1,3 @@
-import { notFound } from 'next/navigation';
-import React from 'react';
 import FileDetail from '@/components/layout/Stroll/components/FileDetail';
 import { RecommendDetailType } from '@/components/layout/Stroll/types/recommend';
 
@@ -27,9 +25,9 @@ const StrollRecommend = async ({ params: { id } }: { params: { id: string } }) =
     source_url: 'https://www.yuque.com/tech/ts-generics',
   };
 
-  if (!detail) {
-    notFound();
-  }
+  // if (!detail) {
+  //   notFound();
+  // }
 
   return <FileDetail detail={detail} />;
 };
