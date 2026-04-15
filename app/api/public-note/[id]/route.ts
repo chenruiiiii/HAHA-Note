@@ -17,7 +17,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 
   return NextResponse.json({
-    code: 0,
+    code: 200,
     data: detail,
     message: 'success',
   });

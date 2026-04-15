@@ -2,7 +2,7 @@
 
 import { MongoClient, MongoClientOptions } from 'mongodb';
 
-const url = process.env.MONGODB_URI;
+const url = process.env.APP_MONGODB_MONGODB_URI;
 const options: MongoClientOptions = {
   appName: 'devrel.vercel.integration',
   maxIdleTimeMS: 5000,

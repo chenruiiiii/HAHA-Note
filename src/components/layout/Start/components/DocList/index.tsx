@@ -1,11 +1,11 @@
 'use client';
 import HASkeleton from '@/components/common/HASkeleton';
 import { Divider } from 'antd';
-import { useEffect, useState } from 'react';
-import { Repository } from '../../types/list';
-import DocItem from '../DocItem';
+import { EditDocument, Repository } from '../../types/list';
 import './style.scss';
-import useDoc from '@/hooks/layer/useDoc';
+import { useGetEditedListQuery } from '@/store/modules/user_history';
+import { useState } from 'react';
+import DocItem from '../DocItem';
 
 const list: Repository[] = [
   {
@@ -37,9 +37,7 @@ const list: Repository[] = [
   },
 ];
 
-const handleLoading = (isLoading: boolean, list: Repository[]) => {
-  const { handleToDetail } = useDoc();
-  if (isLoading) return <HASkeleton num={5}></HASkeleton>;
+const handleLoading = (list: EditDocument[]) => {
   return list.map((item, index) => (
     <div key={item._id} className="doc-item">
       <DocItem {...item} />
@@ -48,15 +46,14 @@ const handleLoading = (isLoading: boolean, list: Repository[]) => {
   ));
 };
 function DocList() {
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    // 获取数据
-    // ...
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-  }, []);
-  return <div className="doc-list">{handleLoading(isLoading, list)}</div>;
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const { data: list, isLoading, error } = useGetEditedListQuery({ page, limit });
+  if (isLoading) return <HASkeleton num={5}></HASkeleton>;
+  else if (error) return <div>出错了...</div>;
+  else if (!list) return <div>没有数据</div>;
+
+  return <div className="doc-list">{handleLoading(list)}</div>;
 }
 
 export default DocList;
