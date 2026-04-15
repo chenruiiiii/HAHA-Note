@@ -1,9 +1,12 @@
 // 创建数据库连接单例
 
-import { MongoClient } from 'mongodb';
+import { MongoClient, MongoClientOptions } from 'mongodb';
 
-const url = process.env.APP_MONGODB_MONGODB_URI;
-const options = {};
+const url = process.env.MONGODB_URI;
+const options: MongoClientOptions = {
+  appName: 'devrel.vercel.integration',
+  maxIdleTimeMS: 5000,
+};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
