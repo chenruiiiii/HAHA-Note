@@ -1,10 +1,9 @@
-import { z } from 'zod';
-
-import type {
+import {
   LeftRecommendItemType,
   RecommendDetailType,
   RightRecommendItemType,
 } from '@/components/layout/Stroll/types/recommend';
+import { z } from 'zod';
 
 const recommendUserSchema = z.object({
   avatar: z.string().optional(),

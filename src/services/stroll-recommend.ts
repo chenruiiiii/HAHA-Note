@@ -1,7 +1,6 @@
 import { RecommendDetailType } from '@/components/layout/Stroll/types/recommend';
 import http from '@/lib/http';
 import { ResponseData } from '@/types/response';
-import { NextApiResponse } from 'next';
 
 /**
  * 获取逛逛推荐列表
