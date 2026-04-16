@@ -1,3 +1,4 @@
+import { repositorySlice } from './modules/repository';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import TempReducer from './modules/temp';
 import ChatReducer from './modules/chat';
@@ -9,8 +10,10 @@ export const store = configureStore({
     temp: TempReducer,
     chat: ChatReducer,
     [userHistorySlice.reducerPath]: userHistorySlice.reducer,
+    [repositorySlice.reducerPath]: repositorySlice.reducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(userHistorySlice.middleware),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(userHistorySlice.middleware, repositorySlice.middleware),
 });
 
 type GetStateFnType = typeof store.getState;

@@ -1,12 +1,15 @@
+export type Align = '编辑过' | '浏览过';
+
 // 知识库
 export interface Repository {
   _id: string;
-  type: string;
+  type: 'note' | 'project' | 'code' | 'growth' | undefined;
   title: string;
   creator: string;
   time: string;
   repository: string; // 知识库名
   docs_list: [{ docs_name: string; docs_id: string }];
+  isPublic?: boolean;
 }
 
 // 知识库文档

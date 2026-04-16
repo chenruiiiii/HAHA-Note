@@ -1,24 +1,24 @@
-import { BrowseDocument, EditDocument } from '@/components/layout/Start/types/list';
+import { Align, BrowseDocument, EditDocument } from '@/components/layout/Start/types/list';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+// 定义联合类型
+type ListResponse = EditDocument[] | BrowseDocument[];
+
 export const userHistorySlice = createApi({
   reducerPath: 'userHistoryApi',
   baseQuery: fetchBaseQuery({ baseUrl: '/api/start' }),
   tagTypes: ['edited', 'browsed'],
   endpoints: (builder) => ({
     // 获取编辑历史文档
-    getEditedList: builder.query<EditDocument[], { page: number; limit: number }>({
-      query: ({ page, limit }) => ({
-        url: '/edited',
+    getEditedList: builder.query<ListResponse, { type: Align; page: number; limit: number }>({
+      query: ({ type, page, limit }) => ({
+        url: type === '编辑过' ? '/edited' : '/browsed',
         params: { page, limit },
       }),
-      providesTags: ['edited'],
-    }),
-    // 获取浏览历史文档
-    getBrowsedList: builder.query<BrowseDocument[], void>({
-      query: () => '/browsed',
-      providesTags: ['browsed'],
+      // 这里的 result 类型会被推断为 ListResponse
+      providesTags: (result, error, arg) => [{ type: 'edited', id: arg.type }],
     }),
   }),
 });
 
-export const { useGetEditedListQuery, useGetBrowsedListQuery } = userHistorySlice;
+export const { useGetEditedListQuery } = userHistorySlice;

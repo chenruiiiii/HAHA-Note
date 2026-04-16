@@ -1,8 +1,11 @@
+'use client';
 import DocFiltering from './components/DocFiltering';
 import DocList from './components/DocList';
 import HATitle from './components/HATitle';
 import NewFolderContainer from './components/NewFolderContainer';
 import MainContent from '../MainContent';
+import { useEffect } from 'react';
+import emitter from '@/lib/mitt';
 
 function Start() {
   return (

@@ -2,6 +2,10 @@ import React from 'react';
 import FileIcon from '@/components/common/FileIcon';
 import styles from './style.module.scss';
 import { useRouter } from 'next/navigation';
+import { useGetRepositoryListQuery } from '@/store/modules/repository';
+import HASkeleton from '@/components/common/HASkeleton';
+import { Repository } from '@/components/layout/Start/types/list';
+import HAEmpty from '@/components/common/HAEmpty';
 
 type RepositoryItem = {
   id: string;
@@ -44,46 +48,53 @@ const repositories: RepositoryItem[] = [
 
 const NewFileModal = () => {
   const router = useRouter();
+  const { data: repositories, isLoading, error } = useGetRepositoryListQuery();
+  if (isLoading) return <HASkeleton num={3} />;
+  if (error) return <div>error</div>;
   const handleNewFile = (id: string) => {
     console.log(id, '新建文件');
   };
-  return (
-    <div className={styles['new-file-modal']}>
-      <div className={styles['warning']}>选择一个知识库🧀</div>
+  if (!repositories) return <HAEmpty />;
 
-      <div className={styles['repositories']}>
-        {repositories.map((repo) => {
-          return (
-            <button
-              key={repo.id}
-              type="button"
-              className={[styles['repository-item'], 'cursor-pointer'].join(' ')}
-              onClick={() => handleNewFile(repo.id)}
-            >
-              <span className={styles['repo-icon-wrap']} aria-hidden="true">
-                <FileIcon type={repo.type} />
-              </span>
+  if (repositories) {
+    return (
+      <div className={styles['new-file-modal']}>
+        <div className={styles['warning']}>选择一个知识库🧀</div>
 
-              <div className={styles['repo-main']}>
-                <div className={styles['repo-line']}>
-                  <span className={styles['repo-name']}>{repo.name}</span>
-                  <span className={styles['repo-separator']}>/</span>
-                  <span className={styles['repo-author']}>{repo.author}</span>
-                  <i
-                    className={[
-                      'iconfont',
-                      repo.public ? 'icon-jiesuo' : 'icon-suoding',
-                      styles['repo-lock'],
-                    ].join(' ')}
-                  ></i>
+        <div className={styles['repositories']}>
+          {repositories.map((repo) => {
+            return (
+              <button
+                key={repo._id}
+                type="button"
+                className={[styles['repository-item'], 'cursor-pointer'].join(' ')}
+                onClick={() => handleNewFile(repo._id)}
+              >
+                <span className={styles['repo-icon-wrap']} aria-hidden="true">
+                  <FileIcon type={repo.type} />
+                </span>
+
+                <div className={styles['repo-main']}>
+                  <div className={styles['repo-line']}>
+                    <span className={styles['repo-name']}>{repo.title}</span>
+                    <span className={styles['repo-separator']}>/</span>
+                    <span className={styles['repo-author']}>{repo.creator}</span>
+                    <i
+                      className={[
+                        'iconfont',
+                        repo.isPublic ? 'icon-jiesuo' : 'icon-suoding',
+                        styles['repo-lock'],
+                      ].join(' ')}
+                    ></i>
+                  </div>
                 </div>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 };
 
 export default NewFileModal;

@@ -8,7 +8,7 @@ import { ResponseData } from '@/types/response';
  * @param limit 每页条数 (默认 10)
  */
 export const getStrollRecommend = async (page: number = 1, limit: number = 10) => {
-  return await http.get<ResponseData<RecommendDetailType[]>>('/stroll/left', {
+  return await http.get<ResponseData<RecommendDetailType[]>>('/api/stroll/left', {
     params: {
       page,
       limit,

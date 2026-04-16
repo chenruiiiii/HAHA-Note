@@ -2,15 +2,15 @@
 import { Segmented } from 'antd';
 import { useState } from 'react';
 import './style.scss';
-
-type Align = '编辑过' | '浏览过';
+import emitter from '@/lib/mitt';
+import { Align } from '../../types/list';
 
 const options = ['编辑过', '浏览过'];
 
 function DocFiltering() {
-  const [alignValue, setAlignValue] = useState<Align>('编辑过');
   const handleTabClick = (key: Align) => {
-    setAlignValue(key);
+    emitter.emit('doc-filtering', key);
+    console.log('切换', key);
   };
 
   return (

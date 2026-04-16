@@ -1,7 +1,8 @@
 'use client';
 import useDoc from '@/hooks/layer/useDoc';
-import { EditDocument, Repository } from '../../types/list';
+import { EditDocument } from '../../types/list';
 import './style.scss';
+import { handleUTCTime } from '@/utils/timeFormatter';
 
 function DocItem({ _id, title, author, updated_time, repository_name }: EditDocument) {
   const { handleToDetail } = useDoc();
@@ -20,7 +21,7 @@ function DocItem({ _id, title, author, updated_time, repository_name }: EditDocu
       <div className="f-center-3">
         {author} / {repository_name}
       </div>
-      <div className="f-right-3">{updated_time}</div>
+      <div className="f-right-3">{handleUTCTime(updated_time)}</div>
     </div>
   );
 }

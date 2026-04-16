@@ -9,19 +9,11 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request): Promise<any> {
   const client = await clientPromise;
   const db = client.db('user_activity');
-  const collection = db.collection('browsed_history');
+  const collection = db.collection('browse_history');
   try {
     const data = await collection.find().toArray();
-    return NextResponse.json({
-      code: 200,
-      data,
-      message: 'success',
-    });
+    return NextResponse.json(data);
   } catch (err) {
-    return NextResponse.json({
-      code: 500,
-      data: err,
-      message: 'error',
-    });
+    return NextResponse.json(err);
   }
 }
