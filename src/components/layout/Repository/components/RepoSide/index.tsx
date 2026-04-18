@@ -1,9 +1,11 @@
 'use client';
 import logoImg from '@/assets/images/logo.png';
+import HAEmpty from '@/components/common/HAEmpty';
+import HASkeleton from '@/components/common/HASkeleton';
+import useRepoDetail from '@/hooks/layer/useRepoDetail';
 import { Tooltip } from 'antd';
 import styles from './style.module.scss';
-import { RepoDetailType } from '../../types';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import HABack from '@/components/common/HABack';
 
 const mainMenuList = [
@@ -21,23 +23,14 @@ const mainMenuList = [
   },
 ];
 
-const RepoSide = ({ name, repo_list, avatar }: RepoDetailType) => {
-  const router = useRouter();
+const RepoSide = () => {
   const params = useParams();
   const repoId = params.repoId as string;
+  const { data: repoDetail, isLoading, error, handleToDetail, handleToHome } =
+    useRepoDetail(repoId);
 
-  // 详细文档内容跳转
-  const handleToDetail = (id: string) => {
-    router.push(`/repo-detail/${repoId}/${id}`);
-  };
-
-  const handleToHome = (isHome: boolean) => {
-    if (isHome) {
-      router.push(`/repo-detail/${repoId}/home`);
-    } else {
-      router.push('/repository');
-    }
-  };
+  if (isLoading) return <HASkeleton num={1} />;
+  if (error || !repoDetail) return <HAEmpty />;
 
   return (
     <aside className={styles['repo-aside']}>
@@ -49,7 +42,9 @@ const RepoSide = ({ name, repo_list, avatar }: RepoDetailType) => {
               <div className={[styles['repo-owner']].join(' ')}>个人知识库</div>
             </HABack>
             <div className={styles['repo-title-row']}>
-              <span className={[styles['repo-title'], 'cursor-pointer'].join(' ')}>{name}</span>
+              <span className={[styles['repo-title'], 'cursor-pointer'].join(' ')}>
+                {repoDetail.name}
+              </span>
             </div>
           </div>
         </div>
@@ -93,13 +88,15 @@ const RepoSide = ({ name, repo_list, avatar }: RepoDetailType) => {
 
       <section className={styles['repo-list-section']}>
         <div className={styles['repo-items']}>
-          {repo_list.map((item, index) => (
+          {repoDetail.docs_list.map((item) => (
             <div
-              key={`${item.name}-${item.update_time}`}
+              key={item.docs_id}
               className={[styles['repo-item'], 'cursor-pointer'].join(' ')}
-              onClick={() => handleToDetail(item.id)}
+              onClick={() => handleToDetail(item.docs_id)}
             >
-              <span className={`${styles['repo-item-name']} ellipse-one-line`}>{item.name}</span>
+              <span className={`${styles['repo-item-name']} ellipse-one-line`}>
+                {item.docs_name}
+              </span>
               <Tooltip title="目录操作">
                 <button type="button" className={styles['ghost-action']} aria-label="目录操作">
                   <i className="iconfont icon-gengduo"></i>

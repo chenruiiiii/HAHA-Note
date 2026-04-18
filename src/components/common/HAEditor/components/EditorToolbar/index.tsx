@@ -1,16 +1,19 @@
 'use client';
 
 import './style.scss';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Editor } from '@tiptap/react';
-import { message, Tooltip } from 'antd';
+import { Button, Dropdown, MenuProps, message, Tooltip } from 'antd';
 import {
   BoldOutlined,
   CodeOutlined,
+  DownloadOutlined,
+  ExportOutlined,
   FontSizeOutlined,
   ItalicOutlined,
   OrderedListOutlined,
   RedoOutlined,
+  SaveOutlined,
   UploadOutlined,
   ShareAltOutlined,
   StrikethroughOutlined,
@@ -18,6 +21,7 @@ import {
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import HAUploadFileModal from '@/components/common/HAUploadFileModal';
+import EditorShareModal from '../EditorShareModal';
 
 const ToolbarButton = ({
   title,
@@ -43,14 +47,72 @@ const ToolbarButton = ({
   );
 };
 
-const EditorToolbar = ({ editor }: { editor: Editor }) => {
+const EditorToolbar = ({
+  editor,
+  title,
+  onSave,
+}: {
+  editor: Editor;
+  title: string;
+  onSave?: () => Promise<void> | void;
+}) => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const shareUrl = typeof window === 'undefined' ? '' : window.location.href;
+  const baseFileName = useMemo(() => {
+    const normalized = title.trim().replace(/[\\/:*?"<>|]/g, '-');
+    return normalized || '未命名文档';
+  }, [title]);
+
+  const downloadFile = (content: string, extension: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${baseFileName}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportMenus: MenuProps['items'] = [
+    {
+      key: 'html',
+      label: '导出 HTML',
+      icon: <ExportOutlined />,
+    },
+    {
+      key: 'txt',
+      label: '导出 TXT',
+      icon: <DownloadOutlined />,
+    },
+  ];
+
+  const handleExport: MenuProps['onClick'] = ({ key }) => {
+    const html = editor.getHTML();
+
+    if (key === 'html') {
+      downloadFile(html, 'html', 'text/html;charset=utf-8');
+      messageApi.success('已导出 HTML');
+      return;
+    }
+
+    downloadFile(editor.getText(), 'txt', 'text/plain;charset=utf-8');
+    messageApi.success('已导出 TXT');
+  };
 
   return (
     <>
       {contextHolder}
       <div className="ha-editor-toolbar">
+        <Button type="primary" icon={<SaveOutlined />} onClick={() => void onSave?.()}>
+          保存
+        </Button>
+        <Dropdown menu={{ items: exportMenus, onClick: handleExport }} trigger={['click']}>
+          <Button icon={<ExportOutlined />}>导出</Button>
+        </Dropdown>
         <ToolbarButton title="撤销" onClick={() => editor.chain().focus().undo().run()}>
           <UndoOutlined />
         </ToolbarButton>
@@ -125,7 +187,7 @@ const EditorToolbar = ({ editor }: { editor: Editor }) => {
         <ToolbarButton title="上传文件" onClick={() => setIsUploadOpen(true)}>
           <UploadOutlined />
         </ToolbarButton>
-        <ToolbarButton title="分享" onClick={() => {}}>
+        <ToolbarButton title="分享" onClick={() => setIsShareOpen(true)}>
           <ShareAltOutlined />
         </ToolbarButton>
       </div>
@@ -136,6 +198,12 @@ const EditorToolbar = ({ editor }: { editor: Editor }) => {
         onConfirm={(files) => {
           messageApi.success(`已选择 ${files.length} 个文件，后续可直接接上传接口`);
         }}
+      />
+
+      <EditorShareModal
+        open={isShareOpen}
+        onCancel={() => setIsShareOpen(false)}
+        shareUrl={shareUrl}
       />
     </>
   );

@@ -14,7 +14,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <html lang="en">
       <body>
         <AntdRegistry>
-          <ConfigProvider theme={theme_config}>{children}</ConfigProvider>
+          <ConfigProvider theme={theme_config}>
+            {children}
+            <div id="portal-root"></div>
+          </ConfigProvider>
         </AntdRegistry>
       </body>
     </html>

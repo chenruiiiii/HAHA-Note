@@ -7,7 +7,6 @@ import SideBar from '@/components/layout/SideBar';
 import { Content } from 'antd/es/layout/layout';
 import { Provider } from 'react-redux';
 import store from '@/store';
-import ChatListModal from '@/components/layout/ChatListModal';
 
 const { Sider: Aside } = Layout;
 const aside_style = {
@@ -36,7 +35,6 @@ function Home({ children }: { children: ReactNode }) {
           <Content>{children}</Content>
         </Layout>
       </div>
-      <div id="portal-root"></div>
     </Provider>
   );
 }

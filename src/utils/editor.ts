@@ -6,11 +6,7 @@ export type HAEditorOutlineItem = {
   level: number;
 };
 
-export const DEFAULT_CONTENT = `
-  <h1>文档标题</h1>
-  <h2>标题1</h2>
-  <p></p>
-`;
+export const DEFAULT_CONTENT = ``;
 
 export const MAX_TITLE_LENGTH = 30;
 
@@ -20,6 +16,24 @@ export const getSaveStatusText = (date = new Date()) => {
     .join(':');
 
   return `已保存 ${time}`;
+};
+
+export const getInitialSaveStatusText = (savedAt?: string | null) => {
+  if (!savedAt) return '未保存';
+
+  const date = new Date(savedAt);
+  if (Number.isNaN(date.getTime())) return '未保存';
+
+  const formatted = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+  const time = [date.getHours(), date.getMinutes()]
+    .map((value) => String(value).padStart(2, '0'))
+    .join(':');
+
+  return `上次保存 ${formatted} ${time}`;
 };
 
 export const createHeadingId = (text: string, index: number) => {

@@ -6,6 +6,7 @@ import { useGetRepositoryListQuery } from '@/store/modules/repository';
 import HASkeleton from '@/components/common/HASkeleton';
 import { Repository } from '@/components/layout/Start/types/list';
 import HAEmpty from '@/components/common/HAEmpty';
+import { nanoid } from 'nanoid';
 
 type RepositoryItem = {
   id: string;
@@ -53,6 +54,8 @@ const NewFileModal = () => {
   if (error) return <div>error</div>;
   const handleNewFile = (id: string) => {
     console.log(id, '新建文件');
+    const docsId = nanoid();
+    window.open(`/repo-detail/${id}/${docsId}`);
   };
   if (!repositories) return <HAEmpty />;
 

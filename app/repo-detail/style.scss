@@ -5,4 +5,11 @@
   height: 100%;
   display: flex;
   flex-wrap: nowrap;
+  position: relative;
+  & > div:first-child {
+    max-width: 300px;
+  }
+  & > div:last-child {
+    width: 100%;
+  }
 }

@@ -13,6 +13,7 @@ import {
   DEFAULT_CONTENT,
   HAEditorOutlineItem,
   MAX_TITLE_LENGTH,
+  getInitialSaveStatusText,
   getOutlineFromEditor,
   getSaveStatusText,
   injectHeadingIds,
@@ -21,6 +22,7 @@ import {
 type HAEditorProps = {
   initialTitle?: string;
   initialContent?: string;
+  initialSavedAt?: string;
   readonly?: boolean;
   showToolbar?: boolean;
   showHeader?: boolean;
@@ -34,6 +36,7 @@ type HAEditorProps = {
 const HAEditor = ({
   initialTitle = '',
   initialContent = DEFAULT_CONTENT,
+  initialSavedAt,
   readonly = false,
   showToolbar = true,
   showHeader = true,
@@ -45,8 +48,7 @@ const HAEditor = ({
 }: HAEditorProps) => {
   const [title, setTitle] = useState(initialTitle);
   const [outlineItems, setOutlineItems] = useState<HAEditorOutlineItem[]>([]);
-  const [saveStatusText, setSaveStatusText] = useState('未保存');
-  const [isEditorHovered, setIsEditorHovered] = useState(false);
+  const [saveStatusText, setSaveStatusText] = useState(getInitialSaveStatusText(initialSavedAt));
   const [messageApi, contextHolder] = message.useMessage();
 
   const editor = useEditor({
@@ -70,13 +72,17 @@ const HAEditor = ({
     if (!editor) return;
     const html = injectHeadingIds(editor.getHTML());
 
-    await onSave?.({
-      title: title.trim(),
-      content: html,
-    });
+    try {
+      await onSave?.({
+        title: title.trim(),
+        content: html,
+      });
 
-    setSaveStatusText(getSaveStatusText());
-    messageApi.success('已保存');
+      setSaveStatusText(getSaveStatusText());
+      messageApi.success('已保存');
+    } catch {
+      messageApi.error('保存失败，请稍后重试');
+    }
   }, [editor, messageApi, onSave, title]);
 
   useEffect(() => {
@@ -95,6 +101,10 @@ const HAEditor = ({
   }, [initialTitle]);
 
   useEffect(() => {
+    setSaveStatusText(getInitialSaveStatusText(initialSavedAt));
+  }, [initialSavedAt]);
+
+  useEffect(() => {
     if (!editor) return;
     setOutlineItems(getOutlineFromEditor(editor.getJSON()));
   }, [editor]);
@@ -102,7 +112,6 @@ const HAEditor = ({
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return;
-      if (!isEditorHovered) return;
 
       event.preventDefault();
       await handleSave();
@@ -110,7 +119,7 @@ const HAEditor = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, isEditorHovered]);
+  }, [handleSave]);
 
   if (readonly) {
     return (
@@ -143,14 +152,10 @@ const HAEditor = ({
         />
       )}
 
-      {showToolbar && editor && <EditorToolbar editor={editor} />}
+      {showToolbar && editor && <EditorToolbar editor={editor} title={title} onSave={handleSave} />}
 
       <div className="ha-editor-shell">
-        <main
-          className="ha-editor-main"
-          onMouseEnter={() => setIsEditorHovered(true)}
-          onMouseLeave={() => setIsEditorHovered(false)}
-        >
+        <main className="ha-editor-main">
           <div className="ha-editor-document">
             <div className="ha-editor-page">
               <div className="ha-editor-page-title">{title}</div>

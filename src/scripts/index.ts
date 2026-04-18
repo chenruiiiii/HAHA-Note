@@ -18,6 +18,9 @@ async function run() {
       case 'docs':
         await seedDocuments();
         break;
+      case 'docs-detail':
+        await seedDocuments();
+        break;
       case 'activity': // 新增：一次性填充所有活动数据
         await seedEditHistory();
         await seedBrowseHistory();
@@ -33,7 +36,7 @@ async function run() {
         await seedFavoriteCollections();
         break;
       default:
-        console.log('❌ 请指定任务名称: repos, docs, 或 all');
+        console.log('❌ 请指定任务名称: repos, docs, docs-detail, activity, favorite, 或 all');
         process.exit(1);
     }
     console.log('✅ 选定任务执行完毕');

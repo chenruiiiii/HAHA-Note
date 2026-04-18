@@ -1,5 +1,5 @@
 export interface RepoDetailType {
-  id: string;
+  _id: string;
   name: string;
   isPublic: boolean;
   description: string;
@@ -7,14 +7,13 @@ export interface RepoDetailType {
   update_time: string;
   owner: string;
   avatar: string[];
-  repo_list: RepoListItem[];
+  docs_list: RepoListItem[];
   collect: boolean;
   file_desc_title: string;
   file_desc: string;
 }
 
 interface RepoListItem {
-  id: string;
-  name: string;
-  update_time: string;
+  docs_id: string;
+  docs_name: string;
 }
