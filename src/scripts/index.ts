@@ -45,7 +45,7 @@ async function run() {
         break;
       default:
         console.log(
-          '❌ 请指定任务名称: repos, docs, docs-detail, activity, favorite, ai-chat, docs-detail, activity, favorite, 或 all'
+          '❌ 请指定任务名称: repos, docs, docs-detail, activity, favorite, ai-chat, docs-detail, activity, favorite, docs-detail, activity, favorite, 或 all'
         );
         process.exit(1);
     }
