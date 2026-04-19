@@ -2,10 +2,13 @@ import AiChatPage from '@/components/layout/AIChat';
 import React from 'react';
 
 interface AIChatProps {
-  id: string;
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-const AIChat = ({ id }: AIChatProps) => {
+const AIChat = async ({ params }: AIChatProps) => {
+  const { id } = await params;
   return <AiChatPage id={id} />;
 };
 

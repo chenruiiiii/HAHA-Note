@@ -1,8 +1,9 @@
 'use client';
-import { useCallback, useEffect, useRef } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import InnerHeader from './components/InnerHeader';
 import './style.scss';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import MDEditor from '@uiw/react-md-editor';
 import emitter from '@/lib/mitt';
 import ChatBottom from '../AIWritingHome/components/ChatBottom';
@@ -11,7 +12,9 @@ import { useHaChat } from '@/hooks/common/useHaChat';
 import { useOneRequest } from '@/hooks/common/useOneRequest';
 import PostingBox from './components/PostingBox';
 import { formatTime } from '@/utils/timeFormatter';
-import type { AiMissionPart } from '@/models/ai-mission';
+import type { AiMissionDetail, AiMissionPart } from '@/models/ai-mission';
+import http from '@/lib/http';
+import type { ResponseData } from '@/types/response';
 
 interface AiChatProps {
   id: string;
@@ -40,13 +43,65 @@ type RenderablePart = Partial<AiMissionPart> & {
   [key: string]: unknown;
 };
 
+type RenderBlock =
+  | {
+      type: 'text';
+      content: string;
+    }
+  | {
+      type: 'markdown';
+      content: string;
+    }
+  | {
+      type: 'image_url';
+      part: RenderablePart;
+    };
+
 const AiChat = ({ id: _id }: AiChatProps) => {
-  void _id;
-  const { messages, status, sendMessage } = useChat();
+  const [chatTitle, setChatTitle] = useState('新建文档');
+
+  const { messages, status, sendMessage, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat-detail',
+      body: {
+        chatId: _id,
+      },
+    }),
+    onFinish: () => {
+      void loadChatDetail();
+    },
+  });
   const chatRef = useRef<HTMLDivElement>(null);
   const { handlePostingClose, handlePostingOpen } = useHaChat();
   const { value } = useAppSelector((state) => ({ ...state.temp }));
   const { checkDuplicate } = useOneRequest();
+
+  const loadChatDetail = useCallback(async () => {
+    try {
+      const response = await http.get<ResponseData<AiMissionDetail>>(`/chat/${_id}`);
+
+      if (response.code !== 200 || !response.data) {
+        startTransition(() => {
+          setChatTitle('新建文档');
+          setMessages([]);
+        });
+        return null;
+      }
+
+      startTransition(() => {
+        setChatTitle(response.data.title || '新建文档');
+        setMessages((response.data.types ?? []) as unknown as UIMessage[]);
+      });
+
+      return response.data;
+    } catch {
+      startTransition(() => {
+        setChatTitle('新建文档');
+        setMessages([]);
+      });
+      return null;
+    }
+  }, [_id, setMessages]);
 
   // 处理具体内容显示
   const getImageMeta = useCallback((part: RenderablePart) => {
@@ -84,42 +139,79 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     return '';
   }, []);
 
+  const getRenderableBlocks = useCallback(
+    (parts: Array<RenderablePart>) => {
+      const blocks: RenderBlock[] = [];
+
+      parts.forEach((part) => {
+        const rawType = typeof part?.type === 'string' ? String(part.type) : '';
+
+        if (
+          rawType === 'step-start' ||
+          rawType === 'step-finish' ||
+          rawType === 'start-step' ||
+          rawType === 'finish-step'
+        ) {
+          return;
+        }
+
+        if (rawType === 'image_url' || part?.image_url || part?.image) {
+          blocks.push({
+            type: 'image_url',
+            part,
+          });
+          return;
+        }
+
+        const content = getTextContent(part);
+
+        if (!content.trim()) {
+          return;
+        }
+
+        const blockType = rawType === 'markdown' ? 'markdown' : 'text';
+        const lastBlock = blocks[blocks.length - 1];
+
+        if (lastBlock && lastBlock.type === blockType) {
+          lastBlock.content += content;
+          return;
+        }
+
+        blocks.push({
+          type: blockType,
+          content,
+        });
+      });
+
+      return blocks;
+    },
+    [getTextContent]
+  );
+
   const handleParts = useCallback(
     (id: string, parts: Array<RenderablePart>, role: string, showPostingBox: boolean) => {
+      const blocks = getRenderableBlocks(parts);
+
       return (
         <>
-          {parts.map((part, i) => {
-            const partType =
-              typeof part?.type === 'string'
-                ? part.type
-                : typeof part?.text === 'string'
-                  ? 'text'
-                  : typeof part?.markdown === 'string'
-                    ? 'markdown'
-                    : part?.image_url || part?.image
-                      ? 'image_url'
-                      : 'unknown';
-
-            switch (partType) {
+          {blocks.map((block, i) => {
+            switch (block.type) {
               case 'text':
                 return (
                   <div key={`${id}-${i}`} className="message-part">
                     {showPostingBox && i === 0 && role !== 'user' && <PostingBox />}
-                    <div className="message-text">{getTextContent(part)}</div>
+                    <div className="message-text">{block.content}</div>
                   </div>
                 );
               case 'markdown':
                 return (
                   <div key={`${id}-${i}`} className="message-part" data-color-mode="light">
                     {showPostingBox && i === 0 && role !== 'user' && <PostingBox />}
-                    <MDEditor.Markdown
-                      source={getTextContent(part)}
-                      className="chat-markdown-preview"
-                    />
+                    <MDEditor.Markdown source={block.content} className="chat-markdown-preview" />
                   </div>
                 );
               case 'image_url': {
-                const imageMeta = getImageMeta(part);
+                const imageMeta = getImageMeta(block.part);
 
                 if (!imageMeta) {
                   return null;
@@ -133,17 +225,13 @@ const AiChat = ({ id: _id }: AiChatProps) => {
                 );
               }
               default:
-                return (
-                  <pre key={`${id}-${i}`} className="message-part message-fallback">
-                    {JSON.stringify(part, null, 2)}
-                  </pre>
-                );
+                return null;
             }
           })}
         </>
       );
     },
-    [getImageMeta, getTextContent]
+    [getImageMeta, getRenderableBlocks]
   );
 
   // 处理信息展示为为用户还是ai类型
@@ -177,6 +265,14 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       emitter.emit('quit-streaming'); // 发布事件通知posting-box组件停止流式展示
     }
   }, [handlePostingClose, handleScroll, status]);
+
+  useEffect(() => {
+    void loadChatDetail();
+  }, [loadChatDetail]);
+
+  useEffect(() => {
+    document.title = chatTitle;
+  }, [chatTitle]);
 
   // 结束流式传输，停止发送中状态
   useEffect(() => {
@@ -213,7 +309,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   return (
     <div className="ai-chat-container">
       <div className="header">
-        <InnerHeader title="新建对话"></InnerHeader>
+        <InnerHeader title={chatTitle}></InnerHeader>
       </div>
       <div className="chat-box" ref={chatRef}>
         <div className="container">

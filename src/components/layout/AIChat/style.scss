@@ -16,7 +16,7 @@
 }
 
 .chat-box {
-  height: 82vh;
+  height: 83vh;
   overflow-y: scroll;
   width: 100%;
   padding-bottom: 40px;
@@ -52,21 +52,24 @@
   .ask-box {
     position: relative;
     align-self: end;
-    background-color: var.$theme-color-shallow;
-    border-radius: var.$border-radius-chat-r;
-    margin: 15px;
-    padding: 15px;
   }
   .answer-box {
     position: relative;
     align-self: start;
     border-radius: var.$border-radius-chat-l;
     padding: 15px;
+    & > div {
+      background-color: transparent !important;
+    }
   }
 
   .message-part {
     font-size: var.$font-size-md;
     margin-bottom: 12px;
+    background-color: var.$theme-color-shallow;
+    border-radius: var.$border-radius-chat-r;
+    margin: 15px;
+    padding: 15px;
 
     &:last-child {
       margin-bottom: 0;
@@ -102,26 +105,26 @@
     background: transparent !important;
     box-shadow: none !important;
 
-    :global(.wmde-markdown),
-    :global(.wmde-markdown-var) {
+    .wmde-markdown,
+    .wmde-markdown-var {
       background: transparent !important;
     }
 
-    :global(.wmde-markdown) {
+    .wmde-markdown {
       padding: 0 !important;
       color: inherit;
       font-size: var.$font-size-md;
       line-height: 1.8;
     }
 
-    :global(.wmde-markdown p),
-    :global(.wmde-markdown ul),
-    :global(.wmde-markdown ol),
-    :global(.wmde-markdown blockquote) {
+    .wmde-markdown p,
+    .wmde-markdown ul,
+    .wmde-markdown ol,
+    .wmde-markdown blockquote {
       margin-bottom: 12px;
     }
 
-    :global(.wmde-markdown img) {
+    .wmde-markdown img {
       max-width: min(100%, 480px);
       border-radius: 16px;
     }

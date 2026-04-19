@@ -7,6 +7,9 @@ import { Segmented } from 'antd';
 import HASearchBox from '@/components/common/HASearchBox';
 import useChatMissionList, { type ChatMissionAlign } from '@/hooks/layer/useChatMissionList';
 import HASkeleton from '@/components/common/HASkeleton';
+import { useRouter } from 'next/navigation';
+import HAError from '@/components/common/HAError';
+import HAEmpty from '@/components/common/HAEmpty';
 
 type Events = {
   'portal-status': boolean;
@@ -15,12 +18,14 @@ type Events = {
 const typeEmitter = emitter as unknown as Emitter<Events>;
 
 const ChatListModal = () => {
+  const router = useRouter();
   const [, setOpen] = useState(false);
   const [alignValue, setAlignValue] = useState<ChatMissionAlign>('最近任务');
   const { data, isLoading, error } = useChatMissionList(alignValue);
 
   const handleClick = (id: string) => {
     console.log(id, 'chat-id');
+    router.push(`/ai-chat/${id}`);
   };
 
   useEffect(() => {
@@ -56,8 +61,8 @@ const ChatListModal = () => {
                 {item.title}
               </div>
             ))}
-          {!isLoading && error && <div className="chat-list-item">获取数据失败</div>}
-          {!isLoading && !error && !data.length && <div className="chat-list-item">暂无数据</div>}
+          {!isLoading && error && <HAError />}
+          {!isLoading && !error && !data.length && <HAEmpty />}
         </div>
       </div>
     </div>

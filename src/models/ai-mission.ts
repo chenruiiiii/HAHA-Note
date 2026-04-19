@@ -5,6 +5,11 @@ export const ListItemSchema = z.object({
   title: z.string(),
 });
 
+export const AiChatListItemSchema = z.object({
+  docs_id: z.string(),
+  title: z.string(),
+});
+
 export const AiMissionTextPartSchema = z.object({
   type: z.literal('text'),
   text: z.string(),
@@ -47,6 +52,7 @@ export const AiMissionDetailSchema = z.object({
 });
 
 export type ListItem = z.infer<typeof ListItemSchema>;
+export type AiChatListItem = z.infer<typeof AiChatListItemSchema>;
 export type AiMissionPart = z.infer<typeof AiMissionPartSchema>;
 export type AiMissionMessage = z.infer<typeof AiMissionMessageSchema>;
 export type AiMissionDetail = z.infer<typeof AiMissionDetailSchema>;
