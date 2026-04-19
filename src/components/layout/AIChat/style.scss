@@ -55,18 +55,75 @@
     background-color: var.$theme-color-shallow;
     border-radius: var.$border-radius-chat-r;
     margin: 15px;
-    & > div:nth-child(1) {
-      font-size: var.$font-size-md;
-      padding: 15px;
-    }
+    padding: 15px;
   }
   .answer-box {
     position: relative;
     align-self: start;
     border-radius: var.$border-radius-chat-l;
-    & > div:nth-child(1) {
+    padding: 15px;
+  }
+
+  .message-part {
+    font-size: var.$font-size-md;
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .message-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.8;
+  }
+
+  .chat-image {
+    max-width: min(100%, 480px);
+    display: block;
+    border-radius: 16px;
+    object-fit: cover;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .message-fallback {
+    margin: 0;
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.06);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .chat-markdown-preview {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+
+    :global(.wmde-markdown),
+    :global(.wmde-markdown-var) {
+      background: transparent !important;
+    }
+
+    :global(.wmde-markdown) {
+      padding: 0 !important;
+      color: inherit;
       font-size: var.$font-size-md;
-      padding: 15px;
+      line-height: 1.8;
+    }
+
+    :global(.wmde-markdown p),
+    :global(.wmde-markdown ul),
+    :global(.wmde-markdown ol),
+    :global(.wmde-markdown blockquote) {
+      margin-bottom: 12px;
+    }
+
+    :global(.wmde-markdown img) {
+      max-width: min(100%, 480px);
+      border-radius: 16px;
     }
   }
 }

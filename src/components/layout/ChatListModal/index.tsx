@@ -5,13 +5,8 @@ import emitter from '@/lib/mitt';
 import { Emitter } from 'mitt';
 import { Segmented } from 'antd';
 import HASearchBox from '@/components/common/HASearchBox';
-
-interface ListItem {
-  id: string;
-  title: string;
-}
-
-type Align = '最近任务' | '收藏任务';
+import useChatMissionList, { type ChatMissionAlign } from '@/hooks/layer/useChatMissionList';
+import HASkeleton from '@/components/common/HASkeleton';
 
 type Events = {
   'portal-status': boolean;
@@ -20,21 +15,9 @@ type Events = {
 const typeEmitter = emitter as unknown as Emitter<Events>;
 
 const ChatListModal = () => {
-  const [open, setOpen] = useState(false);
-
-  const handleModalStatus = () => {
-    setOpen(!open);
-    console.log('open-status', open);
-  };
-  const [alignValue, setAlignValue] = useState<Align>('最近任务');
-
-  const onChange = (key: string) => {
-    console.log(key);
-  };
-  const [list, setList] = useState<ListItem[]>([
-    { id: '1', title: '任务1任务1任务1任务1任务1任务1任务1任务1任务1' },
-    { id: '2', title: '任务2' },
-  ]);
+  const [, setOpen] = useState(false);
+  const [alignValue, setAlignValue] = useState<ChatMissionAlign>('最近任务');
+  const { data, isLoading, error } = useChatMissionList(alignValue);
 
   const handleClick = (id: string) => {
     console.log(id, 'chat-id');
@@ -62,16 +45,19 @@ const ChatListModal = () => {
         />
         <HASearchBox />
         <div className="list">
-          {list.length &&
-            list.map((item, _) => (
+          {isLoading && <HASkeleton num={3} />}
+          {!isLoading &&
+            data.map((item) => (
               <div
                 className="chat-list-item ellipse-one-line cursor-pointer"
-                key={item.id}
-                onClick={() => handleClick(item.id)}
+                key={item._id}
+                onClick={() => handleClick(item._id)}
               >
                 {item.title}
               </div>
             ))}
+          {!isLoading && error && <div className="chat-list-item">获取数据失败</div>}
+          {!isLoading && !error && !data.length && <div className="chat-list-item">暂无数据</div>}
         </div>
       </div>
     </div>

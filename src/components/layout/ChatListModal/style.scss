@@ -11,7 +11,8 @@
   box-shadow: var.$shadow-sidebar;
   background-color: var.$white-color;
   .list {
-    min-height: 30rem;
+    height: 30rem;
+    overflow-y: auto;
     .chat-list-item {
       min-width: 180px;
       padding: 8px;
