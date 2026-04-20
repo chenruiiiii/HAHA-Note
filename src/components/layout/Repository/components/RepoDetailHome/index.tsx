@@ -7,7 +7,7 @@ import { RepoDetailType } from '../../types';
 const RepoDetailHome = ({
   name,
   word_count,
-  repo_list,
+  docs_list,
   avatar,
   file_desc_title,
   file_desc,
@@ -25,7 +25,7 @@ const RepoDetailHome = ({
             </div>
 
             <div className={styles['repo-meta']}>
-              <span className={styles['meta-strong']}>{repo_list.length}</span>
+              <span className={styles['meta-strong']}>{docs_list.length}</span>
               <span className={styles['meta-label']}>文档</span>
               <span className={styles['meta-strong']}>{word_count}</span>
               <span className={styles['meta-label']}>字</span>
@@ -68,16 +68,12 @@ const RepoDetailHome = ({
 
         <section className={styles['document-section']}>
           <ul className={styles['document-list']}>
-            {repo_list.map((item) => (
-              <li key={`${item.id}-${item.update_time}`} className={styles['document-item']}>
-                <span className={`${styles['document-title']} ellipse-one-line`}>{item.name}</span>
+            {docs_list.map((item) => (
+              <li key={item.docs_id} className={styles['document-item']}>
+                <span className={`${styles['document-title']} ellipse-one-line`}>
+                  {item.docs_name}
+                </span>
                 <span className={styles['document-line']} aria-hidden="true" />
-                <time
-                  className={styles['document-time']}
-                  dateTime={item.update_time.replace(' ', 'T')}
-                >
-                  {item.update_time}
-                </time>
               </li>
             ))}
           </ul>
