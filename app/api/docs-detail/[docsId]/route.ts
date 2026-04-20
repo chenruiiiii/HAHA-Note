@@ -49,38 +49,43 @@ export async function POST(
     const body = (await request.json()) as {
       title?: string;
       content_html?: string;
+      repository_id?: string;
+      author?: string;
     };
-
-    if (!body.title?.trim()) {
-      return NextResponse.json({
-        code: 400,
-        data: null,
-        message: '标题不能为空',
-      });
-    }
-
-    if (!body.content_html?.trim()) {
-      return NextResponse.json({
-        code: 400,
-        data: null,
-        message: '内容不能为空',
-      });
-    }
 
     const existing = await collection.findOne({ _id: docsId });
 
     if (!existing) {
+      if (!body.repository_id?.trim()) {
+        return NextResponse.json({
+          code: 400,
+          data: null,
+          message: '新建文档时 repository_id 不能为空',
+        });
+      }
+
+      const nextDoc: DocumentDetail = {
+        _id: docsId,
+        repository_id: body.repository_id.trim(),
+        title: body.title?.trim() || '新建文档',
+        content_html: body.content_html ?? '',
+        author: body.author?.trim() || '当前用户',
+        updated_at: new Date().toISOString(),
+      };
+
+      await collection.insertOne(nextDoc);
+
       return NextResponse.json({
-        code: 404,
-        data: null,
-        message: '未找到对应文档',
+        code: 200,
+        data: nextDoc,
+        message: '创建成功',
       });
     }
 
     const nextDoc: DocumentDetail = {
       ...existing,
-      title: body.title.trim(),
-      content_html: body.content_html,
+      title: body.title?.trim() || existing.title,
+      content_html: body.content_html ?? existing.content_html,
       updated_at: new Date().toISOString(),
     };
 

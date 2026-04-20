@@ -4,6 +4,8 @@ import './style.scss';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import logo from '@/assets/images/logo.png';
+import { useGetRepositoryListQuery } from '@/store/modules/repository';
+import { Repository } from '../Start/types/list';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -32,11 +34,6 @@ const ITEMS_UP: MenuItem[] = [
     '/ai-chat-home"',
     <i className="iconfont icon-aixiezuo" style={{ color: '#49CA72' }}></i>
   ),
-  // getItem(
-  //   <Link href="/subtotal">小记</Link>,
-  //   '/subtotal',
-  //   <i className="iconfont icon-xiaoji" style={{ color: '#36AFA2' }}></i>
-  // ),
   getItem(
     <Link href="/collect">收藏</Link>,
     '/collect',
@@ -49,17 +46,28 @@ const ITEMS_UP: MenuItem[] = [
   ),
 ];
 
-const ITEMS_DOWN: MenuItem[] = [
-  getItem(
-    <Link href="/repository">知识库</Link>,
-    'sub1',
-    <i className="iconfont icon-zhishiku" style={{ color: '#0062FF' }} />,
-    [getItem(<Link href={`/repo-detail/99999/home`}>Web前端</Link>, '6')]
-  ),
-];
+const handleRepoItems = (repoList: Repository[] = []) => {
+  return repoList.map((repo) =>
+    getItem(
+      <Link href={`/repo-detail/${repo._id}/home`}>{repo.title}</Link>,
+      repo._id
+    )
+  );
+};
 
 export default function SideBar() {
   const pathName = usePathname();
+  const { data: repoList = [] } = useGetRepositoryListQuery();
+
+  const ITEMS_DOWN: MenuItem[] = [
+    getItem(
+      <Link href="/repository">知识库</Link>,
+      'sub1',
+      <i className="iconfont icon-zhishiku" style={{ color: '#0062FF' }} />,
+      handleRepoItems(repoList)
+    ),
+  ];
+
   // 计算当前选中的 key
   const getSelectedKey = () => {
     // 处理根路径

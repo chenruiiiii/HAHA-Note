@@ -1,19 +1,22 @@
 export interface RepoDetailType {
   _id: string;
-  name: string;
   isPublic: boolean;
   description: string;
-  word_count: number;
   update_time: string;
-  owner: string;
+  creator: string;
   avatar: string[];
   docs_list: RepoListItem[];
-  collect: boolean;
-  file_desc_title: string;
-  file_desc: string;
+  title: string;
+  repo_desc: string;
+  type: string;
+  isCollect: boolean;
 }
 
 interface RepoListItem {
   docs_id: string;
   docs_name: string;
+}
+
+export interface RepoDetailApiType extends Partial<RepoDetailType> {
+  _id: string;
 }

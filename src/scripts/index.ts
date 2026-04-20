@@ -22,9 +22,6 @@ async function run() {
       case 'docs-detail':
         await seedDocuments();
         break;
-      case 'docs-detail':
-        await seedDocuments();
-        break;
       case 'activity': // 新增：一次性填充所有活动数据
         await seedEditHistory();
         await seedBrowseHistory();

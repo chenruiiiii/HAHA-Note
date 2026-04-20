@@ -16,37 +16,6 @@ type RepositoryItem = {
   type: 'note' | 'project' | 'code' | 'growth';
 };
 
-const repositories: RepositoryItem[] = [
-  {
-    id: '1',
-    name: '面试准备',
-    author: '陈惟',
-    public: false,
-    type: 'note',
-  },
-  {
-    id: '2',
-    name: '项目',
-    author: '陈惟',
-    public: false,
-    type: 'project',
-  },
-  {
-    id: '3',
-    name: 'web前端',
-    author: '陈惟',
-    public: true,
-    type: 'code',
-  },
-  {
-    id: '4',
-    name: '进阶知识',
-    author: '陈惟',
-    public: true,
-    type: 'growth',
-  },
-];
-
 const NewFileModal = () => {
   const router = useRouter();
   const { data: repositories, isLoading, error } = useGetRepositoryListQuery();

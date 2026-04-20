@@ -2,6 +2,7 @@ import { repositorySlice } from './modules/repository';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import TempReducer from './modules/temp';
 import ChatReducer from './modules/chat';
+import RepoDetailReducer from './modules/repoDetail';
 import { configureStore } from '@reduxjs/toolkit';
 import { userHistorySlice } from './modules/user_history';
 
@@ -9,6 +10,7 @@ export const store = configureStore({
   reducer: {
     temp: TempReducer,
     chat: ChatReducer,
+    repoDetail: RepoDetailReducer,
     [userHistorySlice.reducerPath]: userHistorySlice.reducer,
     [repositorySlice.reducerPath]: repositorySlice.reducer,
   },

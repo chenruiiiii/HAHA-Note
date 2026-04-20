@@ -26,8 +26,14 @@ const mainMenuList = [
 const RepoSide = () => {
   const params = useParams();
   const repoId = params.repoId as string;
-  const { data: repoDetail, isLoading, error, handleToDetail, handleToHome } =
-    useRepoDetail(repoId);
+  const {
+    data: repoDetail,
+    isLoading,
+    error,
+    handleToDetail,
+    handleToHome,
+  } = useRepoDetail(repoId);
+  console.log(repoDetail);
 
   if (isLoading) return <HASkeleton num={1} />;
   if (error || !repoDetail) return <HAEmpty />;
@@ -39,11 +45,11 @@ const RepoSide = () => {
           <img className={styles['repo-logo']} src={logoImg.src} alt="logo" />
           <div className={styles['repo-title-group']}>
             <HABack onClick={() => handleToHome(false)}>
-              <div className={[styles['repo-owner']].join(' ')}>个人知识库</div>
+              <div className={[styles['repo-owner']].join(' ')}>开始</div>
             </HABack>
             <div className={styles['repo-title-row']}>
               <span className={[styles['repo-title'], 'cursor-pointer'].join(' ')}>
-                {repoDetail.name}
+                {repoDetail.title}
               </span>
             </div>
           </div>
