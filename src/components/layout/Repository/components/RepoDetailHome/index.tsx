@@ -39,7 +39,6 @@ const RepoDetailHome = () => {
 
   if (!repoId) return <HAEmpty />;
   if (!repoDetail) return <HALoading type="simple" />;
-  if (!repoDetail.docs_list) return <HAError />;
 
   return <RepoDetailHomeView repoDetail={repoDetail} onToggleCollect={handleToggleCollect} />;
 };

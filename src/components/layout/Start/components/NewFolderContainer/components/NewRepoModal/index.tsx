@@ -1,7 +1,8 @@
 'use client';
-import { FieldNamesType } from 'antd/es/cascader';
 import styles from './style.module.scss';
-import { Button, Form, FormProps, Input } from 'antd';
+import { Button, Form, FormProps, Input, message } from 'antd';
+import { useCreateRepositoryMutation } from '@/store/modules/repository';
+import { useRouter } from 'next/navigation';
 
 type FieldType = {
   repoName?: string;
@@ -9,8 +10,23 @@ type FieldType = {
 };
 
 const NewRepoModal = () => {
-  const onFinish: FormProps<FieldType>['onFinish'] = (values) => {
-    console.log('Success:', values);
+  const router = useRouter();
+  const [form] = Form.useForm<FieldType>();
+  const [messageApi, contextHolder] = message.useMessage();
+  const [createRepository, { isLoading }] = useCreateRepositoryMutation();
+
+  const onFinish: FormProps<FieldType>['onFinish'] = async (values) => {
+    try {
+      const result = await createRepository({
+        title: values.repoName?.trim() || '',
+        description: values.description?.trim(),
+      }).unwrap();
+      messageApi.success('知识库创建成功');
+      form.resetFields();
+      router.push(`/repo-detail/${result.data._id}/home`);
+    } catch {
+      messageApi.error('知识库创建失败，请稍后重试');
+    }
   };
 
   const onFinishFailed: FormProps<FieldType>['onFinishFailed'] = (errorInfo) => {
@@ -18,11 +34,18 @@ const NewRepoModal = () => {
   };
   return (
     <div className={styles['new-repo-modal']}>
-      <Form name="basic" onFinish={onFinish} onFinishFailed={onFinishFailed} autoComplete="off">
+      {contextHolder}
+      <Form
+        form={form}
+        name="basic"
+        onFinish={onFinish}
+        onFinishFailed={onFinishFailed}
+        autoComplete="off"
+      >
         <Form.Item<FieldType>
           name="repoName"
           label={'🧀库名称'}
-          rules={[{ required: true, message: 'Please input your repoName!' }]}
+          rules={[{ required: true, message: '请输入知识库名称~' }]}
         >
           <Input placeholder="知识库名称" />
         </Form.Item>
@@ -31,7 +54,12 @@ const NewRepoModal = () => {
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" style={{ width: '100%', padding: '3px 0' }}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isLoading}
+            style={{ width: '100%', padding: '3px 0' }}
+          >
             新建
           </Button>
         </Form.Item>

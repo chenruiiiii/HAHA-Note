@@ -3,46 +3,50 @@ import HAEditor from '@/components/common/HAEditor';
 import { Suspense, useEffect } from 'react';
 import HALoading from '@/components/common/HALoading';
 import { useParams } from 'next/navigation';
-import HAEmpty from '@/components/common/HAEmpty';
 import useDocsDetail from '@/hooks/layer/useDocsDetail';
 import { updateDocsDetailData } from '@/services/docs-detail';
 import { useAppDispatch } from '@/store';
 import { upsertRepoDetailDocAction } from '@/store/modules/repoDetail';
+import { DocumentDetail } from '@/models/docs';
 
 const FileDetail = () => {
   const params = useParams();
   const dispatch = useAppDispatch();
   const repoId = params.repoId as string;
   const docsId = params.fileId as string;
-  const { data, isLoading, error } = useDocsDetail(docsId, repoId);
+  const { data, isLoading } = useDocsDetail(docsId, repoId);
+  const editorData: DocumentDetail = data ?? {
+    _id: docsId,
+    repository_id: repoId,
+    title: '新建文档',
+    content_html: '',
+    author: '',
+    updated_at: '',
+  };
 
   useEffect(() => {
-    if (!repoId || !docsId || !data?.title) return;
+    if (!repoId || !docsId) return;
 
     dispatch(
       upsertRepoDetailDocAction({
         repoId,
         docsId,
-        docsName: data.title,
+        docsName: editorData.title || '新建文档',
       })
     );
-  }, [data?.title, dispatch, docsId, repoId]);
+  }, [dispatch, docsId, editorData.title, repoId]);
 
   if (isLoading) {
     return <HALoading type="simple" />;
-  }
-
-  if (error || !data) {
-    return <HAEmpty />;
   }
 
   return (
     <Suspense fallback={<HALoading type="simple" />}>
       <div className="file-detail" style={{ height: '100%', overflowY: 'scroll' }}>
         <HAEditor
-          initialTitle={data.title}
-          initialContent={data.content_html}
-          initialSavedAt={data.updated_at}
+          initialTitle={editorData.title}
+          initialContent={editorData.content_html}
+          initialSavedAt={editorData.updated_at}
           onTitleChange={(title) => {
             dispatch(
               upsertRepoDetailDocAction({
@@ -57,7 +61,7 @@ const FileDetail = () => {
               title: title || '新建文档',
               content_html: content,
               repository_id: repoId,
-              author: data.author || '当前用户',
+              author: editorData.author || '当前用户',
             });
             dispatch(
               upsertRepoDetailDocAction({

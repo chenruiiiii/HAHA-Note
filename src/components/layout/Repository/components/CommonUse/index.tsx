@@ -1,45 +1,43 @@
+'use client';
+
 import React from 'react';
 import styles from './style.module.scss';
 import FileIcon from '@/components/common/FileIcon';
+import { useGetRepositoryListQuery } from '@/store/modules/repository';
+import HASkeleton from '@/components/common/HASkeleton';
+import HAEmpty from '@/components/common/HAEmpty';
+import Link from 'next/link';
 
 const CommonUse = () => {
-  const list = [
-    {
-      name: '常用1',
-      public: true,
-    },
-    {
-      name: '常用2',
-      public: true,
-    },
-    {
-      name: '常用3',
-      public: false,
-    },
-    {
-      name: '常用4',
-      public: true,
-    },
-    {
-      name: '常用5',
-      public: true,
-    },
-  ];
+  const { data: repositories = [], isLoading, error } = useGetRepositoryListQuery();
+  const list = repositories.slice(0, 5);
+
+  if (isLoading) return <HASkeleton num={3} />;
+  if (error) return <HAEmpty />;
+  if (!list.length) return <HAEmpty />;
+
   return (
     <div className={styles['common-use']}>
       <div className={styles['title']}>常用</div>
       <div className={styles['list']}>
         {list.map((item) => {
           return (
-            <div className={styles['list-item']} key={item.name}>
-              <FileIcon file_name={item.name} />
+            <Link
+              href={`/repo-detail/${item._id}/home`}
+              className={styles['list-item']}
+              key={item._id}
+            >
+              <FileIcon type={item.type} />
               <div className={styles['name']}>
-                {item.name}
+                {item.title}
                 <i
-                  className={['iconfont', item.public ? 'icon-jiesuo' : 'icon-suoding'].join(' ')}
+                  className={[
+                    'iconfont',
+                    item.isPublic ? 'icon-jiesuo' : 'icon-suoding',
+                  ].join(' ')}
                 ></i>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
