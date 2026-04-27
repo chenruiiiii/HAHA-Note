@@ -5,6 +5,7 @@ import './style.scss';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import MDEditor from '@uiw/react-md-editor';
+import HALoading from '@/components/common/HALoading';
 import emitter from '@/lib/mitt';
 import ChatBottom from '../AIWritingHome/components/ChatBottom';
 import { useAppSelector } from '@/store';
@@ -59,6 +60,7 @@ type RenderBlock =
 
 const AiChat = ({ id: _id }: AiChatProps) => {
   const [chatTitle, setChatTitle] = useState('新建文档');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const { messages, status, sendMessage, setMessages } = useChat({
     transport: new DefaultChatTransport({
@@ -198,9 +200,20 @@ const AiChat = ({ id: _id }: AiChatProps) => {
             switch (block.type) {
               case 'text':
                 return (
-                  <div key={`${id}-${i}`} className="message-part">
+                  <div
+                    key={`${id}-${i}`}
+                    className="message-part"
+                    data-color-mode={role !== 'user' ? 'light' : undefined}
+                  >
                     {showPostingBox && i === 0 && role !== 'user' && <PostingBox />}
-                    <div className="message-text">{block.content}</div>
+                    {role === 'user' ? (
+                      <div className="message-text">{block.content}</div>
+                    ) : (
+                      <MDEditor.Markdown
+                        source={block.content}
+                        className="chat-markdown-preview"
+                      />
+                    )}
                   </div>
                 );
               case 'markdown':
@@ -267,7 +280,23 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   }, [handlePostingClose, handleScroll, status]);
 
   useEffect(() => {
-    void loadChatDetail();
+    let cancelled = false;
+
+    const initChatDetail = async () => {
+      try {
+        await loadChatDetail();
+      } finally {
+        if (!cancelled) {
+          setIsInitialLoading(false);
+        }
+      }
+    };
+
+    void initChatDetail();
+
+    return () => {
+      cancelled = true;
+    };
   }, [loadChatDetail]);
 
   useEffect(() => {
@@ -313,12 +342,18 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       </div>
       <div className="chat-box" ref={chatRef}>
         <div className="container">
-          {messages.map((message, index) =>
-            handleContent(
-              message.id,
-              message.role,
-              (message.parts ?? []) as Array<RenderablePart>,
-              message.role === 'assistant' && index === messages.length - 1 && status !== 'ready'
+          {isInitialLoading ? (
+            <div className="chat-initial-loading">
+              <HALoading type="simple" />
+            </div>
+          ) : (
+            messages.map((message, index) =>
+              handleContent(
+                message.id,
+                message.role,
+                (message.parts ?? []) as Array<RenderablePart>,
+                message.role === 'assistant' && index === messages.length - 1 && status !== 'ready'
+              )
             )
           )}
         </div>

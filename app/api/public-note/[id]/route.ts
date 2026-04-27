@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { publicNoteMockMap } from '@/constants/config.ts/mock';
+import { getPublicNoteDetailById } from '@/services/public-note';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const detail = publicNoteMockMap[id];
+  const detail = await getPublicNoteDetailById(id);
 
   if (!detail) {
     return NextResponse.json(

@@ -2,12 +2,10 @@
 import styles from './style.module.scss';
 import HAAvatar from '@/components/common/HAAvatar';
 import { RecommendDetailType } from '../../types/recommend';
-import { useRouter } from 'next/navigation';
 
-const RightRecommendItem = ({ _id, author: { avatar, name }, title_html }: RecommendDetailType) => {
-  const router = useRouter();
+const RightRecommendItem = ({ id, author: { avatar, name }, title_html }: RecommendDetailType) => {
   const handleToDetail = () => {
-    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${_id}`, '_blank');
+    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${id}`, '_blank');
   };
   return (
     <div className={[styles['recommend-item']].join(' ')}>

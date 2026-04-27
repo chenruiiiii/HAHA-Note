@@ -47,6 +47,7 @@ export const rightRecommendItemModelSchema: z.ZodType<RightRecommendItemType> = 
 
 export const recommendDetailModelSchema: z.ZodType<RecommendDetailType> = z.object({
   _id: z.string(),
+  id: z.string(),
   source: recommendSourceSchema,
   author: recommendAuthorSchema,
   title_html: z.string(),

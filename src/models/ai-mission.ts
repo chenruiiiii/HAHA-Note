@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const ListItemSchema = z.object({
   _id: z.string(),
   title: z.string(),
+  docs_id: z.string(),
 });
 
 export const AiChatListItemSchema = z.object({

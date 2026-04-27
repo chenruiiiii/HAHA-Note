@@ -25,6 +25,7 @@ export interface RightRecommendItemType {
 
 export interface RecommendDetailType {
   _id: string;
+  id: string;
   source: {
     platform: 'yuque' | 'community';
     title: string;

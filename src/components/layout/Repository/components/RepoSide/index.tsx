@@ -94,22 +94,26 @@ const RepoSide = () => {
 
       <section className={styles['repo-list-section']}>
         <div className={styles['repo-items']}>
-          {repoDetail.docs_list.map((item) => (
-            <div
-              key={item.docs_id}
-              className={[styles['repo-item'], 'cursor-pointer'].join(' ')}
-              onClick={() => handleToDetail(item.docs_id)}
-            >
-              <span className={`${styles['repo-item-name']} ellipse-one-line`}>
-                {item.docs_name}
-              </span>
-              <Tooltip title="目录操作">
-                <button type="button" className={styles['ghost-action']} aria-label="目录操作">
-                  <i className="iconfont icon-gengduo"></i>
-                </button>
-              </Tooltip>
-            </div>
-          ))}
+          {repoDetail.docs_list.length ? (
+            repoDetail.docs_list.map((item) => (
+              <div
+                key={item.docs_id}
+                className={[styles['repo-item'], 'cursor-pointer'].join(' ')}
+                onClick={() => handleToDetail(item.docs_id)}
+              >
+                <span className={`${styles['repo-item-name']} ellipse-one-line`}>
+                  {item.docs_name}
+                </span>
+                <Tooltip title="目录操作">
+                  <button type="button" className={styles['ghost-action']} aria-label="目录操作">
+                    <i className="iconfont icon-gengduo"></i>
+                  </button>
+                </Tooltip>
+              </div>
+            ))
+          ) : (
+            <HAEmpty />
+          )}
         </div>
       </section>
     </aside>

@@ -56,7 +56,7 @@ const ChatListModal = () => {
               <div
                 className="chat-list-item ellipse-one-line cursor-pointer"
                 key={item._id}
-                onClick={() => handleClick(item._id)}
+                onClick={() => handleClick(item.docs_id)}
               >
                 {item.title}
               </div>

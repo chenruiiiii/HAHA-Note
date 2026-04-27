@@ -1,5 +1,6 @@
 'use client';
 
+import HAEmpty from '@/components/common/HAEmpty';
 import { Tooltip } from 'antd';
 import styles from './style.module.scss';
 import { RepoDetailType } from '../../types';
@@ -67,14 +68,20 @@ const RepoDetailHomeView = ({ repoDetail, onToggleCollect }: RepoDetailHomeViewP
 
         <section className={styles['document-section']}>
           <ul className={styles['document-list']}>
-            {safeDocsList.map((item) => (
-              <li key={item.docs_id} className={styles['document-item']}>
-                <span className={`${styles['document-title']} ellipse-one-line`}>
-                  {item.docs_name}
-                </span>
-                <span className={styles['document-line']} aria-hidden="true" />
+            {safeDocsList.length ? (
+              safeDocsList.map((item) => (
+                <li key={item.docs_id} className={styles['document-item']}>
+                  <span className={`${styles['document-title']} ellipse-one-line`}>
+                    {item.docs_name}
+                  </span>
+                  <span className={styles['document-line']} aria-hidden="true" />
+                </li>
+              ))
+            ) : (
+              <li>
+                <HAEmpty />
               </li>
-            ))}
+            )}
           </ul>
         </section>
       </div>
