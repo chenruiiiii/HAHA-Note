@@ -4,6 +4,7 @@ import { seedDocuments } from './seed-docs';
 import { seedBrowseHistory, seedEditHistory } from './seed-activity';
 import { seedFavoriteCollections } from './seed-collections';
 import { seedAiChat } from './seed-ai-chat';
+import { seedAdmins } from './seed-admin';
 
 const rawArg = process.argv[2] || '';
 const task = rawArg.replace(/^-+/, ''); // 兼容 --docs 和 docs
@@ -32,6 +33,9 @@ async function run() {
       case 'ai-chat':
         await seedAiChat();
         break;
+      case 'admin':
+        await seedAdmins();
+        break;
       case 'all':
         await seedRepositories();
         await seedDocuments();
@@ -39,10 +43,11 @@ async function run() {
         await seedBrowseHistory();
         await seedFavoriteCollections();
         await seedAiChat();
+        await seedAdmins();
         break;
       default:
         console.log(
-          '❌ 请指定任务名称: repos, docs, docs-detail, activity, favorite, ai-chat, docs-detail, activity, favorite, docs-detail, activity, favorite, 或 all'
+          '❌ 请指定任务名称: repos, docs, docs-detail, activity, favorite, ai-chat, admin 或 all'
         );
         process.exit(1);
     }

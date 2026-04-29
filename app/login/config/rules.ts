@@ -1,16 +1,16 @@
 export const form_rules = {
-  phone: {
+  username: {
     rules: [
-      { required: true, message: '请输入手机号' },
-      { pattern: /^1[3456789]\d{8}$/, message: '请输入正确的手机号' },
+      { required: true, message: '请输入账号' },
+      { min: 3, message: '账号长度不能少于 3 位' },
     ],
-    defaultValue: '请输入手机号',
+    defaultValue: '请输入账号',
   },
-  code: {
+  password: {
     rules: [
-      { required: true, message: '请输入验证码' },
-      { pattern: /^\d{6}$/, message: '验证码为6位数字' },
+      { required: true, message: '请输入密码' },
+      { min: 3, message: '密码长度不能少于 3 位' },
     ],
-    defaultValue: '请输入验证码',
+    defaultValue: '请输入密码',
   },
 };
