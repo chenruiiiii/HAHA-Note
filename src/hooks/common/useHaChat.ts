@@ -1,13 +1,15 @@
 import { useAppDispatch, useAppSelector } from '@/store';
 import { setTempValueAction } from '@/store/modules/temp';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { nanoid } from 'nanoid';
 import emitter from '@/lib/mitt';
 import { setPostingAction } from '@/store/modules/chat';
+import { errorMessage } from '@/utils/message_reminder';
 
 export function useHaChat() {
-  const { isPosting } = useAppSelector((state) => ({ ...state.chat }));
+  const { isPosting, requestStatus, lastError, retryCount } = useAppSelector((state) => ({
+    ...state.chat,
+  }));
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
@@ -43,8 +45,18 @@ export function useHaChat() {
   // 处理error
   const handleError = (error: string) => {
     handlePostingClose();
-    console.log(error);
+    errorMessage(error);
   };
 
-  return { isPosting, handlePostingClose, handlePostingOpen, handleSend, stopSendMessage };
+  return {
+    isPosting,
+    requestStatus,
+    lastError,
+    retryCount,
+    handlePostingClose,
+    handlePostingOpen,
+    handleSend,
+    stopSendMessage,
+    handleError,
+  };
 }

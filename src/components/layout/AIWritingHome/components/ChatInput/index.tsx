@@ -9,7 +9,7 @@ import emitter from '@/lib/mitt';
 
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');
-  const { isPosting, handleSend, handlePostingClose } = useHaChat();
+  const { isPosting, handleSend } = useHaChat();
 
   // 通知兄弟组件发送消息并展示流式数据内容
   const handleSendMessage = () => {
@@ -20,9 +20,7 @@ const ChatInput = () => {
   // 发送按钮点击事件
   const handleSendClick = () => {
     if (isPosting) {
-      warningMessage('已停止消息输出，若需重新开始再次输入！');
       emitter.emit('stop-send-message');
-      handlePostingClose();
     } else {
       if (inputValue.trim() === '') {
         warningMessage('请输入内容！');

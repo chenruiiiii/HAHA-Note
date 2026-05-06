@@ -6,13 +6,25 @@ import emitter from '@/lib/mitt';
 const PostingBox = () => {
   const [isStreaming, setIsStreaming] = useState(true);
   useEffect(() => {
-    emitter.on('quit-streaming', () => {
+    const quitStreaming = () => {
       setIsStreaming(false);
-    });
-    return () => {
-      emitter.off('quit-streaming');
     };
-  }, [isStreaming]);
+    emitter.on('quit-streaming', quitStreaming);
+    return () => {
+      emitter.off('quit-streaming', quitStreaming);
+    };
+  }, []);
+
+  useEffect(() => {
+    const restartStreaming = () => {
+      setIsStreaming(true);
+    };
+    emitter.on('start-streaming', restartStreaming);
+    return () => {
+      emitter.off('start-streaming', restartStreaming);
+    };
+  }, []);
+
   return (
     <div className={styles['posting-box']}>
       {isStreaming && (

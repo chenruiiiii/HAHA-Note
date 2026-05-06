@@ -2,8 +2,7 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import InnerHeader from './components/InnerHeader';
 import './style.scss';
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport, type UIMessage } from 'ai';
+import { type UIMessage } from 'ai';
 import MDEditor from '@uiw/react-md-editor';
 import HALoading from '@/components/common/HALoading';
 import emitter from '@/lib/mitt';
@@ -16,6 +15,7 @@ import { formatTime } from '@/utils/timeFormatter';
 import type { AiMissionDetail, AiMissionPart } from '@/models/ai-mission';
 import http from '@/lib/http';
 import type { ResponseData } from '@/types/response';
+import { useAIChatStream } from '@/hooks/common/useAIChatStream';
 
 interface AiChatProps {
   id: string;
@@ -61,22 +61,16 @@ type RenderBlock =
 const AiChat = ({ id: _id }: AiChatProps) => {
   const [chatTitle, setChatTitle] = useState('新建文档');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-
-  const { messages, status, sendMessage, setMessages } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat-detail',
-      body: {
-        chatId: _id,
-      },
-    }),
-    onFinish: () => {
-      void loadChatDetail();
-    },
-  });
   const chatRef = useRef<HTMLDivElement>(null);
-  const { handlePostingClose, handlePostingOpen } = useHaChat();
+  const loadChatDetailRef = useRef<() => Promise<unknown> | unknown>(() => null);
+  const { handlePostingClose, handlePostingOpen, requestStatus, lastError, retryCount } = useHaChat();
   const { value } = useAppSelector((state) => ({ ...state.temp }));
   const { checkDuplicate } = useOneRequest();
+
+  const { messages, status, sendMessage, setMessages, stopStream, retryStream } = useAIChatStream({
+    chatId: _id,
+    onPersisted: () => loadChatDetailRef.current(),
+  });
 
   const loadChatDetail = useCallback(async () => {
     try {
@@ -104,6 +98,10 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       return null;
     }
   }, [_id, setMessages]);
+
+  useEffect(() => {
+    loadChatDetailRef.current = loadChatDetail;
+  }, [loadChatDetail]);
 
   // 处理具体内容显示
   const getImageMeta = useCallback((part: RenderablePart) => {
@@ -269,6 +267,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   useEffect(() => {
     // 再次变为submitted时，说明开始新的请求，新对话滚动到可视窗口最上方
     if (status == 'submitted') {
+      emitter.emit('start-streaming');
       handleScroll();
     }
 
@@ -306,13 +305,15 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   // 结束流式传输，停止发送中状态
   useEffect(() => {
     const handler = () => {
-      handlePostingClose();
+      void stopStream().finally(() => {
+        handlePostingClose();
+      });
     };
     emitter.on('stop-send-message', handler);
     return () => {
       emitter.off('stop-send-message', handler);
     };
-  }, [handlePostingClose]);
+  }, [handlePostingClose, stopStream]);
 
   // chat-put组件发布 chat-message 消息时候发送消息
   useEffect(() => {
@@ -342,6 +343,19 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       </div>
       <div className="chat-box" ref={chatRef}>
         <div className="container">
+          {(requestStatus === 'error' || requestStatus === 'retrying') && lastError && (
+            <div className="chat-status-banner">
+              <span>
+                {lastError}
+                {retryCount > 0 ? `（第 ${retryCount} 次）` : ''}
+              </span>
+              {requestStatus === 'error' && (
+                <button type="button" onClick={() => void retryStream()}>
+                  重新生成
+                </button>
+              )}
+            </div>
+          )}
           {isInitialLoading ? (
             <div className="chat-initial-loading">
               <HALoading type="simple" />

@@ -46,6 +46,7 @@ export const AiMissionMessageSchema = z.object({
 export const AiMissionDetailSchema = z.object({
   _id: z.string(),
   title: z.string(),
+  summary: z.string().optional(),
   category: z.enum(['recent', 'favorite']),
   types: z.array(AiMissionMessageSchema),
   created_at: z.string(),

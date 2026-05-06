@@ -121,6 +121,38 @@ async function generateDocumentTitle(messages: AiMissionMessage[]) {
   }
 }
 
+async function generateConversationSummary(messages: AiMissionMessage[]) {
+  const conversation = messages
+    .filter((message) => message.role !== 'system')
+    .map((message) => `${message.role === 'user' ? '用户' : '助手'}：${getMessagePlainText(message)}`)
+    .join('\n')
+    .trim();
+
+  if (!conversation) {
+    return '';
+  }
+
+  try {
+    const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
+    const result = await generateText({
+      model: deepseek('deepseek-chat'),
+      prompt: [
+        '请基于下面的对话内容，生成一段适合作为会话摘要的中文总结。',
+        '要求：',
+        '1. 控制在 60 到 100 个中文字符内',
+        '2. 仅输出摘要内容，不要添加前缀',
+        '3. 保留用户诉求、关键结果和主要约束',
+        '',
+        conversation,
+      ].join('\n'),
+    });
+
+    return result.text.trim().slice(0, 120);
+  } catch {
+    return conversation.slice(0, 120);
+  }
+}
+
 async function saveChatListItem(chatId: string, title: string) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
@@ -138,7 +170,14 @@ async function saveChatListItem(chatId: string, title: string) {
   );
 }
 
-async function saveChatDetail(chatId: string, messages: UIMessage[], titleOverride?: string) {
+async function saveChatDetail(
+  chatId: string,
+  messages: UIMessage[],
+  options?: {
+    titleOverride?: string;
+    summaryOverride?: string;
+  }
+) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection<AiMissionDetail>(COLLECTION_NAME);
@@ -146,11 +185,12 @@ async function saveChatDetail(chatId: string, messages: UIMessage[], titleOverri
   const now = new Date().toISOString();
 
   const existing = await collection.findOne({ _id: chatId });
-  const title = titleOverride || existing?.title || getTitleFromMessages(normalizedMessages);
+  const title = options?.titleOverride || existing?.title || getTitleFromMessages(normalizedMessages);
 
   const payload: AiMissionDetail = {
     _id: chatId,
     title,
+    summary: options?.summaryOverride || existing?.summary || '',
     category: existing?.category || 'recent',
     types: normalizedMessages,
     created_at: existing?.created_at || now,
@@ -198,15 +238,21 @@ export async function POST(req: Request) {
     originalMessages: messages,
     onFinish: async ({ messages: finalMessages }) => {
       const needsTitleGeneration = await shouldGenerateTitle(chatId);
+      const normalizedMessages = normalizeMessages(finalMessages);
+      const summary = await generateConversationSummary(normalizedMessages);
 
       if (needsTitleGeneration) {
-        const normalizedMessages = normalizeMessages(finalMessages);
         const generatedTitle = await generateDocumentTitle(normalizedMessages);
-        await saveChatDetail(chatId, finalMessages, generatedTitle);
+        await saveChatDetail(chatId, finalMessages, {
+          titleOverride: generatedTitle,
+          summaryOverride: summary,
+        });
         return;
       }
 
-      await saveChatDetail(chatId, finalMessages);
+      await saveChatDetail(chatId, finalMessages, {
+        summaryOverride: summary,
+      });
     },
   });
 }
