@@ -1,7 +1,12 @@
-import { LOGIN_COOKIE_NAME, LOGIN_ROUTE, isPublicAuthPath, shouldBypassAuth } from '@/middleware/auth';
+import {
+  LOGIN_COOKIE_NAME,
+  LOGIN_ROUTE,
+  isPublicAuthPath,
+  shouldBypassAuth,
+} from '@/middleware/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (shouldBypassAuth(pathname) || isPublicAuthPath(pathname)) {

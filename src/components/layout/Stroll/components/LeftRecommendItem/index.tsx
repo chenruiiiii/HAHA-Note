@@ -6,7 +6,6 @@ import { RecommendDetailType } from '../../types/recommend';
 
 const RecommendItem = ({
   _id,
-  id,
   author: { avatar, name },
   title_html,
   description_html,
@@ -33,11 +32,11 @@ const RecommendItem = ({
 
   // 跳转详情页
   const handleToDetail = () => {
-    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${id}`, '_blank');
+    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${_id}`, '_blank');
   };
 
   const handleOpenSource = () => {
-    window.open(`/public-note/${id}`, '_blank', 'noopener,noreferrer');
+    window.open(`/public-note/${_id}`, '_blank', 'noopener,noreferrer');
   };
 
   return (

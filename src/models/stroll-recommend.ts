@@ -32,7 +32,7 @@ const recommendAuthorSchema = z.object({
 });
 
 export const leftRecommendItemModelSchema: z.ZodType<LeftRecommendItemType> = z.object({
-  id: z.string(),
+  _id: z.string(),
   user: recommendUserSchema,
   content: leftRecommendContentSchema,
   likNum: z.number(),

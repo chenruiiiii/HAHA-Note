@@ -1,7 +1,7 @@
 import FileDetail from '@/components/layout/Stroll/components/FileDetail';
 import { RecommendDetailType } from '@/components/layout/Stroll/types/recommend';
 
-const StrollRecommend = async ({ params: { id } }: { params: { id: string } }) => {
+const StrollRecommend = async ({ params: { _id } }: { params: { _id: string } }) => {
   const detail: RecommendDetailType = {
     _id: '65a3b2c1d4e5f67890ab1234',
     source: {
