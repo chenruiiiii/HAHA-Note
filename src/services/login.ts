@@ -13,5 +13,5 @@ export interface LoginResponseData {
 }
 
 export async function postLogin(payload: LoginRequestPayload) {
-  return await http.post<ResponseData<LoginResponseData>>('/login', payload);
+  return await http.post<ResponseData<LoginResponseData>>('/api/login', payload);
 }
