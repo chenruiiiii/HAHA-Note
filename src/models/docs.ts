@@ -25,6 +25,7 @@ export const DocumentDetailSchema = z.object({
   repository_id: z.string(),
   title: z.string(),
   content_html: z.string(),
+  summary: z.string().default(''),
   author: z.string(),
   updated_at: z.string(),
 });

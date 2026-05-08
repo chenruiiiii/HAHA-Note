@@ -11,6 +11,14 @@ interface LoginFormValues {
   password: string;
 }
 
+function getSafeRedirectPath(redirectPath: string | null) {
+  if (!redirectPath || !redirectPath.startsWith('/') || redirectPath.startsWith('/login')) {
+    return '/';
+  }
+
+  return redirectPath;
+}
+
 export function useLogin() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -23,7 +31,7 @@ export function useLogin() {
       const response = await postLogin(values);
       message.success(response.message || '登录成功');
 
-      const redirectPath = searchParams.get('redirect') || '/';
+      const redirectPath = getSafeRedirectPath(searchParams.get('redirect'));
       router.replace(redirectPath);
       router.refresh();
     } catch (error) {

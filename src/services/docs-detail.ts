@@ -9,7 +9,7 @@ export const getDocsDetailData = async (docsId: string) => {
 export const updateDocsDetailData = async (
   docsId: string,
   payload: Pick<DocumentDetail, 'title' | 'content_html'> &
-    Partial<Pick<DocumentDetail, 'repository_id' | 'author'>>
+    Partial<Pick<DocumentDetail, 'repository_id' | 'author' | 'summary'>>
 ) => {
   return await http.post<ResponseData<DocumentDetail>>(`/docs-detail/${docsId}`, payload);
 };

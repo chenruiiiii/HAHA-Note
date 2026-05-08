@@ -1,11 +1,16 @@
-import { LOGIN_COOKIE_NAME } from '@/constants/auth';
+import { ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME } from '@/constants/auth';
+import {
+  createAccessToken,
+  createRefreshToken,
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+} from '@/lib/auth-token';
 import clientPromise from '@/lib/mongodb';
 import { AdminUser, AdminUserSchema, LoginPayloadSchema } from '@/models/admin';
 import { NextResponse } from 'next/server';
 
 const DB_NAME = 'ha_admin';
 const COLLECTION_NAME = 'users';
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
 async function ensureAdminSeedData() {
   const client = await clientPromise;
@@ -91,14 +96,26 @@ export async function POST(request: Request): Promise<Response> {
       message: '登录成功',
     });
 
+    const authUser = {
+      username: user.username,
+      role: user.role,
+      nickname: user.nickname,
+    };
+    const [accessToken, refreshToken] = await Promise.all([
+      createAccessToken(authUser),
+      createRefreshToken(authUser),
+    ]);
+
     response.cookies.set({
-      name: LOGIN_COOKIE_NAME,
-      value: encodeURIComponent(user.username),
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: COOKIE_MAX_AGE,
+      name: ACCESS_TOKEN_COOKIE_NAME,
+      value: accessToken,
+      ...getAccessTokenCookieOptions(),
+    });
+
+    response.cookies.set({
+      name: REFRESH_TOKEN_COOKIE_NAME,
+      value: refreshToken,
+      ...getRefreshTokenCookieOptions(),
     });
 
     return response;

@@ -17,6 +17,12 @@
   min-width: 0;
 }
 
+.ha-editor-top-content {
+  width: min(100%, 1040px);
+  margin: 24px auto 0;
+  padding: 0 64px;
+}
+
 .ha-editor-document {
   width: min(100%, 1040px);
   margin: 0 auto;
@@ -152,6 +158,10 @@
   .ha-editor-document {
     padding: 36px 28px 72px;
   }
+
+  .ha-editor-top-content {
+    padding: 0 28px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -174,6 +184,11 @@
 
   .ha-editor-document {
     padding: 28px 18px 56px;
+  }
+
+  .ha-editor-top-content {
+    margin-top: 16px;
+    padding: 0 18px;
   }
 
   .ha-editor-prosemirror,

@@ -3,14 +3,40 @@ import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } fro
 const baseURL = process.env.NEXT_PUBLIC_APP_API_URL;
 
 const TIME_OUT = 10000;
+const refreshEndpoint = baseURL ? `${baseURL}/auth/refresh` : '/api/auth/refresh';
+
+interface RetryableAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const instance = axios.create({
   baseURL,
   timeout: TIME_OUT,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+let refreshPromise: Promise<unknown> | null = null;
+
+async function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = axios.post(refreshEndpoint, undefined, {
+      withCredentials: true,
+      timeout: TIME_OUT,
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    refreshPromise.finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+}
 
 instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -27,8 +53,29 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response) => response.data,
   (error: AxiosError<{ message?: string }>) => {
+    const originalRequest = error.config as RetryableAxiosRequestConfig | undefined;
     const status = error.response?.status;
     let message = '';
+
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      originalRequest.url !== '/auth/refresh'
+    ) {
+      originalRequest._retry = true;
+
+      return refreshAccessToken()
+        .then(() => instance(originalRequest))
+        .catch((refreshError) => {
+          if (typeof window !== 'undefined') {
+            const redirect = `${window.location.pathname}${window.location.search}`;
+            window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`;
+          }
+
+          return Promise.reject(refreshError);
+        });
+    }
 
     if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
       message = '网络请求超时，请检查网络后再试';

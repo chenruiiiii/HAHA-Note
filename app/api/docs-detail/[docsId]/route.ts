@@ -51,6 +51,7 @@ export async function POST(
       content_html?: string;
       repository_id?: string;
       author?: string;
+      summary?: string;
     };
 
     const existing = await collection.findOne({ _id: docsId });
@@ -69,6 +70,7 @@ export async function POST(
         repository_id: body.repository_id.trim(),
         title: body.title?.trim() || '新建文档',
         content_html: body.content_html ?? '',
+        summary: body.summary?.trim() || '',
         author: body.author?.trim() || '当前用户',
         updated_at: new Date().toISOString(),
       };
@@ -86,6 +88,7 @@ export async function POST(
       ...existing,
       title: body.title?.trim() || existing.title,
       content_html: body.content_html ?? existing.content_html,
+      summary: body.summary ?? existing.summary ?? '',
       updated_at: new Date().toISOString(),
     };
 

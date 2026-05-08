@@ -41,6 +41,7 @@ export default function useDocsDetail(docsId?: string, repositoryId?: string) {
           repository_id: repositoryId ?? '',
           title: '新建文档',
           content_html: '',
+          summary: '',
           author: '',
           updated_at: '',
         };

@@ -1,17 +1,15 @@
-import React from 'react';
-import PublicNote from '@/components/layout/PublicNote';
-import { getPublicNoteDetailById } from '@/services/public-note';
-import HAError from '@/components/common/HAError';
+import { Suspense } from 'react';
+import HALoading from '@/components/common/HALoading';
+import PublicNoteContent from './public-note-content';
 
-async function PublicPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const detail = await getPublicNoteDetailById(id);
-
-  if (!detail) {
-    return <HAError />;
-  }
-
-  return <PublicNote detail={detail} />;
+interface PublicNotePageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default PublicPage;
+export default function PublicNotePage({ params }: PublicNotePageProps) {
+  return (
+    <Suspense fallback={<HALoading type="simple" />}>
+      <PublicNoteContent params={params} />
+    </Suspense>
+  );
+}

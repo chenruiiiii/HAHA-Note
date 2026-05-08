@@ -2,6 +2,7 @@
 
 import './style.scss';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { message } from 'antd';
@@ -28,6 +29,7 @@ type HAEditorProps = {
   showToolbar?: boolean;
   showHeader?: boolean;
   showOutline?: boolean;
+  topContent?: ReactNode;
   onTitleChange?: (title: string) => void;
   onTitleSubmit?: (title: string) => void;
   onChange?: (html: string) => void;
@@ -42,6 +44,7 @@ const HAEditor = ({
   showToolbar = true,
   showHeader = true,
   showOutline = true,
+  topContent,
   onTitleChange,
   onTitleSubmit,
   onChange,
@@ -189,6 +192,7 @@ const HAEditor = ({
 
       <div className="ha-editor-shell">
         <main className="ha-editor-main">
+          {topContent && <div className="ha-editor-top-content">{topContent}</div>}
           <div className="ha-editor-document">
             <div className="ha-editor-page">
               <div className="ha-editor-page-title">{title}</div>
