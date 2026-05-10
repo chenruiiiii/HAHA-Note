@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
  * @param request
  * @returns
  */
-export async function GET(request: Request): Promise<any> {
+export async function GET() {
   const client = await clientPromise;
   const db = client.db('user_activity');
   const collection = db.collection('browse_history');

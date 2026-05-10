@@ -4,14 +4,7 @@ import { ResponseData } from '@/types/response';
 
 /**
  * 获取逛逛推荐列表
- * @param page 当前页码 (默认 1)
- * @param limit 每页条数 (默认 10)
  */
-export const getStrollRecommend = async (page: number = 1, limit: number = 10) => {
-  return await http.get<ResponseData<RecommendDetailType[]>>('/stroll/left', {
-    params: {
-      page,
-      limit,
-    },
-  });
+export const getStrollRecommend = async () => {
+  return await http.get<ResponseData<RecommendDetailType[]>>('/stroll/left');
 };

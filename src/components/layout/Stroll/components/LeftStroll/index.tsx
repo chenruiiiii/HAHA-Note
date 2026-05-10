@@ -1,6 +1,5 @@
 'use client';
 import styles from './style.module.scss';
-import HAVirtualScroll from '@/components/common/HAVirtualScroll';
 import RecommendList from '../RecommendList';
 import { Tabs, TabsProps } from 'antd';
 import HAEmpty from '@/components/common/HAEmpty';
@@ -15,11 +14,7 @@ const LeftStroll = () => {
     {
       label: '推荐',
       key: 'recommend',
-      children: (
-        <HAVirtualScroll>
-          <RecommendList isLeft={true} />
-        </HAVirtualScroll>
-      ),
+      children: <RecommendList isLeft={true} />,
     },
   ];
   const onChange = (key: string) => {

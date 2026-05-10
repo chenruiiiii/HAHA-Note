@@ -4,6 +4,7 @@ import { z } from 'zod';
 // 导入你的 Interface (这里假设你已经定义了对应的 Schema，如果没有，我们直接在此处定义校验)
 import { EditDocument, BrowseDocument } from '@/components/layout/Start/types/list';
 const DB_NAME = 'user_activity';
+const HISTORY_COUNT = 200;
 
 // 定义 Zod Schema 以确保数据合规
 const ActivitySchema = z.object({
@@ -33,13 +34,15 @@ export async function seedEditHistory() {
   const db = client.db(DB_NAME);
   const collection = db.collection<EditDocument>('edit_history');
 
-  const data = ActivitySchema.array().parse(generateData(5, 'EDIT'));
+  const data = ActivitySchema.array().parse(generateData(HISTORY_COUNT, 'EDIT'));
   const ops = data.map((item) => ({
     updateOne: { filter: { _id: item._id }, update: { $set: item }, upsert: true },
   }));
 
   const result = await collection.bulkWrite(ops);
-  console.log(`✅ [${DB_NAME}] 编辑历史同步成功：插入 ${result.upsertedCount} 条`);
+  console.log(
+    `✅ [${DB_NAME}] 编辑历史同步成功：目标 ${HISTORY_COUNT} 条，插入 ${result.upsertedCount} 条`
+  );
 }
 
 // 填充浏览历史
@@ -48,11 +51,13 @@ export async function seedBrowseHistory() {
   const db = client.db(DB_NAME);
   const collection = db.collection<BrowseDocument>('browse_history');
 
-  const data = ActivitySchema.array().parse(generateData(5, 'BROWSE'));
+  const data = ActivitySchema.array().parse(generateData(HISTORY_COUNT, 'BROWSE'));
   const ops = data.map((item) => ({
     updateOne: { filter: { _id: item._id }, update: { $set: item }, upsert: true },
   }));
 
   const result = await collection.bulkWrite(ops);
-  console.log(`✅ [${DB_NAME}] 浏览历史同步成功：插入 ${result.upsertedCount} 条`);
+  console.log(
+    `✅ [${DB_NAME}] 浏览历史同步成功：目标 ${HISTORY_COUNT} 条，插入 ${result.upsertedCount} 条`
+  );
 }

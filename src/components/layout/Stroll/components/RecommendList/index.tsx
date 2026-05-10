@@ -1,5 +1,7 @@
 'use client';
-import { Fragment, useEffect, useState } from 'react';
+import HAVirtualScroll from '@/components/common/HAVirtualScroll';
+import HAEmpty from '@/components/common/HAEmpty';
+import { Fragment, useEffect } from 'react';
 import styles from './style.module.scss';
 import LeftRecommendItem from '../LeftRecommendItem';
 import { Divider } from 'antd';
@@ -12,32 +14,38 @@ interface RecommendListProps {
   isLeft: boolean;
 }
 
-const RecommendList = ({ isLeft }: RecommendListProps) => {
-  const { isLoading, loadData, error, list } = useRecommendList(isLeft);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+const LEFT_RECOMMEND_ROW_HEIGHT = 206;
 
-  const left_items =
-    list &&
-    list.map((item, index) => (
-      <Fragment key={item._id}>
-        <LeftRecommendItem {...item} />
-        {index !== list.length - 1 && <Divider size="small" />}
-      </Fragment>
-    ));
+const RecommendList = ({ isLeft }: RecommendListProps) => {
+  const { isLoading, loadData, list } = useRecommendList();
 
   const right_items = list
     .slice(0, 3)
     .map((item) => <RightRecommendItem key={item._id} {...item} />);
 
   useEffect(() => {
-    loadData(page, limit);
-  }, []);
+    loadData();
+  }, [loadData]);
   if (isLoading) return <HASkeleton num={isLeft ? 5 : 3} />;
 
   return (
     <div className={styles['recommend-list']}>
-      {isLeft ? handleEmpty(list, left_items) : handleEmpty(list.slice(0, 3), right_items)}
+      {isLeft ? (
+        <HAVirtualScroll
+          items={list}
+          itemHeight={LEFT_RECOMMEND_ROW_HEIGHT}
+          itemKey={(item) => item._id}
+          empty={<HAEmpty />}
+          renderItem={(item, index) => (
+            <Fragment key={item._id}>
+              <LeftRecommendItem {...item} />
+              {index !== list.length - 1 && <Divider size="small" />}
+            </Fragment>
+          )}
+        />
+      ) : (
+        handleEmpty(list.slice(0, 3), right_items)
+      )}
     </div>
   );
 };

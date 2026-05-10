@@ -3,5 +3,19 @@
 .left-stroll {
   padding-right: 30px;
   height: 100%;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.left-stroll :global(.ant-tabs) {
+  height: 100%;
+  min-height: 0;
+}
+
+.left-stroll :global(.ant-tabs-content-holder),
+.left-stroll :global(.ant-tabs-content),
+.left-stroll :global(.ant-tabs-tabpane) {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }

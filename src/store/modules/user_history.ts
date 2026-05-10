@@ -10,10 +10,9 @@ export const userHistorySlice = createApi({
   tagTypes: ['edited', 'browsed'],
   endpoints: (builder) => ({
     // 获取编辑历史文档
-    getEditedList: builder.query<ListResponse, { type: Align; page: number; limit: number }>({
-      query: ({ type, page, limit }) => ({
+    getEditedList: builder.query<ListResponse, { type: Align }>({
+      query: ({ type }) => ({
         url: type === '编辑过' ? '/edited' : '/browsed',
-        params: { page, limit },
       }),
       // 这里的 result 类型会被推断为 ListResponse
       providesTags: (result, error, arg) => [{ type: 'edited', id: arg.type }],

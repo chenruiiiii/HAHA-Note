@@ -1,17 +1,16 @@
 import { getStrollRecommend } from '@/services/stroll-recommend';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { RecommendDetailType } from '../types/recommend';
 
-export function useRecommendList(isLeft: boolean) {
+export function useRecommendList() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
   const [list, setList] = useState<RecommendDetailType[]>([]);
 
   // 加载数据
-  const loadData = async (page: number, limit: number) => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
-    // isLeft ? 获取左列表数据 : 获取右列表数据
-    const res = isLeft ? await getStrollRecommend(page, limit) : await getStrollRecommend(1, 10);
+    const res = await getStrollRecommend();
     // 根据返回的code , data 处理数据
     if (res.code === 200) {
       setList(res.data);
@@ -19,7 +18,7 @@ export function useRecommendList(isLeft: boolean) {
       setError(res.data);
     }
     setIsLoading(false);
-  };
+  }, []);
 
   return { isLoading, loadData, error, list };
 }
