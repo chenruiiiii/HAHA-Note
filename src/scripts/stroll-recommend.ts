@@ -1,5 +1,7 @@
 import clientPromise from '../lib/mongodb';
 import { recommendDetailListModelSchema } from '../models/stroll-recommend';
+import type { RecommendDetailType } from '../components/layout/Stroll/types/recommend';
+import type { AnyBulkWriteOperation } from 'mongodb';
 
 const DATABASE_NAME = 'stroll-recommend';
 const COLLECTION_NAME = 'recommend_details';
@@ -139,12 +141,12 @@ function buildRecommendSeedData(count: number) {
 export async function seedStrollRecommend() {
   const client = await clientPromise;
   const db = client.db(DATABASE_NAME);
-  const collection = db.collection(COLLECTION_NAME);
+  const collection = db.collection<RecommendDetailType>(COLLECTION_NAME);
   const recommendSeedData = buildRecommendSeedData(STROLL_COUNT);
 
   await collection.createIndex({ id: 1 }, { unique: true });
 
-  const operations = recommendSeedData.map((item) => ({
+  const operations: AnyBulkWriteOperation<RecommendDetailType>[] = recommendSeedData.map((item) => ({
     updateOne: {
       filter: { _id: item._id },
       update: {
