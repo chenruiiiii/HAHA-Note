@@ -11,21 +11,45 @@ import { Align, BrowseDocument, EditDocument } from '../../types/list';
 import HAEmpty from '@/components/common/HAEmpty';
 
 const DOC_ROW_HEIGHT = 76;
+type DocumentList = EditDocument[] | BrowseDocument[];
 
-function DocList() {
-  const [filterType, setFilterType] = useState<Align>('编辑过');
+interface DocListProps {
+  filterType?: Align;
+  list?: DocumentList;
+  isLoading?: boolean;
+  error?: unknown;
+}
+
+function DocList({
+  filterType: controlledFilterType,
+  list: controlledList,
+  isLoading: controlledIsLoading,
+  error: controlledError,
+}: DocListProps) {
+  const [internalFilterType, setInternalFilterType] = useState<Align>('编辑过');
+  const filterType = controlledFilterType ?? internalFilterType;
+  const hasControlledQuery =
+    controlledList !== undefined || controlledIsLoading !== undefined || controlledError !== undefined;
 
   useEffect(() => {
+    if (controlledFilterType) {
+      return;
+    }
+
     const handler = (key: unknown) => {
       const alignKey = key as Align;
-      setFilterType(alignKey);
+      setInternalFilterType(alignKey);
     };
     emitter.on('doc-filtering', handler);
     return () => {
       emitter.off('doc-filtering', handler);
     };
-  }, []);
-  const { data: list, isLoading, error } = useGetEditedListQuery({ type: filterType });
+  }, [controlledFilterType]);
+  const queryResult = useGetEditedListQuery({ type: filterType }, { skip: hasControlledQuery });
+
+  const list = controlledList ?? queryResult.data;
+  const isLoading = controlledIsLoading ?? queryResult.isLoading;
+  const error = controlledError ?? queryResult.error;
 
   const items = useMemo(() => {
     if (!list) {

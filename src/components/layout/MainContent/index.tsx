@@ -1,19 +1,23 @@
 'use client';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import HALoading from '../../common/HALoading';
 import './style.scss';
 interface MainContentProps {
   children: ReactNode;
+  isLoading?: boolean;
 }
 
-function MainContent({ children }: MainContentProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
-  });
-  return <div className="main-content">{isLoading ? <HALoading type="simple" /> : children}</div>;
+function MainContent({ children, isLoading = false }: MainContentProps) {
+  return (
+    <div className="main-content">
+      {children}
+      {isLoading && (
+        <div className="main-content__loading">
+          <HALoading type="simple" />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default MainContent;

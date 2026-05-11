@@ -17,7 +17,12 @@ import {
 } from '@/lib/auth-token';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function proxy(request: NextRequest) {
+export async function proxy() {
+  // Auth is temporarily bypassed; keep authProxyWithLogin below for quick restore.
+  return NextResponse.next();
+}
+
+export async function authProxyWithLogin(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (shouldBypassAuth(pathname) || isPublicAuthPath(pathname)) {

@@ -1,23 +1,31 @@
 'use client';
 import { Segmented } from 'antd';
-import { useState } from 'react';
 import './style.scss';
 import emitter from '@/lib/mitt';
 import { Align } from '../../types/list';
 
 const options = ['编辑过', '浏览过'];
 
-function DocFiltering() {
+interface DocFilteringProps {
+  value?: Align;
+  onChange?: (value: Align) => void;
+}
+
+function DocFiltering({ value, onChange }: DocFilteringProps) {
   const handleTabClick = (key: Align) => {
-    emitter.emit('doc-filtering', key);
+    onChange?.(key);
+    if (!onChange) {
+      emitter.emit('doc-filtering', key);
+    }
     console.log('切换', key);
   };
 
   return (
     <div className="f-sb">
       <div className="f-left">
-        <Segmented<String>
+        <Segmented<string>
           style={{ marginBottom: 8 }}
+          value={value}
           onChange={(value) => handleTabClick(value as Align)}
           options={options}
         />
