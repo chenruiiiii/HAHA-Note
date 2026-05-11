@@ -8,7 +8,7 @@ import ChatBottom from './components/ChatBottom';
 function AIWriting() {
   const [isShowInput, setIsShowInput] = useState(false);
   return (
-    <MainContent>
+    <MainContent style={{ justifyContent: 'space-between' }}>
       <Header></Header>
       {/* <CaseContainer></CaseContainer> */}
       <ChatBottom></ChatBottom>

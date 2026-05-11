@@ -2,9 +2,9 @@
 
 import { postLogin } from '@/services/login';
 import { AxiosError } from 'axios';
-import { message } from 'antd';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { errorMessage, successMessage } from '@/utils/message_reminder';
 
 interface LoginFormValues {
   username: string;
@@ -29,18 +29,18 @@ export function useLogin() {
 
     try {
       const response = await postLogin(values);
-      message.success(response.message || '登录成功');
+      successMessage(response.message || '登录成功');
 
       const redirectPath = getSafeRedirectPath(searchParams.get('redirect'));
       router.replace(redirectPath);
       router.refresh();
     } catch (error) {
       console.error('login failed', error);
-      const errorMessage =
+      const loginErrorMessage =
         error instanceof AxiosError
           ? error.response?.data?.message || error.message
           : '登录失败，请检查账号或密码';
-      message.error(errorMessage);
+      errorMessage(loginErrorMessage);
     } finally {
       setLoading(false);
     }

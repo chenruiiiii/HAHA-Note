@@ -7,9 +7,7 @@ import { setPostingAction } from '@/store/modules/chat';
 import { errorMessage } from '@/utils/message_reminder';
 
 export function useHaChat() {
-  const { isPosting, requestStatus, lastError, retryCount } = useAppSelector((state) => ({
-    ...state.chat,
-  }));
+  const { isPosting, requestStatus, lastError, retryCount } = useAppSelector((state) => state.chat);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();

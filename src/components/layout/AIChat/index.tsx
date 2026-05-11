@@ -64,7 +64,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   const chatRef = useRef<HTMLDivElement>(null);
   const loadChatDetailRef = useRef<() => Promise<unknown> | unknown>(() => null);
   const { handlePostingClose, handlePostingOpen, requestStatus, lastError, retryCount } = useHaChat();
-  const { value } = useAppSelector((state) => ({ ...state.temp }));
+  const value = useAppSelector((state) => state.temp.value);
   const { checkDuplicate } = useOneRequest();
 
   const { messages, status, sendMessage, setMessages, stopStream, retryStream } = useAIChatStream({

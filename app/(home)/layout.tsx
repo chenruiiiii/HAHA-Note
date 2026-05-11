@@ -16,13 +16,22 @@ const aside_style = {
   width: 'var(--width-sidebar)',
   height: '99.95vh',
 };
+const layout_style = {
+  height: '100vh',
+  minHeight: 0,
+};
+
+const content_style = {
+  height: '100%',
+  minHeight: 0,
+};
 
 function Home({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <Provider store={store}>
-      <div className="layout">
+      <div className="layout" style={layout_style}>
         <Aside
           collapsible
           collapsed={collapsed}
@@ -31,8 +40,8 @@ function Home({ children }: { children: ReactNode }) {
         >
           <SideBar></SideBar>
         </Aside>
-        <Layout>
-          <Content>{children}</Content>
+        <Layout style={content_style}>
+          <Content style={content_style}>{children}</Content>
         </Layout>
       </div>
     </Provider>
