@@ -23,7 +23,16 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.cert
+*.credentials.json
+secrets.*
+*.secret
 
 # debug
 npm-debug.log*
@@ -31,11 +40,19 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# environment and secrets
+# Keep real API keys, database URLs, auth secrets, and deployment addresses out of git.
+.env
+.env.*
+.env*.local
+.env.*.local
+!.env.example
+!.env.sample
+!.env.template
 
 # vercel
-.vercel
+.vercel/
+.netlify/
 
 # typescript
 *.tsbuildinfo
@@ -43,4 +60,15 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
-.env*.local
+
+# local AI / MCP / IDE connector config
+.mcp.json
+.mcp.*.json
+.cursor/mcp.json
+.cursor/**/mcp.json
+.vscode/mcp.json
+.vscode/**/mcp.json
+
+# local editor metadata that can contain machine-specific paths or private prompts
+.idea/
+*.code-workspace
