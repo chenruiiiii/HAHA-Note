@@ -25,23 +25,23 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['sass'],
 };
 
-// 根据环境决定是否启用 Sentry
-let finalConfig = nextConfig;
+// Sentry 默认启用；如需临时关闭，可设置 SENTRY_DISABLED=true。
+const isSentryEnabled = process.env.SENTRY_DISABLED !== 'true';
 
-if (process.env.NODE_ENV === 'production') {
-  finalConfig = withSentryConfig(nextConfig, {
-    org: 'cb276019559e',
-    project: 'haha-note',
-    silent: !process.env.CI,
-    widenClientFileUpload: true,
-    tunnelRoute: '/monitoring',
-    webpack: {
-      automaticVercelMonitors: true,
-      treeshake: {
-        removeDebugLogging: true,
+const finalConfig = isSentryEnabled
+  ? withSentryConfig(nextConfig, {
+      org: 'cb276019559e',
+      project: 'haha-note',
+      silent: !process.env.CI,
+      widenClientFileUpload: true,
+      tunnelRoute: '/monitoring',
+      webpack: {
+        automaticVercelMonitors: true,
+        treeshake: {
+          removeDebugLogging: true,
+        },
       },
-    },
-  });
-}
+    })
+  : nextConfig;
 
 export default finalConfig;
