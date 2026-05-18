@@ -4,6 +4,12 @@ import { RepositorySchema } from '@/models/docs';
 import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 
+/**
+ * 获取知识库列表。
+ *
+ * @param request - 请求对象，当前接口未读取请求内容。
+ * @returns 知识库列表 JSON 响应；查询失败时返回错误信息。
+ */
 export async function GET(request: Request): Promise<Response> {
   void request;
   const client = await clientPromise;
@@ -18,6 +24,12 @@ export async function GET(request: Request): Promise<Response> {
   }
 }
 
+/**
+ * 创建新的知识库。
+ *
+ * @param request - 请求对象，JSON body 需包含知识库 `title`，可选 `description`。
+ * @returns 新建知识库详情 JSON 响应；标题为空或创建失败时返回错误信息。
+ */
 export async function POST(request: Request): Promise<Response> {
   const client = await clientPromise;
   const db = client.db('repository');

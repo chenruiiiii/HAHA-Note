@@ -7,6 +7,12 @@ import { NextResponse } from 'next/server';
 const DB_NAME = 'repository';
 const COLLECTION_NAME = 'docs_detail';
 
+/**
+ * 将 HTML 内容转换为适合摘要生成的纯文本。
+ *
+ * @param value - 原始 HTML 字符串。
+ * @returns 移除标签、脚本、样式和多余空白后的纯文本。
+ */
 function stripHtml(value: string) {
   return value
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
@@ -16,6 +22,13 @@ function stripHtml(value: string) {
     .trim();
 }
 
+/**
+ * 基于文档标题和 HTML 内容调用 DeepSeek 生成中文摘要。
+ *
+ * @param title - 文档标题。
+ * @param contentHtml - 文档 HTML 内容。
+ * @returns AI 生成的摘要；内容为空时返回空字符串，生成失败时返回截断后的正文。
+ */
 async function generateDocumentSummary(title: string, contentHtml: string) {
   const plainText = stripHtml(contentHtml);
 
@@ -47,6 +60,13 @@ async function generateDocumentSummary(title: string, contentHtml: string) {
   }
 }
 
+/**
+ * 生成指定文档的 AI 摘要，并可选择持久化到文档详情。
+ *
+ * @param request - 请求对象，JSON body 可包含标题、HTML 内容、知识库 ID、作者和 `persist` 标记。
+ * @param context - Next.js 路由上下文，`params.docsId` 为文档 ID。
+ * @returns 摘要结果或保存后的文档详情 JSON 响应。
+ */
 export async function POST(
   request: Request,
   context: { params: Promise<{ docsId: string }> }
@@ -62,7 +82,10 @@ export async function POST(
       persist?: boolean;
     };
 
-    const summary = await generateDocumentSummary(body.title?.trim() || '新建文档', body.content_html ?? '');
+    const summary = await generateDocumentSummary(
+      body.title?.trim() || '新建文档',
+      body.content_html ?? ''
+    );
 
     if (!body.persist) {
       return NextResponse.json({

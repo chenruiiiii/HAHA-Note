@@ -2,6 +2,13 @@ import { RepoDetailType } from '@/components/layout/Repository/types';
 import clientPromise from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
+/**
+ * 获取指定知识库详情。
+ *
+ * @param _request - 请求对象，当前接口未读取请求内容。
+ * @param context - Next.js 路由上下文，`params.id` 为知识库 ID。
+ * @returns 知识库详情 JSON 响应；ID 为空或知识库不存在时返回错误信息。
+ */
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }
@@ -33,6 +40,10 @@ export async function GET(
 
 /**
  * 更新指定知识库的收藏状态。
+ *
+ * @param request - 请求对象，JSON body 需包含布尔值 `isCollect`。
+ * @param context - Next.js 路由上下文，`params.id` 为知识库 ID。
+ * @returns 更新后的知识库详情 JSON 响应；ID 为空、参数非法或知识库不存在时返回错误信息。
  */
 export async function POST(
   request: Request,

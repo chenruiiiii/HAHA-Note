@@ -5,6 +5,11 @@ import { NextResponse } from 'next/server';
 const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'latest_mission';
 
+/**
+ * 获取最近的 AI 会话任务列表。
+ *
+ * @returns 按 `_id` 倒序排列的最近任务列表 JSON 响应；查询失败时返回错误信息。
+ */
 export async function GET(): Promise<Response> {
   const client = await clientPromise;
   const db = client.db(DB_NAME);

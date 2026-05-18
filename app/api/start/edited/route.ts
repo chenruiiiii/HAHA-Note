@@ -2,9 +2,9 @@ import clientPromise from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 /**
- * 获取最近编辑过的文件
- * @param request
- * @returns
+ * 获取最近编辑过的文件列表。
+ *
+ * @returns 最近编辑记录的 JSON 响应；查询失败时返回错误信息。
  */
 export async function GET() {
   const client = await clientPromise;

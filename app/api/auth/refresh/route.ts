@@ -9,6 +9,12 @@ import {
 } from '@/lib/auth-token';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * 使用刷新令牌续期登录状态。
+ *
+ * @param request - Next.js 请求对象，从 Cookie 中读取 refresh token。
+ * @returns 刷新后的用户信息 JSON 响应；刷新成功时重写 auth cookies，失败时清理 cookies 并返回 401。
+ */
 export async function POST(request: NextRequest): Promise<Response> {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
   const refreshResult = await verifyRefreshToken(refreshToken);

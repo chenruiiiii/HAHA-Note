@@ -5,6 +5,13 @@ import { NextResponse } from 'next/server';
 const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'ai_chat_detail';
 
+/**
+ * 获取指定 AI 会话详情。
+ *
+ * @param _request - 请求对象，当前接口未读取请求内容。
+ * @param context - Next.js 路由上下文，`params.id` 为会话 ID。
+ * @returns 会话详情 JSON 响应；会话不存在时返回 404。
+ */
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }

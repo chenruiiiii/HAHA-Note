@@ -12,6 +12,12 @@ const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'ai_chat_detail';
 const CHAT_LIST_COLLECTION_NAME = 'latest_mission';
 
+/**
+ * 将 AI SDK message part 转换为本项目存储用的消息片段格式。
+ *
+ * @param part - 原始 message part，可能是文本、图片或兼容旧结构的数据。
+ * @returns 标准化后的消息片段；无法识别时返回 `null`。
+ */
 function normalizePart(part: Record<string, unknown>): AiMissionPart | null {
   if (part.type === 'text' && typeof part.text === 'string') {
     return {
@@ -46,6 +52,12 @@ function normalizePart(part: Record<string, unknown>): AiMissionPart | null {
   return null;
 }
 
+/**
+ * 将 AI SDK 的 UI 消息数组转换为会话详情可持久化的消息结构。
+ *
+ * @param messages - AI SDK UI 消息数组。
+ * @returns 标准化后的会话消息数组。
+ */
 function normalizeMessages(messages: UIMessage[]): AiMissionMessage[] {
   return messages.map((message, index) => {
     const parts = Array.isArray(message.parts)
@@ -62,6 +74,12 @@ function normalizeMessages(messages: UIMessage[]): AiMissionMessage[] {
   });
 }
 
+/**
+ * 从首条用户文本消息中截取默认文档标题。
+ *
+ * @param messages - 标准化后的会话消息数组。
+ * @returns 最多 30 个字符的标题；没有可用文本时返回默认标题。
+ */
 function getTitleFromMessages(messages: AiMissionMessage[]) {
   const firstUserMessage = messages.find((message) => message.role === 'user');
   const firstTextPart = firstUserMessage?.parts.find((part) => part.type === 'text');
@@ -73,6 +91,12 @@ function getTitleFromMessages(messages: AiMissionMessage[]) {
   return firstTextPart.text.slice(0, 30) || '新建文档';
 }
 
+/**
+ * 提取单条会话消息中的纯文本内容。
+ *
+ * @param message - 标准化后的会话消息。
+ * @returns 合并后的文本内容；非文本片段会被忽略。
+ */
 function getMessagePlainText(message: AiMissionMessage) {
   return message.parts
     .map((part) => {
@@ -84,6 +108,12 @@ function getMessagePlainText(message: AiMissionMessage) {
     .trim();
 }
 
+/**
+ * 基于首轮问答调用 DeepSeek 生成会话文档标题。
+ *
+ * @param messages - 标准化后的会话消息数组。
+ * @returns AI 生成的标题；生成失败或内容为空时返回默认标题。
+ */
 async function generateDocumentTitle(messages: AiMissionMessage[]) {
   const firstUserMessage = messages.find((message) => message.role === 'user');
   const firstAssistantMessage = messages.find((message) => message.role === 'assistant');
@@ -121,10 +151,18 @@ async function generateDocumentTitle(messages: AiMissionMessage[]) {
   }
 }
 
+/**
+ * 基于会话内容调用 DeepSeek 生成摘要。
+ *
+ * @param messages - 标准化后的会话消息数组。
+ * @returns AI 生成的会话摘要；生成失败时返回截断后的原始对话文本。
+ */
 async function generateConversationSummary(messages: AiMissionMessage[]) {
   const conversation = messages
     .filter((message) => message.role !== 'system')
-    .map((message) => `${message.role === 'user' ? '用户' : '助手'}：${getMessagePlainText(message)}`)
+    .map(
+      (message) => `${message.role === 'user' ? '用户' : '助手'}：${getMessagePlainText(message)}`
+    )
     .join('\n')
     .trim();
 
@@ -153,6 +191,13 @@ async function generateConversationSummary(messages: AiMissionMessage[]) {
   }
 }
 
+/**
+ * 保存或更新最近会话列表中的展示项。
+ *
+ * @param chatId - 会话 ID。
+ * @param title - 会话标题。
+ * @returns MongoDB upsert 操作完成后的 Promise。
+ */
 async function saveChatListItem(chatId: string, title: string) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
@@ -170,6 +215,14 @@ async function saveChatListItem(chatId: string, title: string) {
   );
 }
 
+/**
+ * 保存或更新完整会话详情，并同步最近会话列表标题。
+ *
+ * @param chatId - 会话 ID。
+ * @param messages - AI SDK UI 消息数组。
+ * @param options - 可选覆盖字段，用于写入生成后的标题或摘要。
+ * @returns 会话详情和最近会话列表写入完成后的 Promise。
+ */
 async function saveChatDetail(
   chatId: string,
   messages: UIMessage[],
@@ -185,7 +238,8 @@ async function saveChatDetail(
   const now = new Date().toISOString();
 
   const existing = await collection.findOne({ _id: chatId });
-  const title = options?.titleOverride || existing?.title || getTitleFromMessages(normalizedMessages);
+  const title =
+    options?.titleOverride || existing?.title || getTitleFromMessages(normalizedMessages);
 
   const payload: AiMissionDetail = {
     _id: chatId,
@@ -201,6 +255,12 @@ async function saveChatDetail(
   await saveChatListItem(chatId, title);
 }
 
+/**
+ * 判断当前会话是否需要重新生成标题。
+ *
+ * @param chatId - 会话 ID。
+ * @returns 不存在会话或标题仍为默认值时返回 `true`。
+ */
 async function shouldGenerateTitle(chatId: string) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
@@ -214,6 +274,12 @@ async function shouldGenerateTitle(chatId: string) {
   return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
 }
 
+/**
+ * 发送聊天消息并以流式响应返回 AI 回复，同时持久化会话详情、标题和摘要。
+ *
+ * @param req - 请求对象，JSON body 需包含 `chatId` 和 AI SDK `messages`。
+ * @returns UI message stream 响应；缺少 `chatId` 时返回 400 JSON 错误。
+ */
 export async function POST(req: Request) {
   const { messages, chatId }: { messages: UIMessage[]; chatId?: string } = await req.json();
   const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });

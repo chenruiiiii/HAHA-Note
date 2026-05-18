@@ -2,6 +2,13 @@ import clientPromise from '@/lib/mongodb';
 import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
 
+/**
+ * 获取指定文档详情。
+ *
+ * @param _request - 请求对象，当前接口未读取请求内容。
+ * @param context - Next.js 路由上下文，`params.docsId` 为文档 ID。
+ * @returns 文档详情 JSON 响应；文档不存在时返回 404。
+ */
 export async function GET(
   _request: Request,
   context: { params: Promise<{ docsId: string }> }
@@ -36,6 +43,13 @@ export async function GET(
   }
 }
 
+/**
+ * 创建或更新指定文档详情。
+ *
+ * @param request - 请求对象，JSON body 可包含标题、HTML 内容、知识库 ID、作者和摘要。
+ * @param context - Next.js 路由上下文，`params.docsId` 为文档 ID。
+ * @returns 创建或保存后的文档详情 JSON 响应；缺少必要字段或保存失败时返回错误信息。
+ */
 export async function POST(
   request: Request,
   context: { params: Promise<{ docsId: string }> }

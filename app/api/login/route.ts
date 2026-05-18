@@ -12,6 +12,11 @@ import { NextResponse } from 'next/server';
 const DB_NAME = 'ha_admin';
 const COLLECTION_NAME = 'users';
 
+/**
+ * 确保内置后台用户种子数据存在，并返回用户集合实例。
+ *
+ * @returns 已完成种子数据 upsert 的 MongoDB 用户集合。
+ */
 async function ensureAdminSeedData() {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
@@ -63,6 +68,12 @@ async function ensureAdminSeedData() {
   return collection;
 }
 
+/**
+ * 登录后台用户并写入访问令牌与刷新令牌 Cookie。
+ *
+ * @param request - 请求对象，JSON body 需符合 `LoginPayloadSchema`。
+ * @returns 登录结果 JSON 响应；认证成功时附带 auth cookies，认证失败时返回 401。
+ */
 export async function POST(request: Request): Promise<Response> {
   try {
     const rawBody = await request.json();
