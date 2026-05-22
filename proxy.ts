@@ -60,7 +60,7 @@ export async function authProxyWithLogin(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|monitoring).*)'],
 };
 
 async function tryRefreshSession(request: NextRequest) {

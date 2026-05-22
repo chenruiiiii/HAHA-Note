@@ -17,6 +17,7 @@ export function shouldBypassAuth(pathname: string) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||
     pathname.startsWith('/images') ||
+    pathname.startsWith('/monitoring') ||
     pathname.startsWith('/api/public-note') ||
     pathname.startsWith('/api/login') ||
     pathname.startsWith('/api/auth/refresh') ||

@@ -25,8 +25,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['sass'],
 };
 
-// Sentry 默认启用；如需临时关闭，可设置 SENTRY_DISABLED=true。
-const isSentryEnabled = process.env.SENTRY_DISABLED !== 'true';
+// Sentry 仅在生产环境启用；如需临时关闭，可设置 SENTRY_DISABLED=true。
+const isSentryEnabled = process.env.NODE_ENV === 'production' && process.env.SENTRY_DISABLED !== 'true';
 
 const finalConfig = isSentryEnabled
   ? withSentryConfig(nextConfig, {
