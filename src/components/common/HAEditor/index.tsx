@@ -125,7 +125,7 @@ const HAEditor = ({
   useEffect(() => {
     const debouncedAutoSave = debounce(() => {
       void autoSaveRef.current();
-    }, 1000);
+    }, 3000);
 
     debouncedAutoSaveRef.current = debouncedAutoSave;
 
@@ -176,7 +176,6 @@ const HAEditor = ({
             titleRef.current = normalizedTitle;
             setSaveStatusText('编辑中...');
             onTitleChange?.(normalizedTitle);
-            debouncedAutoSaveRef.current?.();
           }}
           onTitleSubmit={async (nextTitle) => {
             const normalizedTitle = nextTitle.trim().slice(0, MAX_TITLE_LENGTH);

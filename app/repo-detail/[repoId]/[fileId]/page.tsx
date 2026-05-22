@@ -3,12 +3,13 @@
 import HAEditor from '@/components/common/HAEditor';
 import HALoading from '@/components/common/HALoading';
 import useDocsDetail from '@/hooks/layer/useDocsDetail';
+import useRepoDetail from '@/hooks/layer/useRepoDetail';
 import { generateDocsSummary } from '@/services/docs-summary';
 import { updateDocsDetailData } from '@/services/docs-detail';
 import { useAppDispatch } from '@/store';
 import { upsertRepoDetailDocAction } from '@/store/modules/repoDetail';
 import { DocumentDetail } from '@/models/docs';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import styles from './page.module.scss';
 
@@ -17,7 +18,16 @@ const FileDetail = () => {
   const dispatch = useAppDispatch();
   const repoId = params.repoId as string;
   const docsId = params.fileId as string;
-  const { data, isLoading } = useDocsDetail(docsId, repoId);
+  const { data: repoDetail } = useRepoDetail(repoId);
+  const currentRepoDocName = useMemo(
+    () => repoDetail?.docs_list.find((item) => item.docs_id === docsId)?.docs_name,
+    [docsId, repoDetail?.docs_list]
+  );
+  const { data, isLoading, isRepositoryMismatch } = useDocsDetail(
+    docsId,
+    repoId,
+    currentRepoDocName
+  );
   const editorData: DocumentDetail = data ?? {
     _id: docsId,
     repository_id: repoId,
@@ -39,8 +49,36 @@ const FileDetail = () => {
   const summaryRef = useRef(editorData.summary || '');
   const repositoryIdRef = useRef(editorData.repository_id);
   const authorRef = useRef(editorData.author);
+  const docDirtyRef = useRef(false);
+  const hasFlushedDocRef = useRef(false);
   const summaryDirtyRef = useRef(false);
   const hasFlushedSummaryRef = useRef(false);
+
+  const flushDocBeforeLeave = useCallback(() => {
+    if (hasFlushedDocRef.current || !docDirtyRef.current || !docsId) {
+      return;
+    }
+
+    hasFlushedDocRef.current = true;
+    docDirtyRef.current = false;
+
+    void fetch(`/api/docs-detail/${docsId}`, {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        title: titleRef.current || '新建文档',
+        content_html: contentRef.current || '',
+        repository_id: repositoryIdRef.current || repoId,
+        author: authorRef.current || '当前用户',
+        summary: summaryRef.current,
+      }),
+    });
+  }, [docsId, repoId]);
 
   const flushSummaryBeforeLeave = useCallback(() => {
     if (hasFlushedSummaryRef.current || !summaryDirtyRef.current || !docsId) {
@@ -68,7 +106,7 @@ const FileDetail = () => {
   }, [docsId, repoId]);
 
   useEffect(() => {
-    if (!repoId || !docsId) return;
+    if (!repoId || !docsId || isRepositoryMismatch) return;
 
     dispatch(
       upsertRepoDetailDocAction({
@@ -77,7 +115,7 @@ const FileDetail = () => {
         docsName: editorData.title || '新建文档',
       })
     );
-  }, [dispatch, docsId, editorData.title, repoId]);
+  }, [dispatch, docsId, editorData.title, isRepositoryMismatch, repoId]);
 
   useEffect(() => {
     titleRef.current = editorData.title;
@@ -87,6 +125,8 @@ const FileDetail = () => {
     summaryRef.current = editorData.summary || '';
     setSummary(editorData.summary || '');
     setSummaryError('');
+    docDirtyRef.current = false;
+    hasFlushedDocRef.current = false;
     summaryDirtyRef.current = false;
     hasFlushedSummaryRef.current = false;
     setIsSummaryDirty(false);
@@ -188,6 +228,7 @@ const FileDetail = () => {
 
   useEffect(() => {
     const handlePageHide = () => {
+      flushDocBeforeLeave();
       flushSummaryBeforeLeave();
     };
 
@@ -197,9 +238,10 @@ const FileDetail = () => {
     return () => {
       window.removeEventListener('pagehide', handlePageHide);
       window.removeEventListener('beforeunload', handlePageHide);
+      flushDocBeforeLeave();
       flushSummaryBeforeLeave();
     };
-  }, [flushSummaryBeforeLeave]);
+  }, [flushDocBeforeLeave, flushSummaryBeforeLeave]);
 
   if (isLoading) {
     return <HALoading type="simple" />;
@@ -263,6 +305,8 @@ const FileDetail = () => {
           }
           onTitleChange={(title) => {
             titleRef.current = title || '新建文档';
+            docDirtyRef.current = true;
+            hasFlushedDocRef.current = false;
             summaryDirtyRef.current = true;
             setIsSummaryDirty(true);
 
@@ -276,6 +320,8 @@ const FileDetail = () => {
           }}
           onChange={(html) => {
             contentRef.current = html;
+            docDirtyRef.current = true;
+            hasFlushedDocRef.current = false;
             summaryDirtyRef.current = true;
             setIsSummaryDirty(true);
           }}
@@ -290,6 +336,9 @@ const FileDetail = () => {
               author: editorData.author || '当前用户',
               summary: summaryRef.current,
             });
+
+            docDirtyRef.current = false;
+            hasFlushedDocRef.current = false;
 
             dispatch(
               upsertRepoDetailDocAction({

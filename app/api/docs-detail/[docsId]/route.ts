@@ -69,9 +69,10 @@ export async function POST(
     };
 
     const existing = await collection.findOne({ _id: docsId });
+    const requestRepositoryId = body.repository_id?.trim();
 
     if (!existing) {
-      if (!body.repository_id?.trim()) {
+      if (!requestRepositoryId) {
         return NextResponse.json({
           code: 400,
           data: null,
@@ -81,7 +82,7 @@ export async function POST(
 
       const nextDoc: DocumentDetail = {
         _id: docsId,
-        repository_id: body.repository_id.trim(),
+        repository_id: requestRepositoryId,
         title: body.title?.trim() || '新建文档',
         content_html: body.content_html ?? '',
         summary: body.summary?.trim() || '',
@@ -96,6 +97,17 @@ export async function POST(
         data: nextDoc,
         message: '创建成功',
       });
+    }
+
+    if (requestRepositoryId && existing.repository_id !== requestRepositoryId) {
+      return NextResponse.json(
+        {
+          code: 409,
+          data: existing,
+          message: '文档所属知识库不匹配，请刷新目录后重试',
+        },
+        { status: 409 }
+      );
     }
 
     const nextDoc: DocumentDetail = {
