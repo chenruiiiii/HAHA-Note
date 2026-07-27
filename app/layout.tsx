@@ -9,6 +9,7 @@ import { App as AntdApp, ConfigProvider } from 'antd';
 import theme_config from '@/assets/styles/theme/theme_config';
 import React from 'react';
 import AntdMessageProvider from '@/components/common/AntdMessageProvider';
+import WebVitalsReporter from '@/components/performance/WebVitalsReporter';
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -19,6 +20,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             <AntdApp>
               <AntdMessageProvider>
                 {children}
+                <WebVitalsReporter />
                 <div id="portal-root"></div>
               </AntdMessageProvider>
             </AntdApp>

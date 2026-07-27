@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import logo from '@/assets/images/logo.png';
 import { useGetRepositoryListQuery } from '@/store/modules/repository';
 import { Repository } from '../Start/types/list';
+import { FundProjectionScreenOutlined } from '@ant-design/icons';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -43,6 +44,11 @@ const ITEMS_UP: MenuItem[] = [
     <Link href="/stroll">逛逛</Link>,
     '/stroll',
     <i className="iconfont icon-guangguang1" style={{ color: '#FF3A0C' }}></i>
+  ),
+  getItem(
+    <Link href="/performance">性能检测</Link>,
+    '/performance',
+    <FundProjectionScreenOutlined style={{ color: '#2563EB' }} />
   ),
 ];
 

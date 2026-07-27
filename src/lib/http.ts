@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
 
 const baseURL = process.env.NEXT_PUBLIC_APP_API_URL;
 
@@ -7,6 +8,58 @@ const refreshEndpoint = baseURL ? `${baseURL}/auth/refresh` : '/api/auth/refresh
 
 interface RetryableAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
+  _haStartedAt?: number;
+}
+
+function getRequestPath(url?: string) {
+  if (!url) {
+    return 'unknown';
+  }
+
+  try {
+    return new URL(url, baseURL || window.location.origin).pathname;
+  } catch {
+    return url.split('?')[0];
+  }
+}
+
+function getDuration(startedAt?: number) {
+  if (!startedAt || typeof performance === 'undefined') {
+    return undefined;
+  }
+
+  return Math.round(performance.now() - startedAt);
+}
+
+function reportApiPerformance(
+  config: RetryableAxiosRequestConfig | undefined,
+  success: boolean,
+  statusCode?: number,
+  errorType?: string
+) {
+  if (typeof window === 'undefined' || !config) {
+    return;
+  }
+
+  const duration = getDuration(config._haStartedAt);
+
+  if (typeof duration !== 'number') {
+    return;
+  }
+
+  const budget = getBudget('api_request_ms', 'api_request_completed');
+
+  trackPerformance('api_request_completed', {
+    route: getRequestPath(config.url),
+    metric_name: 'api_request_ms',
+    duration_ms: duration,
+    value: duration,
+    rating: rateMetric(duration, budget),
+    success,
+    status_code: statusCode,
+    method: config.method,
+    error_type: errorType,
+  });
 }
 
 const instance = axios.create({
@@ -45,13 +98,23 @@ instance.interceptors.request.use(
     // if (token) config.headers.Authorization = `Bearer ${token}`;
 
     config.headers.set('Accept', 'application/json');
+    if (typeof performance !== 'undefined') {
+      (config as RetryableAxiosRequestConfig)._haStartedAt = performance.now();
+    }
     return config;
   },
   (error: AxiosError) => Promise.reject(error)
 );
 
 instance.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    reportApiPerformance(
+      response.config as RetryableAxiosRequestConfig,
+      true,
+      response.status
+    );
+    return response.data;
+  },
   (error: AxiosError<{ message?: string }>) => {
     const originalRequest = error.config as RetryableAxiosRequestConfig | undefined;
     const status = error.response?.status;
@@ -104,6 +167,7 @@ instance.interceptors.response.use(
     // 这里可以结合你 UI 库的 Message 组件直接弹出错误提示
     // message.error(message);
     console.error(`[API Error ${status}]:`, message);
+    reportApiPerformance(originalRequest, false, status, error.code || 'api_error');
 
     return Promise.reject(error); // 记得把 error 抛出，方便业务逻辑单独 catch
   }

@@ -10,6 +10,7 @@ import { infoMessage, warningMessage } from '@/utils/message_reminder';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useCallback, useEffect, useRef } from 'react';
+import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
 
 interface UseAIChatStreamProps {
   chatId: string;
@@ -19,11 +20,17 @@ interface UseAIChatStreamProps {
 const MAX_AUTO_RETRY = 2;
 const RETRY_DELAY_MS = 1200;
 
+function now() {
+  return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+}
+
 export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   const dispatch = useAppDispatch();
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
   const hasPendingRetryRef = useRef(false);
+  const requestStartedAtRef = useRef<number | null>(null);
+  const hasReportedFirstTokenRef = useRef(false);
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimerRef.current) {
@@ -50,6 +57,20 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
       },
     }),
     onError: (chatError) => {
+      const totalMs = requestStartedAtRef.current
+        ? Math.round(now() - requestStartedAtRef.current)
+        : undefined;
+
+      trackPerformance('ai_generation_failed', {
+        route: '/ai-chat/[id]',
+        metric_name: 'ai_total_ms',
+        total_ms: totalMs,
+        value: totalMs,
+        success: false,
+        error_type: chatError.name || 'ai_error',
+        retry_count: retryCountRef.current,
+      });
+
       dispatch(
         setChatErrorAction({
           error: chatError.message || '对话请求失败，请稍后重试',
@@ -57,7 +78,20 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
       );
     },
     onFinish: async ({ isAbort, isDisconnect, isError }) => {
+      const totalMs = requestStartedAtRef.current
+        ? Math.round(now() - requestStartedAtRef.current)
+        : undefined;
+
       if (isAbort) {
+        trackPerformance('ai_generation_cancelled', {
+          route: '/ai-chat/[id]',
+          metric_name: 'ai_total_ms',
+          total_ms: totalMs,
+          value: totalMs,
+          success: false,
+          retry_count: retryCountRef.current,
+        });
+
         dispatch(
           setChatRequestStateAction({
             requestStatus: 'aborted',
@@ -87,6 +121,12 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
         clearRetryTimer();
         retryTimerRef.current = setTimeout(() => {
           retryCountRef.current = nextRetryCount;
+          requestStartedAtRef.current = now();
+          hasReportedFirstTokenRef.current = false;
+          trackPerformance('ai_generation_started', {
+            route: '/ai-chat/[id]',
+            retry_count: retryCountRef.current,
+          });
           clearError();
           void regenerate({
             body: {
@@ -98,9 +138,22 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
         return;
       }
 
+      const completedRetryCount = retryCountRef.current;
       retryCountRef.current = 0;
       hasPendingRetryRef.current = false;
       clearRetryTimer();
+
+      trackPerformance(isDisconnect || isError ? 'ai_generation_failed' : 'ai_generation_completed', {
+        route: '/ai-chat/[id]',
+        metric_name: 'ai_total_ms',
+        total_ms: totalMs,
+        value: totalMs,
+        rating: typeof totalMs === 'number' ? rateMetric(totalMs, getBudget('ai_total_ms')) : undefined,
+        success: !(isDisconnect || isError),
+        error_type: isDisconnect ? 'disconnect' : isError ? 'ai_error' : undefined,
+        retry_count: completedRetryCount,
+      });
+
       dispatch(
         setChatRequestStateAction({
           requestStatus: isDisconnect || isError ? 'error' : 'success',
@@ -124,6 +177,21 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     }
 
     if (status === 'streaming') {
+      if (requestStartedAtRef.current && !hasReportedFirstTokenRef.current) {
+        const firstTokenMs = Math.round(now() - requestStartedAtRef.current);
+        hasReportedFirstTokenRef.current = true;
+
+        trackPerformance('ai_first_token', {
+          route: '/ai-chat/[id]',
+          metric_name: 'ai_first_token_ms',
+          first_token_ms: firstTokenMs,
+          value: firstTokenMs,
+          rating: rateMetric(firstTokenMs, getBudget('ai_first_token_ms')),
+          success: true,
+          retry_count: retryCountRef.current,
+        });
+      }
+
       hasPendingRetryRef.current = false;
       dispatch(
         setChatRequestStateAction({
@@ -164,6 +232,19 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   }, [clearRetryTimer, dispatch]);
 
   const stopStream = useCallback(async () => {
+    const totalMs = requestStartedAtRef.current
+      ? Math.round(now() - requestStartedAtRef.current)
+      : undefined;
+
+    trackPerformance('ai_generation_cancelled', {
+      route: '/ai-chat/[id]',
+      metric_name: 'ai_total_ms',
+      total_ms: totalMs,
+      value: totalMs,
+      success: false,
+      retry_count: retryCountRef.current,
+    });
+
     clearRetryTimer();
     hasPendingRetryRef.current = false;
     retryCountRef.current = 0;
@@ -176,6 +257,13 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     retryCountRef.current = 0;
     hasPendingRetryRef.current = false;
     clearError();
+    requestStartedAtRef.current = now();
+    hasReportedFirstTokenRef.current = false;
+
+    trackPerformance('ai_generation_started', {
+      route: '/ai-chat/[id]',
+      retry_count: 0,
+    });
 
     dispatch(
       setChatRequestStateAction({
@@ -193,11 +281,27 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     infoMessage('已重新发起本轮回答');
   }, [chatId, clearError, clearRetryTimer, dispatch, regenerate]);
 
+  const trackedSendMessage = useCallback(
+    (...args: Parameters<typeof sendMessage>) => {
+      requestStartedAtRef.current = now();
+      hasReportedFirstTokenRef.current = false;
+      retryCountRef.current = 0;
+
+      trackPerformance('ai_generation_started', {
+        route: '/ai-chat/[id]',
+        retry_count: 0,
+      });
+
+      return sendMessage(...args);
+    },
+    [sendMessage]
+  );
+
   return {
     messages,
     status,
     error,
-    sendMessage,
+    sendMessage: trackedSendMessage,
     setMessages,
     stopStream,
     retryStream,
