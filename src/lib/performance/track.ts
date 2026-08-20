@@ -8,11 +8,31 @@ function getRelease() {
   return process.env.NEXT_PUBLIC_APP_VERSION || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || 'local';
 }
 
+function getSampleRate() {
+  const configuredRate = Number(process.env.NEXT_PUBLIC_RUM_SAMPLE_RATE);
+  if (Number.isFinite(configuredRate) && configuredRate >= 0 && configuredRate <= 1) {
+    return configuredRate;
+  }
+
+  return process.env.NODE_ENV === 'production' ? 0.1 : 1;
+}
+
+let sampleDecision: boolean | undefined;
+
+function shouldSample() {
+  if (sampleDecision === undefined) {
+    sampleDecision = Math.random() < getSampleRate();
+  }
+
+  return sampleDecision;
+}
+
 function sanitizePayload(payload: PerformanceMetricPayload): PerformanceMetricPayload {
   return {
     event: payload.event,
     route: normalizeRoute(payload.route ?? getCurrentRoute()),
     metric_name: payload.metric_name,
+    metric_id: payload.metric_id,
     value: payload.value,
     duration_ms: payload.duration_ms,
     rating: payload.rating,
@@ -27,7 +47,6 @@ function sanitizePayload(payload: PerformanceMetricPayload): PerformanceMetricPa
     device_type: payload.device_type ?? getDeviceType(),
     network_type: payload.network_type ?? getNetworkType(),
     timestamp: payload.timestamp ?? new Date().toISOString(),
-    metadata: payload.metadata,
   };
 }
 
@@ -36,6 +55,10 @@ export function trackPerformance(
   payload: Omit<PerformanceMetricPayload, 'event'> = {}
 ) {
   if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!shouldSample()) {
     return;
   }
 

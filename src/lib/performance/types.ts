@@ -1,4 +1,5 @@
 export type DeviceType = 'mobile' | 'tablet' | 'desktop' | 'unknown';
+export type NetworkType = 'slow-2g' | '2g' | '3g' | '4g' | '5g' | 'wifi' | 'unknown';
 
 export type PerformanceEventName =
   | 'web_vital'
@@ -13,14 +14,14 @@ export type PerformanceEventName =
   | 'ai_generation_cancelled'
   | 'ai_generation_failed';
 
-export type PerformanceRating = 'good' | 'needs-improvement' | 'poor';
-
-export type PerformanceMetricValue = string | number | boolean | null | undefined;
+export type PerformanceRating = 'good' | 'needs-improvement' | 'poor' | 'unknown';
+export type PerformanceConfidence = 'reliable' | 'insufficient';
 
 export interface PerformanceMetricPayload {
   event: PerformanceEventName;
   route?: string;
   metric_name?: string;
+  metric_id?: string;
   value?: number;
   duration_ms?: number;
   rating?: PerformanceRating | string;
@@ -33,9 +34,8 @@ export interface PerformanceMetricPayload {
   method?: string;
   release?: string;
   device_type?: DeviceType;
-  network_type?: string;
+  network_type?: NetworkType;
   timestamp?: string;
-  metadata?: Record<string, PerformanceMetricValue>;
 }
 
 export interface PerformanceSummaryItem {
@@ -43,10 +43,17 @@ export interface PerformanceSummaryItem {
   metric_name?: string;
   route: string;
   count: number;
+  samples: number;
   avg: number;
+  p50: number;
   p75: number;
+  p95: number;
   budget?: number;
   rating: PerformanceRating;
+  confidence: PerformanceConfidence;
+  device_type: DeviceType;
+  network_type: NetworkType;
+  release: string;
 }
 
 export interface PerformanceSlowItem {
@@ -65,5 +72,13 @@ export interface PerformanceDashboardData {
     count: number;
     ai_success_rate: number | null;
     api_success_rate: number | null;
+    confidence: PerformanceConfidence;
+  };
+  facets: {
+    routes: string[];
+    devices: DeviceType[];
+    networks: NetworkType[];
+    releases: string[];
+    events: PerformanceEventName[];
   };
 }

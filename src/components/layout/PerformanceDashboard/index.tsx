@@ -24,6 +24,14 @@ const EMPTY_DATA: PerformanceDashboardData = {
     count: 0,
     ai_success_rate: null,
     api_success_rate: null,
+    confidence: 'insufficient',
+  },
+  facets: {
+    routes: [],
+    devices: [],
+    networks: [],
+    releases: [],
+    events: [],
   },
 };
 
@@ -31,6 +39,12 @@ const RATING_COLOR = {
   good: 'green',
   'needs-improvement': 'gold',
   poor: 'red',
+  unknown: 'default',
+} as const;
+
+const CONFIDENCE_COLOR = {
+  reliable: 'blue',
+  insufficient: 'default',
 } as const;
 
 function formatMs(value?: number) {
@@ -51,6 +65,11 @@ function formatRate(value: number | null) {
 
 export default function PerformanceDashboard() {
   const [hours, setHours] = useState(24);
+  const [route, setRoute] = useState<string | undefined>();
+  const [device, setDevice] = useState<string | undefined>();
+  const [network, setNetwork] = useState<string | undefined>();
+  const [release, setRelease] = useState<string | undefined>();
+  const [event, setEvent] = useState<string | undefined>();
   const [data, setData] = useState<PerformanceDashboardData>(EMPTY_DATA);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -60,7 +79,31 @@ export default function PerformanceDashboard() {
     setError('');
 
     try {
-      const response = await fetch(`/api/performance?hours=${hours}`, {
+      const params = new URLSearchParams({
+        hours: String(hours),
+      });
+
+      if (route) {
+        params.set('route', route);
+      }
+
+      if (device) {
+        params.set('device', device);
+      }
+
+      if (network) {
+        params.set('network', network);
+      }
+
+      if (release) {
+        params.set('release', release);
+      }
+
+      if (event) {
+        params.set('event', event);
+      }
+
+      const response = await fetch(`/api/performance?${params.toString()}`, {
         cache: 'no-store',
       });
       const json = (await response.json()) as ResponseData<PerformanceDashboardData>;
@@ -76,7 +119,7 @@ export default function PerformanceDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [hours]);
+  }, [device, event, hours, release, route, network]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -161,11 +204,30 @@ export default function PerformanceDashboard() {
         record.metric_name === 'CLS' ? value.toFixed(3) : formatMs(value),
     },
     {
+      title: 'P50',
+      dataIndex: 'p50',
+      key: 'p50',
+      render: (value: number, record: PerformanceSummaryItem) =>
+        record.metric_name === 'CLS' ? value.toFixed(3) : formatMs(value),
+    },
+    {
+      title: 'P95',
+      dataIndex: 'p95',
+      key: 'p95',
+      render: (value: number, record: PerformanceSummaryItem) =>
+        record.metric_name === 'CLS' ? value.toFixed(3) : formatMs(value),
+    },
+    {
       title: '平均',
       dataIndex: 'avg',
       key: 'avg',
       render: (value: number, record: PerformanceSummaryItem) =>
         record.metric_name === 'CLS' ? value.toFixed(3) : formatMs(value),
+    },
+    {
+      title: '样本',
+      dataIndex: 'samples',
+      key: 'samples',
     },
     {
       title: '预算',
@@ -181,6 +243,29 @@ export default function PerformanceDashboard() {
       render: (value: keyof typeof RATING_COLOR) => (
         <Tag color={RATING_COLOR[value] ?? 'default'}>{value}</Tag>
       ),
+    },
+    {
+      title: '置信度',
+      dataIndex: 'confidence',
+      key: 'confidence',
+      render: (value: keyof typeof CONFIDENCE_COLOR) => (
+        <Tag color={CONFIDENCE_COLOR[value] ?? 'default'}>{value}</Tag>
+      ),
+    },
+    {
+      title: '设备',
+      dataIndex: 'device_type',
+      key: 'device_type',
+    },
+    {
+      title: '网络',
+      dataIndex: 'network_type',
+      key: 'network_type',
+    },
+    {
+      title: '版本',
+      dataIndex: 'release',
+      key: 'release',
     },
     {
       title: '次数',
@@ -232,6 +317,8 @@ export default function PerformanceDashboard() {
     },
   ];
 
+  const selectStyle = { width: 160 };
+
   return (
     <MainContent isLoading={isLoading}>
       <div className={styles.dashboard}>
@@ -251,6 +338,46 @@ export default function PerformanceDashboard() {
               ]}
               style={{ width: 150 }}
             />
+            <Select
+              value={route}
+              onChange={setRoute}
+              options={data.facets.routes.map((item) => ({ value: item, label: item }))}
+              placeholder="路由"
+              allowClear
+              style={selectStyle}
+            />
+            <Select
+              value={device}
+              onChange={setDevice}
+              options={data.facets.devices.map((item) => ({ value: item, label: item }))}
+              placeholder="设备"
+              allowClear
+              style={selectStyle}
+            />
+            <Select
+              value={network}
+              onChange={setNetwork}
+              options={data.facets.networks.map((item) => ({ value: item, label: item }))}
+              placeholder="网络"
+              allowClear
+              style={selectStyle}
+            />
+            <Select
+              value={release}
+              onChange={setRelease}
+              options={data.facets.releases.map((item) => ({ value: item, label: item }))}
+              placeholder="版本"
+              allowClear
+              style={selectStyle}
+            />
+            <Select
+              value={event}
+              onChange={setEvent}
+              options={data.facets.events.map((item) => ({ value: item, label: item }))}
+              placeholder="事件"
+              allowClear
+              style={selectStyle}
+            />
             <Button icon={<ReloadOutlined />} onClick={() => void loadData()}>
               刷新
             </Button>
@@ -269,12 +396,21 @@ export default function PerformanceDashboard() {
               )}
             </div>
           ))}
+          <div className={styles.metric}>
+            <span>样本置信度</span>
+            <strong>{data.totals.confidence}</strong>
+            <Tag color={CONFIDENCE_COLOR[data.totals.confidence] ?? 'default'}>
+              {data.totals.confidence}
+            </Tag>
+          </div>
         </div>
 
         <section className={styles.section}>
           <h2>指标 P75</h2>
           <Table<PerformanceSummaryItem>
-            rowKey={(record) => `${record.event}-${record.metric_name}-${record.route}`}
+            rowKey={(record) =>
+              `${record.event}-${record.metric_name}-${record.route}-${record.device_type}-${record.network_type}-${record.release}`
+            }
             columns={summaryColumns}
             dataSource={data.summary}
             pagination={{ pageSize: 8 }}

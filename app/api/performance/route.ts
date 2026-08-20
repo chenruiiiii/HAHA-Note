@@ -1,170 +1,106 @@
 import clientPromise from '@/lib/mongodb';
-import { getBudget, rateMetric } from '@/lib/performance/budget';
+import {
+  ALLOWED_EVENTS,
+  MAX_PERFORMANCE_PAYLOAD_BYTES,
+  buildDashboardData,
+  normalizePerformanceEvent,
+} from '@/lib/performance';
 import { normalizeRoute } from '@/lib/performance/route';
-import type {
-  PerformanceDashboardData,
-  PerformanceMetricPayload,
-  PerformanceSlowItem,
-  PerformanceSummaryItem,
-} from '@/lib/performance/types';
+import type { PerformanceMetricPayload } from '@/lib/performance/types';
 import { NextResponse } from 'next/server';
 
 const DB_NAME = 'performance';
 const COLLECTION_NAME = 'performance_events';
 const MAX_QUERY_LIMIT = 1200;
+const ALLOWED_DEVICES = new Set(['mobile', 'tablet', 'desktop', 'unknown']);
+const ALLOWED_NETWORKS = new Set(['slow-2g', '2g', '3g', '4g', '5g', 'wifi', 'unknown']);
 
-const ALLOWED_EVENTS = new Set([
-  'web_vital',
-  'api_request_completed',
-  'note_open_completed',
-  'note_save_completed',
-  'search_completed',
-  'editor_ready',
-  'ai_generation_started',
-  'ai_first_token',
-  'ai_generation_completed',
-  'ai_generation_cancelled',
-  'ai_generation_failed',
-]);
-
-function toFiniteNumber(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function sanitizeEvent(body: Partial<PerformanceMetricPayload>): PerformanceMetricPayload | null {
-  if (!body.event || !ALLOWED_EVENTS.has(body.event)) {
-    return null;
+function toLimitedText(value: string | null, maxLength: number) {
+  if (!value) {
+    return undefined;
   }
 
-  const durationMs = toFiniteNumber(body.duration_ms);
-  const value = toFiniteNumber(body.value);
-  const firstTokenMs = toFiniteNumber(body.first_token_ms);
-  const totalMs = toFiniteNumber(body.total_ms);
-  const statusCode = toFiniteNumber(body.status_code);
-  const retryCount = toFiniteNumber(body.retry_count);
-
-  return {
-    event: body.event,
-    route: normalizeRoute(typeof body.route === 'string' ? body.route : 'unknown'),
-    metric_name: typeof body.metric_name === 'string' ? body.metric_name.slice(0, 80) : undefined,
-    value,
-    duration_ms: durationMs,
-    rating: typeof body.rating === 'string' ? body.rating.slice(0, 30) : undefined,
-    success: typeof body.success === 'boolean' ? body.success : undefined,
-    error_type: typeof body.error_type === 'string' ? body.error_type.slice(0, 80) : undefined,
-    retry_count: retryCount,
-    first_token_ms: firstTokenMs ?? null,
-    total_ms: totalMs,
-    status_code: statusCode,
-    method: typeof body.method === 'string' ? body.method.slice(0, 12).toUpperCase() : undefined,
-    release: typeof body.release === 'string' ? body.release.slice(0, 80) : 'local',
-    device_type: body.device_type,
-    network_type: typeof body.network_type === 'string' ? body.network_type.slice(0, 40) : undefined,
-    timestamp: typeof body.timestamp === 'string' ? body.timestamp : new Date().toISOString(),
-  };
-}
-
-function percentile(values: number[], percentileValue: number) {
-  if (!values.length) {
-    return 0;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > maxLength) {
+    return undefined;
   }
 
-  const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.ceil((percentileValue / 100) * sorted.length) - 1;
-  return sorted[Math.max(0, Math.min(index, sorted.length - 1))];
+  return trimmed;
 }
 
-function getMetricValue(event: PerformanceMetricPayload) {
-  if (event.event === 'ai_first_token') {
-    return event.first_token_ms ?? event.duration_ms ?? event.value;
+function getHours(searchParams: URLSearchParams) {
+  const raw = Number(searchParams.get('hours') ?? 24);
+  if (!Number.isFinite(raw)) {
+    return 24;
   }
 
-  if (event.event === 'ai_generation_completed') {
-    return event.total_ms ?? event.duration_ms ?? event.value;
+  return Math.max(1, Math.min(Math.floor(raw), 168));
+}
+
+async function readRequestBody(request: Request) {
+  const body = await request.arrayBuffer();
+  if (body.byteLength > MAX_PERFORMANCE_PAYLOAD_BYTES) {
+    return { oversized: true } as const;
   }
 
-  return event.duration_ms ?? event.value;
+  const text = new TextDecoder().decode(body);
+  try {
+    return { parsed: JSON.parse(text) as unknown } as const;
+  } catch {
+    return { parsed: null } as const;
+  }
 }
 
-function getSummaryKey(event: PerformanceMetricPayload) {
-  return [event.event, event.metric_name ?? '', event.route ?? 'unknown'].join('|');
-}
-
-function buildDashboardData(events: PerformanceMetricPayload[]): PerformanceDashboardData {
-  const grouped = new Map<string, PerformanceMetricPayload[]>();
-
-  events.forEach((event) => {
-    const value = getMetricValue(event);
-
-    if (typeof value !== 'number') {
-      return;
-    }
-
-    const key = getSummaryKey(event);
-    grouped.set(key, [...(grouped.get(key) ?? []), event]);
-  });
-
-  const summary: PerformanceSummaryItem[] = Array.from(grouped.values()).map((items) => {
-    const first = items[0];
-    const values = items
-      .map((item) => getMetricValue(item))
-      .filter((value): value is number => typeof value === 'number');
-    const avg = values.reduce((sum, value) => sum + value, 0) / values.length;
-    const p75 = percentile(values, 75);
-    const budget = getBudget(first.metric_name, first.event);
-
-    return {
-      event: first.event,
-      metric_name: first.metric_name,
-      route: first.route ?? 'unknown',
-      count: items.length,
-      avg: Math.round(avg),
-      p75: Number(p75.toFixed(2)),
-      budget,
-      rating: rateMetric(p75, budget),
-    };
-  });
-
-  const slow: PerformanceSlowItem[] = events
-    .map((event) => ({
-      event: event.event,
-      route: event.route ?? 'unknown',
-      metric_name: event.metric_name,
-      duration_ms: getMetricValue(event) ?? 0,
-      timestamp: event.timestamp ?? '',
-      success: event.success,
-    }))
-    .filter((item) => item.duration_ms > 0)
-    .sort((a, b) => b.duration_ms - a.duration_ms)
-    .slice(0, 10);
-
-  const aiCompleted = events.filter((event) => event.event === 'ai_generation_completed');
-  const apiCompleted = events.filter((event) => event.event === 'api_request_completed');
-
-  const getSuccessRate = (items: PerformanceMetricPayload[]) => {
-    if (!items.length) {
-      return null;
-    }
-
-    const successCount = items.filter((item) => item.success !== false).length;
-    return Number(((successCount / items.length) * 100).toFixed(1));
-  };
-
-  return {
-    summary: summary.sort((a, b) => b.p75 - a.p75).slice(0, 30),
-    slow,
-    totals: {
-      count: events.length,
-      ai_success_rate: getSuccessRate(aiCompleted),
-      api_success_rate: getSuccessRate(apiCompleted),
+function buildQuery(searchParams: URLSearchParams, since: Date) {
+  const query: Record<string, unknown> = {
+    received_at: {
+      $gte: since,
     },
   };
+
+  const route = toLimitedText(searchParams.get('route'), 512);
+  if (route) {
+    query.route = normalizeRoute(route);
+  }
+
+  const event = toLimitedText(searchParams.get('event'), 64);
+  if (event && ALLOWED_EVENTS.has(event as PerformanceMetricPayload['event'])) {
+    query.event = event;
+  }
+
+  const device = toLimitedText(searchParams.get('device'), 16);
+  if (device && ALLOWED_DEVICES.has(device)) {
+    query.device_type = device;
+  }
+
+  const network = toLimitedText(searchParams.get('network'), 16);
+  if (network && ALLOWED_NETWORKS.has(network)) {
+    query.network_type = network;
+  }
+
+  const release = toLimitedText(searchParams.get('release'), 80);
+  if (release) {
+    query.release = release;
+  }
+
+  return query;
 }
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as Partial<PerformanceMetricPayload>;
-    const event = sanitizeEvent(body);
+    const bodyResult = await readRequestBody(request);
+
+    if ('oversized' in bodyResult) {
+      return NextResponse.json(
+        {
+          code: 413,
+          message: 'Performance payload too large',
+        },
+        { status: 413 }
+      );
+    }
+
+    const event = normalizePerformanceEvent(bodyResult.parsed);
 
     if (!event) {
       return NextResponse.json(
@@ -178,11 +114,20 @@ export async function POST(request: Request): Promise<Response> {
 
     const client = await clientPromise;
     const collection = client.db(DB_NAME).collection(COLLECTION_NAME);
-
-    await collection.insertOne({
+    const document = {
       ...event,
       received_at: new Date(),
-    });
+    };
+
+    if (event.event === 'web_vital' && event.metric_id) {
+      await collection.updateOne(
+        { event: 'web_vital', metric_id: event.metric_id },
+        { $setOnInsert: document },
+        { upsert: true }
+      );
+    } else {
+      await collection.insertOne(document);
+    }
 
     return NextResponse.json({
       code: 200,
@@ -202,31 +147,14 @@ export async function POST(request: Request): Promise<Response> {
 export async function GET(request: Request): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
-    const hours = Number(searchParams.get('hours') ?? 24);
-    const since = new Date(Date.now() - Math.max(1, Math.min(hours, 168)) * 60 * 60 * 1000);
-    const route = searchParams.get('route');
-    const event = searchParams.get('event');
-
+    const hours = getHours(searchParams);
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
     const client = await clientPromise;
     const collection = client.db(DB_NAME).collection<PerformanceMetricPayload & { received_at: Date }>(
       COLLECTION_NAME
     );
-    const query: Record<string, unknown> = {
-      received_at: {
-        $gte: since,
-      },
-    };
-
-    if (route) {
-      query.route = normalizeRoute(route);
-    }
-
-    if (event && ALLOWED_EVENTS.has(event)) {
-      query.event = event;
-    }
-
     const events = (await collection
-      .find(query)
+      .find(buildQuery(searchParams, since))
       .sort({ received_at: -1 })
       .limit(MAX_QUERY_LIMIT)
       .project({ _id: 0, received_at: 0 })

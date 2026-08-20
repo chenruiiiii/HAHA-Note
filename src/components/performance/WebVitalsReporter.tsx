@@ -13,11 +13,9 @@ interface WebVitalMetric {
 function reportWebVital(metric: WebVitalMetric) {
   trackPerformance('web_vital', {
     metric_name: metric.name,
+    metric_id: metric.id,
     value: Number(metric.value.toFixed(2)),
     rating: metric.rating,
-    metadata: {
-      metric_id: metric.id,
-    },
   });
 }
 

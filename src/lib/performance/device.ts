@@ -1,4 +1,4 @@
-import type { DeviceType } from './types';
+import type { DeviceType, NetworkType } from './types';
 
 interface NavigatorWithConnection extends Navigator {
   connection?: {
@@ -29,5 +29,17 @@ export function getNetworkType() {
     return 'unknown';
   }
 
-  return (navigator as NavigatorWithConnection).connection?.effectiveType ?? 'unknown';
+  const effectiveType = (navigator as NavigatorWithConnection).connection?.effectiveType;
+
+  switch (effectiveType) {
+    case 'slow-2g':
+    case '2g':
+    case '3g':
+    case '4g':
+    case '5g':
+    case 'wifi':
+      return effectiveType as NetworkType;
+    default:
+      return 'unknown';
+  }
 }
