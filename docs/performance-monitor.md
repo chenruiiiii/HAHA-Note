@@ -1,132 +1,276 @@
-# HA Performance Monitor 第一版实施方案
+# HA Performance Monitor：个人项目落地方案
 
-## 目标
+## 1. 目标与结论
 
-`HA Performance Monitor` 是 haha-note 的轻量级性能检测工具。第一版目标不是替代完整 APM 平台，而是为 AI 笔记助手建立一条可解释、可展示、可迭代的性能观测闭环：
+为 haha-note 建立一条低成本的真实用户性能观测链路，回答三个问题：
 
-1. 采集页面、接口、编辑器和 AI 流式生成的关键性能指标。
-2. 用统一事件模型上报，避免散落在业务代码里的临时埋点。
-3. 对路由和字段做脱敏，避免上传笔记正文、AI prompt、AI 回复和真实资源 ID。
-4. 在内部 Dashboard 中查看 P75、成功率、慢请求和性能预算状态。
+1. 用户实际看到首屏内容需要多久？
+2. 哪些页面、设备、网络或版本明显更慢？
+3. 出错时能否在 Sentry 中定位到堆栈和上下文？
 
-## 第一版关键路径
+本项目采用以下职责分工：
 
-优先监控 4 条用户路径：
+```text
+浏览器
+  ├─ web-vitals：采集 FCP / LCP / CLS / INP / TTFB
+  ├─ 业务性能埋点：编辑器 ready、接口耗时、AI 首 token
+  └─ sendBeacon -> /api/performance
 
-1. 首页和笔记列表加载。
-2. 打开一篇笔记并进入可编辑状态。
-3. 保存、搜索等高频笔记操作。
-4. AI 对话和 AI 总结的流式生成体验。
+/api/performance -> MongoDB（或项目已有数据库）-> Dashboard 聚合
 
-第一版不做全站链路追踪，不做 session replay，不引入复杂 OpenTelemetry。
-
-## 指标设计
-
-### 页面性能
-
-- `LCP`: 主要内容出现耗时。
-- `INP`: 点击、输入等交互响应延迟。
-- `CLS`: 页面意外布局位移。
-- `FCP`: 首次内容绘制。
-- `TTFB`: 首字节时间。
-
-### 业务性能
-
-- `api_request_completed`: 前端 API 请求耗时。
-- `note_open_completed`: 打开笔记耗时。
-- `note_save_completed`: 保存笔记耗时。
-- `search_completed`: 搜索耗时。
-- `editor_ready`: 编辑器可编辑耗时。
-
-### AI 性能
-
-- `ai_generation_started`: AI 请求发起。
-- `ai_first_token`: 首 token 或首次进入 streaming 的近似耗时。
-- `ai_generation_completed`: AI 完整生成耗时。
-- `ai_generation_cancelled`: 用户取消生成。
-- `ai_generation_failed`: 生成失败。
-
-### 公共维度
-
-- `route`: 脱敏后的路由模式。
-- `device_type`: `mobile`、`tablet` 或 `desktop`。
-- `network_type`: 浏览器可识别的网络类型。
-- `release`: 当前前端版本。
-- `timestamp`: 上报时间。
-- `rating`: Web Vitals 评级或自定义预算评级。
-
-## 隐私策略
-
-禁止上传：
-
-- 笔记正文。
-- AI prompt。
-- AI 回复。
-- 真实 `noteId`、`repoId`、`fileId`、`docsId`。
-- 完整 URL query。
-- token、cookie、鉴权 header。
-
-允许上传：
-
-- 脱敏后的 route pattern。
-- 耗时和数值指标。
-- 是否成功。
-- 错误类型或错误阶段。
-- 设备类型、网络类型、版本号。
-
-## 目录设计
-
-```txt
-src/lib/performance/
-  index.ts
-  types.ts
-  track.ts
-  route.ts
-  device.ts
-  budget.ts
-  marks.ts
-
-src/components/performance/
-  WebVitalsReporter.tsx
-
-src/components/layout/PerformanceDashboard/
-  index.tsx
-  style.module.scss
-
-app/api/performance/route.ts
-app/(home)/performance/page.tsx
+Sentry：只负责错误、异常上下文和低采样性能排查
 ```
 
-## 第一版性能预算
+不要把所有真实用户性能数据都作为 Sentry 事件上报。Sentry 保留在错误定位的位置；RUM 数据使用自己的轻量接口保存，避免 Replay、日志和全量 traces 持续消耗免费额度。
+
+## 2. 当前配置需要调整的地方
+
+当前 `instrumentation-client.ts` 中有以下高消耗配置：
+
+- `tracesSampleRate: 1`：100% 性能事务都会上报。
+- `replayIntegration()`：会产生 Replay 数据。
+- `replaysOnErrorSampleRate: 1.0`：每个错误都录制 Replay。
+- `enableLogs: true`：日志也会进入 Sentry 数据量。
+- `sendDefaultPii: true`：不符合个人项目默认的最小化采集原则。
+
+建议先调整为：
+
+```ts
+Sentry.init({
+  tracesSampleRate: 0.05,
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 0.05,
+  enableLogs: false,
+  sendDefaultPii: false,
+});
+```
+
+如果需要保留 Replay，优先只在测试环境或短时间排障期间开启。生产环境的性能数据改由 `web-vitals` 采集。
+
+## 3. 指标范围
+
+### 3.1 自动采集的字段指标
+
+使用 `web-vitals` 一次性接入，不需要为每个页面手写 `PerformanceObserver`：
+
+- `LCP`：主要内容出现时间，作为首屏主指标。
+- `FCP`：第一次出现文字或图片的时间。
+- `TTFB`：浏览器收到首字节的时间。
+- `INP`：用户交互到下一次绘制的响应延迟。
+- `CLS`：页面意外布局位移。
+
+查看首屏时优先看 `LCP p75`，不要只看平均值。`FCP` 代表“开始看到内容”，不一定代表页面已经可用。
+
+### 3.2 需要业务代码手动标记的字段
+
+浏览器无法理解 haha-note 的业务完成条件，因此以下指标需要手动埋点：
+
+- `note_open_completed`：笔记内容加载并可编辑。
+- `editor_ready`：编辑器完成初始化并可交互。
+- `note_save_completed`：保存请求完成。
+- `search_completed`：搜索结果可展示。
+- `ai_first_token`：AI 流式响应收到首 token。
+- `ai_generation_completed`：AI 完整响应结束。
+- `ai_generation_failed` / `ai_generation_cancelled`：失败和取消。
+
+手动埋点只记录耗时、成功状态和脱敏后的路由，不记录正文或 prompt。
+
+## 4. 数据契约
+
+所有 RUM 数据统一为以下结构：
+
+```ts
+type PerformanceEvent = {
+  name: string;
+  value: number;
+  metricId: string;
+  route: string;
+  deviceType: 'mobile' | 'tablet' | 'desktop';
+  networkType?: string;
+  release?: string;
+  success?: boolean;
+  rating?: 'good' | 'needs-improvement' | 'poor' | 'unknown';
+  createdAt: string;
+};
+```
+
+允许上报：耗时、数值、成功状态、评级、脱敏后的路由模式、设备类型、网络类型和版本号。
+
+禁止上报：笔记正文、AI prompt、AI 回复、真实资源 ID、完整 URL query、token、cookie、鉴权 header、用户输入内容和可直接识别用户的个人信息。
+
+## 5. 上报规则
+
+### 5.1 Web Vitals 上报
+
+先安装依赖：
+
+```bash
+npm install web-vitals
+```
+
+```ts
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
+
+function reportMetric(metric: {
+  name: string;
+  value: number;
+  id: string;
+  rating?: string;
+}) {
+  const body = JSON.stringify({
+    name: metric.name,
+    value: metric.value,
+    metricId: metric.id,
+    route: getSafeRoute(),
+    deviceType: getDeviceType(),
+    networkType: navigator.connection?.effectiveType ?? 'unknown',
+    release: process.env.NEXT_PUBLIC_APP_VERSION ?? 'unknown',
+    rating: metric.rating ?? 'unknown',
+    createdAt: new Date().toISOString(),
+  });
+
+  navigator.sendBeacon('/api/performance', body);
+}
+
+onCLS(reportMetric);
+onFCP(reportMetric);
+onINP(reportMetric);
+onLCP(reportMetric);
+onTTFB(reportMetric);
+```
+
+生产环境可以按 10% 采样；用户量很小时先使用 100%，但必须保留 `metricId`，避免同一指标重复入库。
+
+### 5.2 业务耗时埋点
+
+```ts
+const startedAt = performance.now();
+
+await openNote();
+
+reportPerformance({
+  name: 'note_open_completed',
+  value: performance.now() - startedAt,
+  success: true,
+});
+```
+
+## 6. 后端接口与存储
+
+新增 `app/api/performance/route.ts`：
+
+1. 只接受白名单中的 `name` 和字段。
+2. 限制单条 payload 大小，例如 8 KB。
+3. 校验 `value` 为有限非负数。
+4. 对 `route` 做模式化处理，不接受原始 query。
+5. 写入 MongoDB；如果项目后续迁移到 PostgreSQL，字段可以直接映射。
+6. 查询接口只返回聚合结果，不返回原始用户记录。
+
+建议的 MongoDB 文档：
+
+```json
+{
+  "name": "LCP",
+  "value": 1840,
+  "metricId": "v4-abc",
+  "route": "/",
+  "deviceType": "mobile",
+  "networkType": "4g",
+  "release": "2026.08.19",
+  "rating": "good",
+  "createdAt": "2026-08-19T10:00:00.000Z"
+}
+```
+
+索引：
+
+```text
+{ name: 1, route: 1, createdAt: -1 }
+{ release: 1, deviceType: 1, createdAt: -1 }
+```
+
+保留周期先设为 30 天。个人项目通常不需要永久保存原始 RUM 记录；日报或周报只保存聚合结果即可。
+
+## 7. 汇总与 Dashboard
+
+`app/(home)/performance/page.tsx` 展示以下内容：
+
+- 最近 7 天各指标的 `p50 / p75 / p95`。
+- 按 `route`、`deviceType`、`networkType`、`release` 筛选。
+- 样本数 `samples`，样本不足时显示“数据不足”。
+- 超过预算的指标和最慢的接口/业务动作。
+- AI 首 token 的 p75、完成率、失败率、取消率。
+
+MongoDB 聚合时使用 `$percentile`（MongoDB 版本支持时）或在服务端读取有限样本后计算分位数。不要用平均值替代 p75。
+
+第一版预算：
 
 ```ts
 export const PERFORMANCE_BUDGET = {
   LCP: 2500,
   INP: 200,
   CLS: 0.1,
-  api_request_ms: 1000,
-  open_note_ms: 800,
-  save_note_ms: 500,
-  search_ms: 500,
-  ai_first_token_ms: 1500,
+  TTFB: 800,
+  note_open_completed: 800,
+  note_save_completed: 500,
+  search_completed: 500,
+  ai_first_token: 1500,
 };
 ```
 
-Dashboard 中超过预算的指标标为 warning 或 poor。
+`LCP p75 <= 2500ms` 作为良好目标；预算不是用户体验的绝对结论，要结合设备、网络和样本数一起判断。
 
-## 实施步骤
+## 8. 实施顺序
 
-1. 新增 `src/lib/performance`，实现事件类型、路由脱敏、设备识别、预算评级和统一上报。
-2. 新增 `/api/performance`，支持写入性能事件和查询聚合数据。
-3. 在 `app/layout.tsx` 挂载 `WebVitalsReporter`，接入 Web Vitals。
-4. 在 `src/lib/http.ts` 的 axios interceptor 记录 API 请求耗时。
-5. 在 `src/hooks/common/useAIChatStream.ts` 记录 AI 开始、首 token、完成、取消、失败和重试。
-6. 为编辑器 ready、搜索等高频交互补充手动埋点。
-7. 新增 `/performance` Dashboard，展示 P75、慢请求和预算状态。
-8. 运行 lint 或 build，确认类型和构建可通过。
+### 第 1 步：先控制 Sentry 用量
 
-## 面试表达
+- 将 `tracesSampleRate` 从 `1` 调到 `0.05`。
+- 关闭生产 Replay 和 Sentry Logs。
+- 将 `sendDefaultPii` 调为 `false`。
+- 在 Sentry 控制台确认开发环境不会进入生产项目。
 
-可以将该工具总结为：
+### 第 2 步：接入 Web Vitals
 
-> 我为 AI 笔记助手实现了一个轻量级性能检测工具，不只是接入 Web Vitals，还针对 AI 产品体验设计了首 token、完整生成、取消率、重试率等业务指标，并通过 route 脱敏和字段白名单避免上传用户笔记内容，最后在内部 Dashboard 中用 P75 和性能预算判断体验是否达标。
+- 安装 `web-vitals`。
+- 新增 `src/lib/performance/` 下的类型、路由脱敏、设备识别和上报函数。
+- 在根布局挂载 `WebVitalsReporter`。
+
+### 第 3 步：增加业务指标
+
+- 先做 `note_open_completed`、`editor_ready`、`ai_first_token`。
+- 再补充保存、搜索、AI 完成/失败/取消。
+- 所有埋点通过统一 `reportPerformance` 函数发送。
+
+### 第 4 步：建立 API 和 Dashboard
+
+- 新增 `/api/performance` 写入和聚合查询接口。
+- 建立索引和 30 天清理任务。
+- 在现有 `/performance` 页面展示 p75、样本数和预算状态。
+
+### 第 5 步：验证
+
+- 用移动端、桌面端和慢网络各访问 10 次。
+- 检查浏览器 Network 中 `/api/performance` 是否成功。
+- 检查数据库中没有正文、prompt、真实资源 ID 或 token。
+- 用两个 release 对比 LCP p75 是否能按版本筛选。
+- 运行 `npm run lint` 和 `npm run build`。
+
+## 9. 个人项目的取舍
+
+推荐组合：
+
+```text
+Sentry       错误、堆栈、异常上下文，性能 5% 采样
+web-vitals   浏览器真实用户性能指标
+MongoDB      复用项目现有数据库，保存 30 天原始数据
+Dashboard    复用现有 /performance 页面
+```
+
+如果不想维护接口和页面，可以把 Web Analytics 交给 Cloudflare Web Analytics；如果想看事件、来源和漏斗，可以使用 Umami。无论选哪种方案，业务“首屏可用”仍然需要 `performance.mark()` 或统一业务埋点，因为平台无法自动知道“笔记已经可编辑”或“AI 首 token 已到达”。
+
+## 10. 参考资料
+
+- [web-vitals：使用 RUM 测量 Web Vitals](https://web.dev/articles/vitals-measurement-getting-started?hl=en)
+- [Cloudflare Web Analytics：真实用户监控](https://developers.cloudflare.com/web-analytics/about/)
+- [Umami：自托管、事件和性能分析](https://docs.umami.is/docs)
+- [Sentry：性能指标监控与聚合](https://docs.sentry.io/api/monitors/create-a-monitor-for-a-project/)
