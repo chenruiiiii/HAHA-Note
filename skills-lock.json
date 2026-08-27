@@ -5,6 +5,60 @@
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "openspec-propose": {
+      "source": "fission-ai/openspec",
+      "sourceType": "cli",
+      "version": "1.11.0",
+      "installedBy": "openspec init --tools codex",
+      "location": ".agents/skills/openspec-propose"
+    },
+    "openspec-explore": {
+      "source": "fission-ai/openspec",
+      "sourceType": "cli",
+      "version": "1.11.0",
+      "installedBy": "openspec init --tools codex",
+      "location": ".agents/skills/openspec-explore"
+    },
+    "openspec-apply-change": {
+      "source": "fission-ai/openspec",
+      "sourceType": "cli",
+      "version": "1.11.0",
+      "installedBy": "openspec init --tools codex",
+      "location": ".agents/skills/openspec-apply-change"
+    },
+    "openspec-update-change": {
+      "source": "fission-ai/openspec",
+      "sourceType": "cli",
+      "version": "1.11.0",
+      "installedBy": "openspec init --tools codex",
+      "location": ".agents/skills/openspec-update-change"
+    },
+    "openspec-sync-specs": {
+      "source": "fission-ai/openspec",
+      "sourceType": "cli",
+      "version": "1.11.0",
+      "installedBy": "openspec init --tools codex",
+      "location": ".agents/skills/openspec-sync-specs"
+    },
+    "openspec-archive-change": {
+      "source": "fission-ai/openspec",
+      "sourceType": "cli",
+      "version": "1.11.0",
+      "installedBy": "openspec init --tools codex",
+      "location": ".agents/skills/openspec-archive-change"
+    },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "entry": "skills/productivity/grill-me",
+      "location": ".codex/skills/grill-me"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "entry": "skills/productivity/grilling",
+      "location": ".codex/skills/grilling"
     }
   }
 }

@@ -1,5 +1,6 @@
 import { generateText, streamText, UIMessage, convertToModelMessages } from 'ai';
-import { createDeepSeek } from '@ai-sdk/deepseek';
+import { createOpenAI } from '@ai-sdk/openai';
+import { z } from 'zod';
 import clientPromise from '@/lib/mongodb';
 import {
   type AiChatListItem,
@@ -11,6 +12,83 @@ import {
 const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'ai_chat_detail';
 const CHAT_LIST_COLLECTION_NAME = 'latest_mission';
+
+// 模型与 Provider 配置（多模型统一封装，切换只需改环境变量）
+const DEFAULT_BASE_URL = 'https://api.deepseek.com/v1';
+const DEFAULT_CHAT_MODEL = 'deepseek-chat';
+const ALLOWED_MODELS = ['deepseek-chat', 'deepseek-reasoner'];
+
+let providerCache: ReturnType<typeof createOpenAI> | null = null;
+
+/**
+ * 获取共享的 OpenAI 兼容 Provider 实例。
+ *
+ * 通过 `createOpenAI` 统一封装 OpenAI 兼容接口（DeepSeek 等），
+ * 切换模型只需更换 `apiKey` + `baseURL`，API key 只存在于服务端。
+ *
+ * @returns OpenAI 兼容的 Provider 实例。
+ * @throws 当 `DEEPSEEK_API_KEY` 未配置时抛出错误。
+ */
+function getProvider() {
+  if (!providerCache) {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+
+    if (!apiKey) {
+      throw new Error('DEEPSEEK_API_KEY is not configured');
+    }
+
+    providerCache = createOpenAI({
+      apiKey,
+      baseURL: process.env.AI_PROVIDER_BASE_URL || DEFAULT_BASE_URL,
+    });
+  }
+
+  return providerCache;
+}
+
+/**
+ * 解析并校验模型名，防止前端传入任意模型。
+ *
+ * @param name - 请求中携带的模型名；缺省时读取 `AI_CHAT_MODEL`，再回退默认模型。
+ * @returns 通过白名单校验的模型名。
+ * @throws 当模型名不在白名单中时抛出错误。
+ */
+function resolveModel(name?: string) {
+  const model = name || process.env.AI_CHAT_MODEL || DEFAULT_CHAT_MODEL;
+
+  if (!ALLOWED_MODELS.includes(model)) {
+    throw new Error(`model "${model}" is not allowed`);
+  }
+
+  return model;
+}
+
+/**
+ * 请求体校验 Schema：`chatId` 非空字符串，`messages` 为非空消息数组。
+ */
+const ChatRequestBodySchema = z.object({
+  chatId: z.string().min(1, 'chatId is required'),
+  messages: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        role: z.enum(['system', 'user', 'assistant']),
+        parts: z.array(z.record(z.string(), z.unknown())).optional(),
+      })
+    )
+    .min(1, 'messages must not be empty'),
+});
+
+/**
+ * 统一的 JSON 错误响应（不暴露后端栈信息）。
+ *
+ * @param status - HTTP 状态码。
+ * @param message - 用户可读的错误信息。
+ * @returns JSON 响应。
+ */
+function jsonError(status: number, message: string) {
+  return Response.json({ code: status, data: null, message }, { status });
+}
 
 /**
  * 将 AI SDK message part 转换为本项目存储用的消息片段格式。
@@ -109,7 +187,7 @@ function getMessagePlainText(message: AiMissionMessage) {
 }
 
 /**
- * 基于首轮问答调用 DeepSeek 生成会话文档标题。
+ * 基于首轮问答调用 LLM 生成会话文档标题。
  *
  * @param messages - 标准化后的会话消息数组。
  * @returns AI 生成的标题；生成失败或内容为空时返回默认标题。
@@ -125,9 +203,8 @@ async function generateDocumentTitle(messages: AiMissionMessage[]) {
   }
 
   try {
-    const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
     const result = await generateText({
-      model: deepseek('deepseek-chat'),
+      model: getProvider()(resolveModel()),
       prompt: [
         '请根据下面的对话内容提取关键词，生成一个适合作为文档标题的中文标题。',
         '要求：',
@@ -152,7 +229,7 @@ async function generateDocumentTitle(messages: AiMissionMessage[]) {
 }
 
 /**
- * 基于会话内容调用 DeepSeek 生成摘要。
+ * 基于会话内容调用 LLM 生成摘要。
  *
  * @param messages - 标准化后的会话消息数组。
  * @returns AI 生成的会话摘要；生成失败时返回截断后的原始对话文本。
@@ -171,9 +248,8 @@ async function generateConversationSummary(messages: AiMissionMessage[]) {
   }
 
   try {
-    const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
     const result = await generateText({
-      model: deepseek('deepseek-chat'),
+      model: getProvider()(resolveModel()),
       prompt: [
         '请基于下面的对话内容，生成一段适合作为会话摘要的中文总结。',
         '要求：',
@@ -274,51 +350,89 @@ async function shouldGenerateTitle(chatId: string) {
   return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
 }
 
+// Vercel 无服务器函数超时上限（流式长请求必须设置）
+export const maxDuration = 30;
+
 /**
  * 发送聊天消息并以流式响应返回 AI 回复，同时持久化会话详情、标题和摘要。
  *
+ * 错误处理约定（双通道）：
+ * - 请求前/校验/初始化阶段错误：直接返回 JSON `{ code, message }`。
+ * - 流开始后的错误：由 AI SDK 编码进流（error part），前端可从错误对象读取
+ *   `statusCode` 与用户可读 `message`，后端不暴露栈信息。
+ * - 用户主动停止（abort）：透传 `req.signal` 真正终止上游 LLM 请求，且不把
+ *   半截 assistant 内容当作最终回答落库。
+ *
  * @param req - 请求对象，JSON body 需包含 `chatId` 和 AI SDK `messages`。
- * @returns UI message stream 响应；缺少 `chatId` 时返回 400 JSON 错误。
+ * @returns UI message stream 响应；参数不合法时返回 400 JSON 错误。
  */
 export async function POST(req: Request) {
-  const { messages, chatId }: { messages: UIMessage[]; chatId?: string } = await req.json();
-  const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
+  let body: unknown;
 
-  if (!chatId) {
-    return new Response(JSON.stringify({ code: 400, data: null, message: 'chatId is required' }), {
-      status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  try {
+    body = await req.json();
+  } catch {
+    return jsonError(400, '请求体不是合法 JSON');
   }
 
-  await saveChatDetail(chatId, messages);
+  const parsed = ChatRequestBodySchema.safeParse(body);
 
-  const result = streamText({
-    model: deepseek('deepseek-chat'),
-    messages: await convertToModelMessages(messages),
-  });
+  if (!parsed.success) {
+    return jsonError(400, parsed.error.issues[0]?.message || '请求参数不合法');
+  }
 
-  return result.toUIMessageStreamResponse({
-    originalMessages: messages,
-    onFinish: async ({ messages: finalMessages }) => {
-      const needsTitleGeneration = await shouldGenerateTitle(chatId);
-      const normalizedMessages = normalizeMessages(finalMessages);
-      const summary = await generateConversationSummary(normalizedMessages);
+  // zod 已校验基本形状，此处按 AI SDK UI 消息类型收窄
+  const { messages, chatId } = parsed.data as { messages: UIMessage[]; chatId: string };
 
-      if (needsTitleGeneration) {
-        const generatedTitle = await generateDocumentTitle(normalizedMessages);
+  try {
+    const model = getProvider()(resolveModel());
+
+    // 流开始前先持久化（含用户消息与历史），abort 时不覆盖，避免半截内容落库
+    await saveChatDetail(chatId, messages);
+
+    const result = streamText({
+      model,
+      messages: await convertToModelMessages(messages),
+      // 透传 abortSignal：前端 stop 时真正终止上游 LLM 请求，避免继续消耗 token
+      abortSignal: req.signal,
+    });
+
+    return result.toUIMessageStreamResponse({
+      originalMessages: messages,
+      onFinish: async ({ messages: finalMessages }) => {
+        // 用户主动停止：不把半截 assistant 内容当作最终回答落库
+        if (req.signal.aborted) {
+          return;
+        }
+
+        const needsTitleGeneration = await shouldGenerateTitle(chatId);
+        const normalizedMessages = normalizeMessages(finalMessages);
+        const summary = await generateConversationSummary(normalizedMessages);
+
+        if (needsTitleGeneration) {
+          const generatedTitle = await generateDocumentTitle(normalizedMessages);
+          await saveChatDetail(chatId, finalMessages, {
+            titleOverride: generatedTitle,
+            summaryOverride: summary,
+          });
+          return;
+        }
+
         await saveChatDetail(chatId, finalMessages, {
-          titleOverride: generatedTitle,
           summaryOverride: summary,
         });
-        return;
-      }
+      },
+    });
+  } catch (err) {
+    console.error('chat api error', err);
 
-      await saveChatDetail(chatId, finalMessages, {
-        summaryOverride: summary,
-      });
-    },
-  });
+    // 上游鉴权/限流等 4xx 错误透传状态码；其余统一 500，不暴露后端细节
+    const statusCode =
+      err instanceof Error && 'statusCode' in err
+        ? (err as { statusCode?: number }).statusCode
+        : undefined;
+    const status = typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
+
+    return jsonError(status, status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试');
+  }
 }
