@@ -20,6 +20,7 @@ import {
   injectHeadingIds,
 } from '../../../utils/editor';
 import { debounce } from '@/utils/debounce';
+import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
 
 type HAEditorProps = {
   initialTitle?: string;
@@ -35,6 +36,10 @@ type HAEditorProps = {
   onChange?: (html: string) => void;
   onSave?: (payload: { title: string; content: string }) => Promise<void> | void;
 };
+
+function now() {
+  return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+}
 
 const HAEditor = ({
   initialTitle = '',
@@ -58,6 +63,8 @@ const HAEditor = ({
   const onSaveRef = useRef(onSave);
   const autoSaveRef = useRef<() => Promise<void>>(async () => {});
   const debouncedAutoSaveRef = useRef<ReturnType<typeof debounce<() => void>> | null>(null);
+  const editorMountStartedAtRef = useRef(now());
+  const hasReportedEditorReadyRef = useRef(false);
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -81,6 +88,7 @@ const HAEditor = ({
   const handleSave = useCallback(async () => {
     if (!editor) return;
     const html = injectHeadingIds(editor.getHTML());
+    const saveStartedAt = now();
 
     try {
       await onSaveRef.current?.({
@@ -88,8 +96,25 @@ const HAEditor = ({
         content: html,
       });
 
+      const duration = Math.round(now() - saveStartedAt);
+      trackPerformance('note_save_completed', {
+        metric_name: 'save_note_ms',
+        duration_ms: duration,
+        value: duration,
+        rating: rateMetric(duration, getBudget('save_note_ms')),
+        success: true,
+      });
       setSaveStatusText(getSaveStatusText());
     } catch {
+      const duration = Math.round(now() - saveStartedAt);
+      trackPerformance('note_save_completed', {
+        metric_name: 'save_note_ms',
+        duration_ms: duration,
+        value: duration,
+        rating: rateMetric(duration, getBudget('save_note_ms')),
+        success: false,
+        error_type: 'save_error',
+      });
       messageApi.error('保存失败，请稍后重试');
     }
   }, [editor, messageApi]);
@@ -137,6 +162,19 @@ const HAEditor = ({
 
   useEffect(() => {
     if (!editor) return;
+    if (!hasReportedEditorReadyRef.current) {
+      const duration = Math.round(now() - editorMountStartedAtRef.current);
+      hasReportedEditorReadyRef.current = true;
+
+      trackPerformance('editor_ready', {
+        metric_name: 'editor_ready_ms',
+        duration_ms: duration,
+        value: duration,
+        rating: rateMetric(duration, getBudget('editor_ready_ms')),
+        success: true,
+      });
+    }
+
     setOutlineItems(getOutlineFromEditor(editor.getJSON()));
   }, [editor]);
 

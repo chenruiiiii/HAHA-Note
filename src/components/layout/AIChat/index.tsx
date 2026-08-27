@@ -1,5 +1,6 @@
 'use client';
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import InnerHeader from './components/InnerHeader';
 import './style.scss';
 import { type UIMessage } from 'ai';
@@ -7,9 +8,8 @@ import MDEditor from '@uiw/react-md-editor';
 import HALoading from '@/components/common/HALoading';
 import emitter from '@/lib/mitt';
 import ChatBottom from '../AIWritingHome/components/ChatBottom';
-import { useAppSelector } from '@/store';
 import { useHaChat } from '@/hooks/common/useHaChat';
-import { useOneRequest } from '@/hooks/common/useOneRequest';
+import { checkDuplicate } from '@/hooks/common/useOneRequest';
 import PostingBox from './components/PostingBox';
 import { formatTime } from '@/utils/timeFormatter';
 import type { AiMissionDetail, AiMissionPart } from '@/models/ai-mission';
@@ -64,8 +64,10 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   const chatRef = useRef<HTMLDivElement>(null);
   const loadChatDetailRef = useRef<() => Promise<unknown> | unknown>(() => null);
   const { handlePostingClose, handlePostingOpen, requestStatus, lastError, retryCount } = useHaChat();
-  const value = useAppSelector((state) => state.temp.value);
-  const { checkDuplicate } = useOneRequest();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pendingMessage = searchParams.get('q');
+  const pendingConsumedRef = useRef(false);
 
   const { messages, status, sendMessage, setMessages, stopStream, retryStream } = useAIChatStream({
     chatId: _id,
@@ -263,6 +265,13 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     }
   }, []);
 
+  // 流式过程自动滚动到底部（2.5.1）
+  useEffect(() => {
+    if (status === 'streaming') {
+      handleScroll();
+    }
+  }, [handleScroll, messages, status]);
+
   // 监听status
   useEffect(() => {
     // 再次变为submitted时，说明开始新的请求，新对话滚动到可视窗口最上方
@@ -302,9 +311,11 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     document.title = chatTitle;
   }, [chatTitle]);
 
-  // 结束流式传输，停止发送中状态
+  // 结束流式传输，停止发送中状态（只处理属于当前会话的事件）
   useEffect(() => {
-    const handler = () => {
+    const handler = (payload: unknown) => {
+      const { chatId } = payload as { chatId: string };
+      if (chatId !== _id) return;
       void stopStream().finally(() => {
         handlePostingClose();
       });
@@ -313,28 +324,39 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     return () => {
       emitter.off('stop-send-message', handler);
     };
-  }, [handlePostingClose, stopStream]);
+  }, [handlePostingClose, stopStream, _id]);
 
-  // chat-put组件发布 chat-message 消息时候发送消息
+  // chat-put组件发布 chat-message 消息时候发送消息（携带 chatId，只处理当前会话）
   useEffect(() => {
-    const handler = (message: unknown) => {
-      if (!checkDuplicate(message as string, {})) {
-        sendMessage({ text: message as string });
-      }
+    const handler = (payload: unknown) => {
+      const { message, chatId } = payload as { message: string; chatId: string };
+      if (chatId !== _id) return;
+      if (checkDuplicate(message, {})) return;
+      sendMessage({ text: message });
     };
     emitter.on('chat-message', handler);
     return () => {
       emitter.off('chat-message', handler);
     };
-  }, [checkDuplicate, sendMessage]);
+  }, [sendMessage, _id]);
 
-  // 从ai-chat-home跳转过来后直接发送请求
+  // 从 ai-chat-home 跳转过来后直接发送请求（消息来自 URL searchParams，消费后清理防止刷新重发）
   useEffect(() => {
-    if (value && !checkDuplicate(value as string, {})) {
-      handlePostingOpen();
-      sendMessage({ text: value });
-    }
-  }, [checkDuplicate, handlePostingOpen, sendMessage, value]);
+    if (isInitialLoading) return;
+    if (!pendingMessage || pendingConsumedRef.current) return;
+    if (checkDuplicate(pendingMessage, {})) return;
+    pendingConsumedRef.current = true;
+    handlePostingOpen();
+    sendMessage({ text: pendingMessage });
+    router.replace(`/ai-chat/${_id}`);
+  }, [
+    _id,
+    handlePostingOpen,
+    isInitialLoading,
+    pendingMessage,
+    router,
+    sendMessage,
+  ]);
 
   return (
     <div className="ai-chat-container">

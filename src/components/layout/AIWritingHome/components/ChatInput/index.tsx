@@ -5,11 +5,10 @@ import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { warningMessage } from '@/utils/message_reminder';
 import { useHaChat } from '@/hooks/common/useHaChat';
-import emitter from '@/lib/mitt';
 
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');
-  const { isPosting, handleSend } = useHaChat();
+  const { isPosting, handleSend, stopSendMessage } = useHaChat();
 
   // 通知兄弟组件发送消息并展示流式数据内容
   const handleSendMessage = () => {
@@ -17,28 +16,36 @@ const ChatInput = () => {
     setInputValue('');
   };
 
-  // 发送按钮点击事件
+  // 发送按钮点击事件：发送中点击 = 停止当前生成（防止重复提交）
   const handleSendClick = () => {
     if (isPosting) {
-      emitter.emit('stop-send-message');
-    } else {
-      if (inputValue.trim() === '') {
-        warningMessage('请输入内容！');
-        return;
-      } else {
-        handleSendMessage();
-      }
+      stopSendMessage();
+      return;
     }
+
+    if (inputValue.trim() === '') {
+      warningMessage('请输入内容！');
+      return;
+    }
+
+    handleSendMessage();
   };
 
-  // 输入框回车事件
+  // 输入框回车事件：发送中禁止再次发送
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+
+      if (isPosting) {
+        warningMessage('内容正在生成中，请稍候或点击停止');
+        return;
+      }
+
       if (inputValue.trim() === '') {
         warningMessage('请输入内容！');
         return;
       }
+
       handleSendMessage();
     }
   };
