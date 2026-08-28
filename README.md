@@ -65,7 +65,8 @@ Haha Note 是一个基于 Next.js App Router 的知识笔记与 AI 写作应用�
 
 ```env
 # MongoDB 连接地址
-APP_MONGODB_MONGODB_URI=mongodb+srv://user:password@cluster.example.mongodb.net
+# 兼容 Vercel MongoDB Atlas 集成的 `MONGODB_URI`，也兼容旧的 `APP_MONGODB_MONGODB_URI`
+MONGODB_URI=mongodb+srv://user:password@cluster.example.mongodb.net
 
 # DeepSeek API Key
 DEEPSEEK_API_KEY=your_deepseek_api_key
