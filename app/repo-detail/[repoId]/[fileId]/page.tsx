@@ -2,10 +2,13 @@
 
 import HAEditor from '@/components/common/HAEditor';
 import HALoading from '@/components/common/HALoading';
+import SaveStatusIndicator from '@/components/common/SaveStatusIndicator/SaveStatusIndicator';
+import ConflictDialog from '@/components/common/SaveStatusIndicator';
 import useDocsDetail from '@/hooks/layer/useDocsDetail';
 import useRepoDetail from '@/hooks/layer/useRepoDetail';
+import { useDocumentAutosave } from '@/hooks/useDocumentAutosave';
 import { generateDocsSummary } from '@/services/docs-summary';
-import { updateDocsDetailData } from '@/services/docs-detail';
+import { saveDocumentVersioned, ConflictError } from '@/services/docs-detail';
 import { useAppDispatch } from '@/store';
 import { upsertRepoDetailDocAction } from '@/store/modules/repoDetail';
 import { DocumentDetail } from '@/models/docs';
@@ -49,36 +52,38 @@ const FileDetail = () => {
   const summaryRef = useRef(editorData.summary || '');
   const repositoryIdRef = useRef(editorData.repository_id);
   const authorRef = useRef(editorData.author);
-  const docDirtyRef = useRef(false);
-  const hasFlushedDocRef = useRef(false);
   const summaryDirtyRef = useRef(false);
   const hasFlushedSummaryRef = useRef(false);
 
+  // ─── 版本化自动保存 ───
+  const docVersionRef = useRef(1);
+  const autosave = useDocumentAutosave({
+    documentId: docsId,
+    initialVersion: docVersionRef.current,
+    debounceMs: 1000,
+    saveFn: async (payload, baseVersion, requestId) => {
+      try {
+        const result = await saveDocumentVersioned(docsId, {
+          baseVersion,
+          content: payload.content,
+          title: payload.title,
+          summary: summaryRef.current,
+          requestId,
+        });
+        docVersionRef.current = result.version;
+        return { version: result.version };
+      } catch (err) {
+        if (err instanceof ConflictError) {
+          docVersionRef.current = err.currentVersion;
+        }
+        throw err;
+      }
+    },
+  });
+
   const flushDocBeforeLeave = useCallback(() => {
-    if (hasFlushedDocRef.current || !docDirtyRef.current || !docsId) {
-      return;
-    }
-
-    hasFlushedDocRef.current = true;
-    docDirtyRef.current = false;
-
-    void fetch(`/api/docs-detail/${docsId}`, {
-      method: 'POST',
-      credentials: 'include',
-      keepalive: true,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        title: titleRef.current || '新建文档',
-        content_html: contentRef.current || '',
-        repository_id: repositoryIdRef.current || repoId,
-        author: authorRef.current || '当前用户',
-        summary: summaryRef.current,
-      }),
-    });
-  }, [docsId, repoId]);
+    void autosave.flushSave();
+  }, [autosave]);
 
   const flushSummaryBeforeLeave = useCallback(() => {
     if (hasFlushedSummaryRef.current || !summaryDirtyRef.current || !docsId) {
@@ -125,8 +130,6 @@ const FileDetail = () => {
     summaryRef.current = editorData.summary || '';
     setSummary(editorData.summary || '');
     setSummaryError('');
-    docDirtyRef.current = false;
-    hasFlushedDocRef.current = false;
     summaryDirtyRef.current = false;
     hasFlushedSummaryRef.current = false;
     setIsSummaryDirty(false);
@@ -254,6 +257,13 @@ const FileDetail = () => {
           initialTitle={editorData.title}
           initialContent={editorData.content_html}
           initialSavedAt={editorData.updated_at}
+          saveStatusText={
+            <SaveStatusIndicator
+              status={autosave.state.status}
+              lastSavedAt={autosave.state.lastSavedAt}
+              error={autosave.state.error}
+            />
+          }
           topContent={
             <section className={styles.summaryCard}>
               <div className={styles.summaryInner}>
@@ -305,8 +315,6 @@ const FileDetail = () => {
           }
           onTitleChange={(title) => {
             titleRef.current = title || '新建文档';
-            docDirtyRef.current = true;
-            hasFlushedDocRef.current = false;
             summaryDirtyRef.current = true;
             setIsSummaryDirty(true);
 
@@ -317,28 +325,31 @@ const FileDetail = () => {
                 docsName: title || '新建文档',
               })
             );
+
+            autosave.notifyEdit({
+              title: title || '新建文档',
+              content: contentRef.current,
+            });
           }}
           onChange={(html) => {
             contentRef.current = html;
-            docDirtyRef.current = true;
-            hasFlushedDocRef.current = false;
             summaryDirtyRef.current = true;
             setIsSummaryDirty(true);
+
+            autosave.notifyEdit({
+              title: titleRef.current || '新建文档',
+              content: html,
+            });
           }}
           onSave={async ({ title, content }) => {
             titleRef.current = title;
             contentRef.current = content;
 
-            await updateDocsDetailData(docsId, {
+            autosave.notifyEdit({
               title: title || '新建文档',
-              content_html: content,
-              repository_id: repoId,
-              author: editorData.author || '当前用户',
-              summary: summaryRef.current,
+              content,
             });
-
-            docDirtyRef.current = false;
-            hasFlushedDocRef.current = false;
+            await autosave.flushSave();
 
             dispatch(
               upsertRepoDetailDocAction({
@@ -348,7 +359,23 @@ const FileDetail = () => {
               })
             );
           }}
-        ></HAEditor>
+        />
+        <ConflictDialog
+          open={autosave.state.status === 'conflict'}
+          conflictVersion={autosave.state.conflictVersion}
+          onLoadServer={() => {
+            if (autosave.state.conflictVersion !== null) {
+              autosave.resolveConflictLoadServer(autosave.state.conflictVersion);
+              // 重新从服务端加载文档
+              void window.location.reload();
+            }
+          }}
+          onKeepLocal={() => {
+            if (autosave.state.conflictVersion !== null) {
+              autosave.resolveConflictKeepLocal(autosave.state.conflictVersion);
+            }
+          }}
+        />
       </div>
     </Suspense>
   );

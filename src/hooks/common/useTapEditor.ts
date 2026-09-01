@@ -110,37 +110,12 @@ export default function useTipTapEditor() {
     setAttachments(attachments.filter((att) => att.id !== id));
   };
 
-  // 8. 保存全部
+  // 8. 保存全部（已移除本地持久化，正文从云端加载）
   const saveAll = () => {
-    const data = {
-      content,
-      tasks,
-      tags,
-      attachments,
-      updatedAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem('final-note-data', JSON.stringify(data));
-    successMessage('✅ 已保存到本地');
+    successMessage('内容已自动保存到云端');
   };
 
-  // 9. 加载数据
-  useEffect(() => {
-    const saved = localStorage.getItem('final-note-data');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        setContent(data.content || '');
-        setTasks(data.tasks || []);
-        setTags(data.tags || []);
-        setAttachments(data.attachments || []);
-      } catch (err) {
-        console.log('无保存数据');
-      }
-    }
-  }, []);
-
-  // 10. 检查placeholder
+  // 9. 检查placeholder
   useEffect(() => {
     if (editorRef.current) {
       const isEmpty = !editorRef.current.innerText.trim();

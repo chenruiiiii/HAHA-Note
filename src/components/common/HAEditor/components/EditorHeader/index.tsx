@@ -8,7 +8,7 @@ import { CommentOutlined, EyeOutlined } from '@ant-design/icons';
 interface EditorHeaderProps {
   title: string;
   titlePlaceholder: string;
-  saveStatusText: string;
+  saveStatusText: React.ReactNode;
   onTitleChange: (title: string) => void;
   onTitleSubmit: (title: string) => void;
 }

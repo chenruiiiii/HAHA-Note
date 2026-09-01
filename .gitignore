@@ -79,3 +79,6 @@ next-env.d.ts
 
 # generated prisma client
 /src/generated/
+
+# openspec working changes (planning artifacts kept local)
+/openspec
