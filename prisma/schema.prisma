@@ -1,0 +1,358 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum RepositoryRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum Visibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+enum DocumentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+enum MessageStatus {
+  PENDING
+  STREAMING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AssetKind {
+  IMAGE
+  AUDIO
+  VIDEO
+  FILE
+}
+
+enum AssetStatus {
+  PENDING
+  READY
+  REJECTED
+  DELETED
+}
+
+enum ActivityType {
+  DOCUMENT_VIEWED
+  DOCUMENT_UPDATED
+  DOCUMENT_CREATED
+  DOCUMENT_SHARED
+  AI_MESSAGE_SENT
+}
+
+model User {
+  id                    String               @id @default(cuid())
+  username              String               @unique @db.VarChar(50)
+  email                 String?              @unique @db.VarChar(254)
+  passwordHash          String               @map("password_hash")
+  nickname              String               @db.VarChar(80)
+  avatarUrl             String?              @map("avatar_url")
+  role                  UserRole             @default(USER)
+  enabled               Boolean              @default(true)
+  passwordResetRequired Boolean              @default(false) @map("password_reset_required")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @updatedAt @map("updated_at")
+  sessions              Session[]
+  ownedRepositories     Repository[]         @relation("RepositoryOwner")
+  repositoryMemberships RepositoryMember[]
+  createdDocuments      Document[]           @relation("DocumentCreator")
+  createdRevisions      DocumentRevision[]   @relation("RevisionCreator")
+  repositoryFavorites   RepositoryFavorite[]
+  documentFavorites     DocumentFavorite[]
+  createdShareLinks     DocumentShareLink[]  @relation("ShareCreator")
+  conversations         Conversation[]
+  assets                Asset[]
+  activities            Activity[]
+
+  @@map("users")
+}
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  userAgent        String?   @map("user_agent")
+  ipHash           String?   @map("ip_hash")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("sessions")
+}
+
+model Repository {
+  id            String               @id @default(cuid())
+  ownerId       String               @map("owner_id")
+  title         String               @db.VarChar(120)
+  description   String               @default("") @db.Text
+  type          String               @default("book") @db.VarChar(30)
+  visibility    Visibility           @default(PRIVATE)
+  coverUrl      String?              @map("cover_url")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  deletedAt     DateTime?            @map("deleted_at")
+  owner         User                 @relation("RepositoryOwner", fields: [ownerId], references: [id])
+  members       RepositoryMember[]
+  documents     Document[]
+  favorites     RepositoryFavorite[]
+  conversations Conversation[]
+
+  @@index([ownerId, updatedAt])
+  @@map("repositories")
+}
+
+model RepositoryMember {
+  repositoryId String         @map("repository_id")
+  userId       String         @map("user_id")
+  role         RepositoryRole @default(VIEWER)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  repository   Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([repositoryId, userId])
+  @@index([userId])
+  @@map("repository_members")
+}
+
+model RepositoryFavorite {
+  userId       String     @map("user_id")
+  repositoryId String     @map("repository_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, repositoryId])
+  @@index([repositoryId])
+  @@map("repository_favorites")
+}
+
+model Document {
+  id            String              @id @default(cuid())
+  repositoryId  String              @map("repository_id")
+  creatorId     String              @map("creator_id")
+  title         String              @default("新建文档") @db.VarChar(200)
+  content       Json
+  contentHtml   String?             @map("content_html") @db.Text
+  contentText   String              @default("") @map("content_text") @db.Text
+  summary       String              @default("") @db.Text
+  version       Int                 @default(1)
+  status        DocumentStatus      @default(DRAFT)
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  publishedAt   DateTime?           @map("published_at")
+  deletedAt     DateTime?           @map("deleted_at")
+  repository    Repository          @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  creator       User                @relation("DocumentCreator", fields: [creatorId], references: [id])
+  revisions     DocumentRevision[]
+  favorites     DocumentFavorite[]
+  shareLinks    DocumentShareLink[]
+  conversations Conversation[]
+  activities    Activity[]
+
+  @@index([repositoryId, updatedAt])
+  @@index([creatorId, updatedAt])
+  @@map("documents")
+}
+
+model DocumentRevision {
+  id          String   @id @default(cuid())
+  documentId  String   @map("document_id")
+  createdById String   @map("created_by_id")
+  version     Int
+  title       String   @db.VarChar(200)
+  content     Json
+  contentHtml String?  @map("content_html") @db.Text
+  summary     String   @default("") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("RevisionCreator", fields: [createdById], references: [id])
+
+  @@unique([documentId, version])
+  @@index([createdById, createdAt])
+  @@map("document_revisions")
+}
+
+model DocumentFavorite {
+  userId     String   @map("user_id")
+  documentId String   @map("document_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, documentId])
+  @@index([documentId])
+  @@map("document_favorites")
+}
+
+model DocumentShareLink {
+  id          String    @id @default(cuid())
+  documentId  String    @map("document_id")
+  createdById String    @map("created_by_id")
+  tokenHash   String    @unique @map("token_hash")
+  expiresAt   DateTime? @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation("ShareCreator", fields: [createdById], references: [id])
+
+  @@index([documentId, revokedAt])
+  @@map("document_share_links")
+}
+
+model Conversation {
+  id           String             @id @default(cuid())
+  ownerId      String             @map("owner_id")
+  repositoryId String?            @map("repository_id")
+  documentId   String?            @map("document_id")
+  title        String             @default("新建对话") @db.VarChar(200)
+  summary      String             @default("") @db.Text
+  provider     String             @default("deepseek") @db.VarChar(40)
+  model        String             @db.VarChar(100)
+  status       ConversationStatus @default(ACTIVE)
+  isFavorite   Boolean            @default(false) @map("is_favorite")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+  deletedAt    DateTime?          @map("deleted_at")
+  owner        User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  repository   Repository?        @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+  document     Document?          @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  messages     Message[]
+
+  @@index([ownerId, updatedAt])
+  @@index([repositoryId])
+  @@index([documentId])
+  @@map("conversations")
+}
+
+model Message {
+  id               String         @id @default(cuid())
+  conversationId   String         @map("conversation_id")
+  clientMessageId  String?        @map("client_message_id") @db.VarChar(120)
+  role             MessageRole
+  status           MessageStatus  @default(COMPLETED)
+  content          String         @default("") @db.Text
+  parts            Json
+  provider         String?        @db.VarChar(40)
+  model            String?        @db.VarChar(100)
+  errorCode        String?        @map("error_code") @db.VarChar(80)
+  promptTokens     Int?           @map("prompt_tokens")
+  completionTokens Int?           @map("completion_tokens")
+  latencyMs        Int?           @map("latency_ms")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  conversation     Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  assets           MessageAsset[]
+
+  @@unique([conversationId, clientMessageId])
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model Asset {
+  id           String         @id @default(cuid())
+  ownerId      String         @map("owner_id")
+  kind         AssetKind
+  status       AssetStatus    @default(PENDING)
+  storageKey   String?        @unique @map("storage_key")
+  externalUrl  String?        @map("external_url") @db.Text
+  originalName String?        @map("original_name") @db.VarChar(255)
+  mimeType     String         @map("mime_type") @db.VarChar(120)
+  sizeBytes    BigInt?        @map("size_bytes")
+  sha256       String?        @db.VarChar(64)
+  width        Int?
+  height       Int?
+  durationMs   Int?           @map("duration_ms")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  deletedAt    DateTime?      @map("deleted_at")
+  owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  messages     MessageAsset[]
+
+  @@index([ownerId, createdAt])
+  @@map("assets")
+}
+
+model MessageAsset {
+  messageId String  @map("message_id")
+  assetId   String  @map("asset_id")
+  position  Int     @default(0)
+  analysis  String? @db.Text
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  asset     Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, assetId])
+  @@index([assetId])
+  @@map("message_assets")
+}
+
+model Activity {
+  id         String       @id @default(cuid())
+  userId     String       @map("user_id")
+  documentId String       @map("document_id")
+  type       ActivityType
+  occurredAt DateTime     @default(now()) @map("occurred_at")
+  metadata   Json?
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, occurredAt])
+  @@index([documentId, occurredAt])
+  @@map("activities")
+}
+
+model ExploreArticle {
+  id              String   @id @default(cuid())
+  legacyNumericId String?  @unique @map("legacy_numeric_id")
+  sourcePlatform  String   @map("source_platform") @db.VarChar(40)
+  sourceTitle     String   @map("source_title") @db.VarChar(200)
+  sourceAvatarUrl String?  @map("source_avatar_url")
+  authorName      String   @map("author_name") @db.VarChar(100)
+  authorAvatarUrl String?  @map("author_avatar_url")
+  titleHtml       String   @map("title_html") @db.Text
+  descriptionHtml String   @map("description_html") @db.Text
+  contentHtml     String   @map("content_html") @db.Text
+  qualityLevel    String   @map("quality_level") @db.VarChar(30)
+  likeCount       Int      @default(0) @map("like_count")
+  commentCount    Int      @default(0) @map("comment_count")
+  wordCount       Int      @default(0) @map("word_count")
+  sourceUrl       String   @map("source_url") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([qualityLevel, updatedAt])
+  @@map("explore_articles")
+}

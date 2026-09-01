@@ -76,3 +76,6 @@ next-env.d.ts
 # local editor metadata that can contain machine-specific paths or private prompts
 .idea/
 *.code-workspace
+
+# generated prisma client
+/src/generated/

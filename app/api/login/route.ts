@@ -6,79 +6,68 @@ import {
   getRefreshTokenCookieOptions,
 } from '@/lib/auth-token';
 import clientPromise from '@/lib/mongodb';
-import { AdminUser, AdminUserSchema, LoginPayloadSchema } from '@/models/admin';
+import { loginWithPrisma } from '@/server/auth/auth-service';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { AdminUser, LoginPayloadSchema } from '@/models/admin';
 import { NextResponse } from 'next/server';
 
 const DB_NAME = 'ha_admin';
 const COLLECTION_NAME = 'users';
 
-/**
- * 确保内置后台用户种子数据存在，并返回用户集合实例。
- *
- * @returns 已完成种子数据 upsert 的 MongoDB 用户集合。
- */
-async function ensureAdminSeedData() {
-  const client = await clientPromise;
-  const db = client.db(DB_NAME);
-  const collection = db.collection<AdminUser>(COLLECTION_NAME);
-  const now = new Date().toISOString();
+function setAuthCookies(
+  response: NextResponse,
+  accessToken: string,
+  refreshToken: string
+) {
+  response.cookies.set({
+    name: ACCESS_TOKEN_COOKIE_NAME,
+    value: accessToken,
+    ...getAccessTokenCookieOptions(),
+  });
 
-  const seedUsers = AdminUserSchema.array().parse([
-    {
-      username: 'admin',
-      password: 'admin',
-      role: 'admin',
-      nickname: '超级管理员',
-      enabled: true,
-      created_at: now,
-      updated_at: now,
-    },
-    {
-      username: 'editor',
-      password: 'editor123',
-      role: 'editor',
-      nickname: '内容编辑',
-      enabled: true,
-      created_at: now,
-      updated_at: now,
-    },
-  ]);
-
-  const ops = seedUsers.map((user) => ({
-    updateOne: {
-      filter: { username: user.username },
-      update: {
-        $setOnInsert: {
-          username: user.username,
-          created_at: user.created_at,
-        },
-        $set: {
-          password: user.password,
-          role: user.role,
-          nickname: user.nickname,
-          enabled: user.enabled,
-          updated_at: now,
-        },
-      },
-      upsert: true,
-    },
-  }));
-
-  await collection.bulkWrite(ops);
-  return collection;
+  response.cookies.set({
+    name: REFRESH_TOKEN_COOKIE_NAME,
+    value: refreshToken,
+    ...getRefreshTokenCookieOptions(),
+  });
 }
 
-/**
- * 登录后台用户并写入访问令牌与刷新令牌 Cookie。
- *
- * @param request - 请求对象，JSON body 需符合 `LoginPayloadSchema`。
- * @returns 登录结果 JSON 响应；认证成功时附带 auth cookies，认证失败时返回 401。
- */
 export async function POST(request: Request): Promise<Response> {
   try {
     const rawBody = await request.json();
     const payload = LoginPayloadSchema.parse(rawBody);
-    const collection = await ensureAdminSeedData();
+    const userAgent = request.headers.get('user-agent');
+    const ipHash =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+
+    if (isPrismaBackend()) {
+      const result = await loginWithPrisma(
+        payload.username,
+        payload.password,
+        userAgent,
+        ipHash
+      );
+
+      if (!result) {
+        return NextResponse.json(
+          { code: 401, data: null, message: '账号或密码错误' },
+          { status: 401 }
+        );
+      }
+
+      const accessToken = await createAccessToken(result.user);
+      const response = NextResponse.json({
+        code: 200,
+        data: result.user,
+        message: '登录成功',
+      });
+      setAuthCookies(response, accessToken, result.refreshToken);
+      return response;
+    }
+
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    const collection = db.collection<AdminUser>(COLLECTION_NAME);
 
     const user = await collection.findOne({
       username: payload.username,
@@ -88,26 +77,13 @@ export async function POST(request: Request): Promise<Response> {
 
     if (!user) {
       return NextResponse.json(
-        {
-          code: 401,
-          data: null,
-          message: '账号或密码错误',
-        },
+        { code: 401, data: null, message: '账号或密码错误' },
         { status: 401 }
       );
     }
 
-    const response = NextResponse.json({
-      code: 200,
-      data: {
-        username: user.username,
-        role: user.role,
-        nickname: user.nickname,
-      },
-      message: '登录成功',
-    });
-
     const authUser = {
+      userId: String(user._id ?? user.username),
       username: user.username,
       role: user.role,
       nickname: user.nickname,
@@ -117,18 +93,12 @@ export async function POST(request: Request): Promise<Response> {
       createRefreshToken(authUser),
     ]);
 
-    response.cookies.set({
-      name: ACCESS_TOKEN_COOKIE_NAME,
-      value: accessToken,
-      ...getAccessTokenCookieOptions(),
+    const response = NextResponse.json({
+      code: 200,
+      data: authUser,
+      message: '登录成功',
     });
-
-    response.cookies.set({
-      name: REFRESH_TOKEN_COOKIE_NAME,
-      value: refreshToken,
-      ...getRefreshTokenCookieOptions(),
-    });
-
+    setAuthCookies(response, accessToken, refreshToken);
     return response;
   } catch (error) {
     console.error('login route error', error);
