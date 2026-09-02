@@ -7,6 +7,7 @@ import {
 } from '@/constants/auth';
 
 export interface AuthUserPayload {
+  userId: string;
   username: string;
   role: string;
   nickname: string;

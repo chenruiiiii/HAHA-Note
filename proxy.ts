@@ -17,9 +17,8 @@ import {
 } from '@/lib/auth-token';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function proxy() {
-  // Auth is temporarily bypassed; keep authProxyWithLogin below for quick restore.
-  return NextResponse.next();
+export async function proxy(request: NextRequest) {
+  return authProxyWithLogin(request);
 }
 
 export async function authProxyWithLogin(request: NextRequest) {
@@ -65,13 +64,19 @@ export const config = {
 
 async function tryRefreshSession(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
+
+  if (!refreshToken) {
+    return null;
+  }
+
   const refreshResult = await verifyRefreshToken(refreshToken);
 
-  if (!refreshResult.valid || !refreshResult.payload) {
+  if (!refreshResult.valid || !refreshResult.payload?.userId) {
     return null;
   }
 
   const authUser = {
+    userId: refreshResult.payload.userId,
     username: refreshResult.payload.username,
     role: refreshResult.payload.role,
     nickname: refreshResult.payload.nickname,
@@ -80,19 +85,26 @@ async function tryRefreshSession(request: NextRequest) {
     createAccessToken(authUser),
     createRefreshToken(authUser),
   ]);
-  const response = NextResponse.next();
 
+  const response = NextResponse.next();
+  setAuthCookies(response, nextAccessToken, nextRefreshToken);
+  return response;
+}
+
+function setAuthCookies(
+  response: NextResponse,
+  accessToken: string,
+  refreshToken: string
+) {
   response.cookies.set({
     name: ACCESS_TOKEN_COOKIE_NAME,
-    value: nextAccessToken,
+    value: accessToken,
     ...getAccessTokenCookieOptions(),
   });
 
   response.cookies.set({
     name: REFRESH_TOKEN_COOKIE_NAME,
-    value: nextRefreshToken,
+    value: refreshToken,
     ...getRefreshTokenCookieOptions(),
   });
-
-  return response;
 }

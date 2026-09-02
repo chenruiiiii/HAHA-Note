@@ -1,12 +1,16 @@
+import { REFRESH_TOKEN_COOKIE_NAME } from '@/constants/auth';
 import { clearAuthCookies } from '@/lib/auth-token';
-import { NextResponse } from 'next/server';
+import { logoutWithPrisma } from '@/server/auth/auth-service';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * 退出当前登录并清理认证 Cookie。
- *
- * @returns 退出登录成功的 JSON 响应。
- */
-export async function POST(): Promise<Response> {
+export async function POST(request: NextRequest): Promise<Response> {
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
+
+  if (isPrismaBackend() && refreshToken) {
+    await logoutWithPrisma(refreshToken);
+  }
+
   const response = NextResponse.json({
     code: 200,
     data: null,
@@ -14,6 +18,5 @@ export async function POST(): Promise<Response> {
   });
 
   clearAuthCookies(response);
-
   return response;
 }

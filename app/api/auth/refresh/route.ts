@@ -7,25 +7,63 @@ import {
   getRefreshTokenCookieOptions,
   verifyRefreshToken,
 } from '@/lib/auth-token';
+import { refreshWithPrisma } from '@/server/auth/auth-service';
+import { isPrismaBackend } from '@/server/auth/backend';
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * 使用刷新令牌续期登录状态。
- *
- * @param request - Next.js 请求对象，从 Cookie 中读取 refresh token。
- * @returns 刷新后的用户信息 JSON 响应；刷新成功时重写 auth cookies，失败时清理 cookies 并返回 401。
- */
+function setAuthCookies(
+  response: NextResponse,
+  accessToken: string,
+  refreshToken: string
+) {
+  response.cookies.set({
+    name: ACCESS_TOKEN_COOKIE_NAME,
+    value: accessToken,
+    ...getAccessTokenCookieOptions(),
+  });
+
+  response.cookies.set({
+    name: REFRESH_TOKEN_COOKIE_NAME,
+    value: refreshToken,
+    ...getRefreshTokenCookieOptions(),
+  });
+}
+
 export async function POST(request: NextRequest): Promise<Response> {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
+  const userAgent = request.headers.get('user-agent');
+  const ipHash =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+
+  if (isPrismaBackend()) {
+    const rotated = refreshToken
+      ? await refreshWithPrisma(refreshToken, userAgent, ipHash)
+      : null;
+
+    if (!rotated) {
+      const failed = NextResponse.json(
+        { code: 401, data: null, message: '刷新登录状态失败，请重新登录' },
+        { status: 401 }
+      );
+      clearAuthCookies(failed);
+      return failed;
+    }
+
+    const accessToken = await createAccessToken(rotated.user);
+    const response = NextResponse.json({
+      code: 200,
+      data: rotated.user,
+      message: '刷新登录状态成功',
+    });
+    setAuthCookies(response, accessToken, rotated.refreshToken);
+    return response;
+  }
+
   const refreshResult = await verifyRefreshToken(refreshToken);
 
-  if (!refreshResult.valid || !refreshResult.payload) {
+  if (!refreshResult.valid || !refreshResult.payload?.userId) {
     const response = NextResponse.json(
-      {
-        code: 401,
-        data: null,
-        message: '刷新登录状态失败，请重新登录',
-      },
+      { code: 401, data: null, message: '刷新登录状态失败，请重新登录' },
       { status: 401 }
     );
 
@@ -34,6 +72,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   const authUser = {
+    userId: refreshResult.payload.userId,
     username: refreshResult.payload.username,
     role: refreshResult.payload.role,
     nickname: refreshResult.payload.nickname,
@@ -48,18 +87,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     data: authUser,
     message: '刷新登录状态成功',
   });
-
-  response.cookies.set({
-    name: ACCESS_TOKEN_COOKIE_NAME,
-    value: nextAccessToken,
-    ...getAccessTokenCookieOptions(),
-  });
-
-  response.cookies.set({
-    name: REFRESH_TOKEN_COOKIE_NAME,
-    value: nextRefreshToken,
-    ...getRefreshTokenCookieOptions(),
-  });
-
+  setAuthCookies(response, nextAccessToken, nextRefreshToken);
   return response;
 }

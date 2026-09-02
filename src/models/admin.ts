@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const AdminUserSchema = z.object({
+  _id: z.string().optional(),
   username: z.string().min(1),
   password: z.string().min(1),
   role: z.string().default('editor'),
