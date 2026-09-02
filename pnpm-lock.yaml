@@ -13,11 +13,7 @@ importers:
         version: 2.0.56(zod@4.4.3)
       '@ai-sdk/openai':
         specifier: ^2.0.122
-<<<<<<< HEAD
         version: 2.0.123(zod@4.4.3)
-=======
-        version: 2.0.122(zod@4.4.3)
->>>>>>> f66e2746e6bdf0d7aba8c12cb297cbdbf10b54d2
       '@ai-sdk/react':
         specifier: ^3.0.136
         version: 3.0.261(react@19.2.3)(zod@4.4.3)
@@ -184,24 +180,14 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-<<<<<<< HEAD
   '@ai-sdk/openai@2.0.123':
     resolution: {integrity: sha512-KB9KY1yxTGkeYE7lskYydS7AkAvEdTSALJfsSsq8oDgTj4zJMfKWS+K5yJVp7ErWZ+tRyMqx3aepnxPsv9fWeA==}
-=======
-  '@ai-sdk/openai@2.0.122':
-    resolution: {integrity: sha512-/s0KGIbpQvjWgMQaUqmQOt0sdgnE8vFdnxz4tI5r/ICUvvCyCmT5CWrmwIVPEYvKSMMsAyDutal4SW3LarAZsQ==}
->>>>>>> f66e2746e6bdf0d7aba8c12cb297cbdbf10b54d2
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-<<<<<<< HEAD
   '@ai-sdk/provider-utils@3.0.36':
     resolution: {integrity: sha512-2eSw90hn32Je6n2a8Gf4dJ2EoecPJuOCWqwZCw+BkhPq2LOS01HX3s6ljgOm0iIkZiD5aAuMdpOw17rYKQF/Zg==}
-=======
-  '@ai-sdk/provider-utils@3.0.35':
-    resolution: {integrity: sha512-/5z8tRGuYXwFy0ID+WtiWiECJzH5x/rI/g/3H8x3GQvE4i4etnZfKWAiU23VZEymInh+4l7uMNQJyaNN/54QFw==}
->>>>>>> f66e2746e6bdf0d7aba8c12cb297cbdbf10b54d2
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -5064,7 +5050,6 @@ snapshots:
       '@vercel/oidc': 3.2.0
       zod: 4.4.3
 
-<<<<<<< HEAD
   '@ai-sdk/openai@2.0.123(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 2.0.3
@@ -5072,15 +5057,6 @@ snapshots:
       zod: 4.4.3
 
   '@ai-sdk/provider-utils@3.0.36(zod@4.4.3)':
-=======
-  '@ai-sdk/openai@2.0.122(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.3
-      '@ai-sdk/provider-utils': 3.0.35(zod@4.4.3)
-      zod: 4.4.3
-
-  '@ai-sdk/provider-utils@3.0.35(zod@4.4.3)':
->>>>>>> f66e2746e6bdf0d7aba8c12cb297cbdbf10b54d2
     dependencies:
       '@ai-sdk/provider': 2.0.3
       '@standard-schema/spec': 1.1.0
