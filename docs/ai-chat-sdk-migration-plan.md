@@ -7,8 +7,6 @@
 > 取消请求方案：`AbortController`  
 > 范围：实施方案文档，不包含代码修改
 
-> 后续硬化执行入口：[ai-chat-hardening-trellis-plan.md](./ai-chat-hardening-trellis-plan.md)
-
 ## 1. OpenSpec Change
 
 ### 1.1 Change ID
@@ -549,3 +547,4 @@ await fetch(providerUrl, {
 
 - `@microsoft/fetch-event-source`：支持基于 Fetch API 的 SSE 客户端能力，包括自定义 method、headers、body 和 signal。
 - DeepSeek API：继续按 OpenAI-compatible chat completions 方式封装，具体 base URL 与模型名以当前环境变量为准。
+
