@@ -77,9 +77,5 @@ next-env.d.ts
 .idea/
 *.code-workspace
 
-# generated prisma client
-/src/generated/
-
-
 /openspec
 /trellis
