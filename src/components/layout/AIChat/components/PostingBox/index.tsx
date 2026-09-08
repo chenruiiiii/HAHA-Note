@@ -3,27 +3,33 @@ import { useEffect, useState } from 'react';
 import styles from './style.module.scss';
 import emitter from '@/lib/mitt';
 
-const PostingBox = () => {
+interface PostingBoxProps {
+  chatId: string;
+}
+
+const PostingBox = ({ chatId }: PostingBoxProps) => {
   const [isStreaming, setIsStreaming] = useState(true);
   useEffect(() => {
-    const quitStreaming = () => {
+    const quitStreaming = (payload: { chatId: string }) => {
+      if (payload.chatId !== chatId) return;
       setIsStreaming(false);
     };
     emitter.on('quit-streaming', quitStreaming);
     return () => {
       emitter.off('quit-streaming', quitStreaming);
     };
-  }, []);
+  }, [chatId]);
 
   useEffect(() => {
-    const restartStreaming = () => {
+    const restartStreaming = (payload: { chatId: string }) => {
+      if (payload.chatId !== chatId) return;
       setIsStreaming(true);
     };
     emitter.on('start-streaming', restartStreaming);
     return () => {
       emitter.off('start-streaming', restartStreaming);
     };
-  }, []);
+  }, [chatId]);
 
   return (
     <div className={styles['posting-box']}>
