@@ -18,13 +18,26 @@ export const SITE_DEFAULT_DESCRIPTION = WEBSITE_INFO.description;
 
 /** 站点绝对 origin（如 https://example.com），未配置时为 undefined。 */
 export function getSiteUrl(): string | undefined {
-  const raw = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!raw) {
-    return undefined;
+  // 1) 显式配置的正式域名（最优先）
+  const explicit = process.env.NEXT_PUBLIC_BASE_URL;
+  if (explicit) {
+    const trimmed = explicit.trim().replace(/\/+$/, '');
+    return trimmed || undefined;
   }
 
-  const trimmed = raw.trim().replace(/\/+$/, '');
-  return trimmed || undefined;
+  // 2) Vercel 自动注入的项目生产域名（构建时可用）
+  const vercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercelProduction) {
+    return `https://${vercelProduction}`;
+  }
+
+  // 3) Vercel Preview 部署临时域名（仅作兜底，SEO 价值有限）
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    return `https://${vercelUrl}`;
+  }
+
+  return undefined;
 }
 
 /** 基于站点 origin 拼接绝对路径；origin 未配置时返回 undefined。 */
