@@ -16,11 +16,11 @@ The system SHALL provide default site metadata for pages that do not define rout
 - **THEN** the document references a static default OpenGraph image (1200×630) instead of omitting the OpenGraph image fields
 
 #### Scenario: Site URL is configured
-- **WHEN** `NEXT_PUBLIC_SITE_URL` is configured
+- **WHEN** `NEXT_PUBLIC_BASE_URL` is configured
 - **THEN** canonical, OpenGraph, sitemap, and robots URLs use that value as their absolute origin
 
 #### Scenario: Site URL is missing
-- **WHEN** `NEXT_PUBLIC_SITE_URL` is not configured
+- **WHEN** `NEXT_PUBLIC_BASE_URL` is not configured
 - **THEN** the system still renders valid metadata but omits `canonical` and `og:url` tags rather than emitting a relative or hard-coded origin
 
 ### Requirement: Public note metadata
@@ -96,7 +96,7 @@ The system SHALL expose crawler discovery endpoints for robots rules and sitemap
 
 #### Scenario: Sitemap enumerates public notes
 - **WHEN** `/sitemap.xml` is requested
-- **THEN** the response includes published public note detail URLs with a `lastmod` derived from each note's `updatedAt`, and omits `changefreq` and `priority`
+- **THEN** the response includes published public note detail URLs and omits `changefreq` and `priority` (and `lastmod`, because public note records do not currently expose a reliable update timestamp)
 
 #### Scenario: Sitemap includes static public pages
 - **WHEN** `/sitemap.xml` is requested
@@ -107,7 +107,7 @@ The system SHALL expose crawler discovery endpoints for robots rules and sitemap
 - **THEN** the sitemap enumerates public notes through a paginated `getPublicNoteList(cursor, limit)` accessor and stops at a bounded entry limit
 
 #### Scenario: Sitemap with missing site URL
-- **WHEN** `/sitemap.xml` is requested and `NEXT_PUBLIC_SITE_URL` is not configured
+- **WHEN** `/sitemap.xml` is requested and `NEXT_PUBLIC_BASE_URL` is not configured
 - **THEN** the response returns an empty URL set instead of emitting relative or hard-coded origin URLs
 
 ### Requirement: Stroll recommendation metadata readiness
