@@ -78,6 +78,6 @@ next-env.d.ts
 *.code-workspace
 
 
-/opensepec
+/openspec
 /.cursor
 /.trellis
