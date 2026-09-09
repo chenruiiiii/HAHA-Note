@@ -80,6 +80,9 @@ next-env.d.ts
 # generated prisma client
 /src/generated/
 
+# local migration checkpoints & quarantine reports
+.migration-checkpoints/
+
 
 /openspec
 /trellis

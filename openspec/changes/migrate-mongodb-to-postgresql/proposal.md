@@ -12,6 +12,7 @@ HAHA-Note persists business data in multiple MongoDB databases/collections with 
 - Hash plaintext passwords and persist session/refresh-token hashes as part of the User/Session migration.
 - Remove `mongodb` usage from application code after cutover; keep MongoDB read-only during the retention window.
 - Keep existing HTTP DTOs and client API shapes compatible. Frontend state management is out of scope for this change.
+- Keep `/api/performance` on MongoDB; the performance dashboard is out of scope.
 - **BREAKING**: the internal data layer changes from MongoDB to PostgreSQL; production cutover is a maintenance window with a validated rollback plan.
 
 ## Capabilities
