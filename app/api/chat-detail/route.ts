@@ -8,6 +8,9 @@ import {
   type AiMissionMessage,
   type AiMissionPart,
 } from '@/models/ai-mission';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { requireUser } from '@/server/dal/require-user';
+import { findConversationById, upsertConversationMessages } from '@/server/dal/conversations';
 
 const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'ai_chat_detail';
@@ -350,6 +353,49 @@ async function shouldGenerateTitle(chatId: string) {
   return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
 }
 
+/**
+ * Prisma 后端：保存或更新会话详情（按 (conversationId, clientMessageId) 幂等）。
+ *
+ * @param userId - 当前登录用户 ID，作为会话拥有者。
+ * @param chatId - 会话 ID。
+ * @param messages - AI SDK UI 消息数组。
+ * @param options - 可选覆盖字段，用于写入生成后的标题或摘要。
+ */
+async function saveChatDetailPrisma(
+  userId: string,
+  chatId: string,
+  messages: UIMessage[],
+  options?: {
+    titleOverride?: string;
+    summaryOverride?: string;
+  }
+) {
+  await upsertConversationMessages({
+    userId,
+    conversationId: chatId,
+    title: options?.titleOverride,
+    summary: options?.summaryOverride,
+    messages: normalizeMessages(messages),
+  });
+}
+
+/**
+ * Prisma 后端：判断当前会话是否需要重新生成标题。
+ *
+ * @param userId - 当前登录用户 ID。
+ * @param chatId - 会话 ID。
+ * @returns 不存在会话或标题仍为默认值时返回 `true`。
+ */
+async function shouldGenerateTitlePrisma(userId: string, chatId: string) {
+  const existing = await findConversationById(chatId, userId);
+
+  if (!existing) {
+    return true;
+  }
+
+  return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
+}
+
 // Vercel 无服务器函数超时上限（流式长请求必须设置）
 export const maxDuration = 30;
 
@@ -383,6 +429,69 @@ export async function POST(req: Request) {
 
   // zod 已校验基本形状，此处按 AI SDK UI 消息类型收窄
   const { messages, chatId } = parsed.data as { messages: UIMessage[]; chatId: string };
+
+  if (isPrismaBackend()) {
+    let userId: string;
+
+    try {
+      const user = await requireUser(req);
+      userId = user.userId;
+    } catch {
+      return jsonError(401, '未登录或登录已过期');
+    }
+
+    try {
+      const model = getProvider()(resolveModel());
+
+      // 流开始前先持久化（含用户消息与历史），abort 时不覆盖，避免半截内容落库
+      await saveChatDetailPrisma(userId, chatId, messages);
+
+      const result = streamText({
+        model,
+        messages: await convertToModelMessages(messages),
+        // 透传 abortSignal：前端 stop 时真正终止上游 LLM 请求，避免继续消耗 token
+        abortSignal: req.signal,
+      });
+
+      return result.toUIMessageStreamResponse({
+        originalMessages: messages,
+        onFinish: async ({ messages: finalMessages }) => {
+          // 用户主动停止：不把半截 assistant 内容当作最终回答落库
+          if (req.signal.aborted) {
+            return;
+          }
+
+          const needsTitleGeneration = await shouldGenerateTitlePrisma(userId, chatId);
+          const normalizedMessages = normalizeMessages(finalMessages);
+          const summary = await generateConversationSummary(normalizedMessages);
+
+          if (needsTitleGeneration) {
+            const generatedTitle = await generateDocumentTitle(normalizedMessages);
+            await saveChatDetailPrisma(userId, chatId, finalMessages, {
+              titleOverride: generatedTitle,
+              summaryOverride: summary,
+            });
+            return;
+          }
+
+          await saveChatDetailPrisma(userId, chatId, finalMessages, {
+            summaryOverride: summary,
+          });
+        },
+      });
+    } catch (err) {
+      console.error('chat api error', err);
+
+      const statusCode =
+        err instanceof Error && 'statusCode' in err
+          ? (err as { statusCode?: number }).statusCode
+          : undefined;
+      const status =
+        typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
+
+      return jsonError(status, status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试');
+    }
+  }
 
   try {
     const model = getProvider()(resolveModel());

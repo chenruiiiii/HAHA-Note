@@ -32,7 +32,10 @@ export async function authProxyWithLogin(request: NextRequest) {
   const accessResult = await verifyAccessToken(accessToken);
 
   if (accessResult.valid && accessResult.payload) {
-    if (!shouldRefreshAccessToken(accessResult.payload.exp)) {
+    if (
+      process.env.DATA_BACKEND === 'prisma' ||
+      !shouldRefreshAccessToken(accessResult.payload.exp)
+    ) {
       return NextResponse.next();
     }
 
@@ -44,9 +47,13 @@ export async function authProxyWithLogin(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const refreshedResponse = await tryRefreshSession(request);
-  if (refreshedResponse) {
-    return refreshedResponse;
+  // Prisma sessions are rotated only by /api/auth/refresh. JWT-only refresh
+  // would mint a new refresh token that is not stored as Session.refreshTokenHash.
+  if (process.env.DATA_BACKEND !== 'prisma') {
+    const refreshedResponse = await tryRefreshSession(request);
+    if (refreshedResponse) {
+      return refreshedResponse;
+    }
   }
 
   const loginUrl = new URL(LOGIN_ROUTE, request.url);

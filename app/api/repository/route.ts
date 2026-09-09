@@ -3,18 +3,34 @@ import { RepoDetailType } from '@/components/layout/Repository/types';
 import { RepositorySchema } from '@/models/docs';
 import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { requireUser } from '@/server/dal/require-user';
+import { listRepositories, createRepository } from '@/server/dal/repositories';
+import { dalErrorResponse, privateJson } from '@/server/http/private-json';
 
 /**
  * 获取知识库列表。
  *
- * @param request - 请求对象，当前接口未读取请求内容。
+ * Prisma 模式下仅返回当前用户拥有或参与的知识库；Mongo 模式保留历史行为。
+ *
+ * @param request - 请求对象，用于解析当前登录用户。
  * @returns 知识库列表 JSON 响应；查询失败时返回错误信息。
  */
 export async function GET(request: Request): Promise<Response> {
-  void request;
-  const client = await clientPromise;
-  const db = client.db('repository');
-  const collection = db.collection('repo_list');
+  if (isPrismaBackend()) {
+    try {
+      const user = await requireUser(request);
+      const data = await listRepositories(user.userId);
+      // 兼容历史契约：列表接口返回裸数组
+      return NextResponse.json(data);
+    } catch (error) {
+      const response = dalErrorResponse(error);
+      return response ?? privateJson({ code: 500, data: null, message: '查询知识库失败' }, { status: 500 });
+    }
+  }
+
+  const db = clientPromise.then((client) => client.db('repository'));
+  const collection = (await db).collection('repo_list');
 
   try {
     const data = await collection.find({}).toArray();
@@ -31,6 +47,41 @@ export async function GET(request: Request): Promise<Response> {
  * @returns 新建知识库详情 JSON 响应；标题为空或创建失败时返回错误信息。
  */
 export async function POST(request: Request): Promise<Response> {
+  if (isPrismaBackend()) {
+    try {
+      const user = await requireUser(request);
+      const body = (await request.json()) as {
+        title?: string;
+        description?: string;
+      };
+
+      if (!body.title?.trim()) {
+        return privateJson({
+          code: 400,
+          data: null,
+          message: '知识库标题不能为空',
+        });
+      }
+
+      const data = await createRepository(
+        {
+          title: body.title.trim(),
+          description: body.description?.trim() || '这个人很懒，没有写任何东西~',
+        },
+        user.userId
+      );
+
+      return privateJson({
+        code: 200,
+        data: data as unknown as RepoDetailType,
+        message: '创建知识库成功',
+      });
+    } catch (error) {
+      const response = dalErrorResponse(error);
+      return response ?? privateJson({ code: 500, data: null, message: '创建知识库失败' }, { status: 500 });
+    }
+  }
+
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<RepoDetailType>('repo_list');

@@ -3,6 +3,8 @@ import { generateText } from 'ai';
 import clientPromise from '@/lib/mongodb';
 import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { upsertDocsDetailForRequest, type DocsDetailBody } from '@/server/http/document-upsert';
 
 const DB_NAME = 'repository';
 const COLLECTION_NAME = 'docs_detail';
@@ -95,6 +97,18 @@ export async function POST(
         },
         message: '总结成功',
       });
+    }
+
+    if (isPrismaBackend()) {
+      return upsertDocsDetailForRequest(
+        request,
+        docsId,
+        { ...body, summary } as DocsDetailBody,
+        {
+          create: '总结并创建成功',
+          save: '总结并保存成功',
+        }
+      );
     }
 
     const client = await clientPromise;

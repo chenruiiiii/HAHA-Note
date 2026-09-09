@@ -1,11 +1,18 @@
 import clientPromise from '@/lib/mongodb';
 import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { requireUser } from '@/server/dal/require-user';
+import { findDocumentById } from '@/server/dal/documents';
+import { dalErrorResponse, privateJson } from '@/server/http/private-json';
+import { upsertDocsDetailForRequest, type DocsDetailBody } from '@/server/http/document-upsert';
 
 /**
  * 获取指定文档详情。
  *
- * @param _request - 请求对象，当前接口未读取请求内容。
+ * Prisma 模式下仅限知识库拥有者或成员可见；Mongo 模式保留历史行为。
+ *
+ * @param _request - 请求对象，用于解析当前登录用户。
  * @param context - Next.js 路由上下文，`params.docsId` 为文档 ID。
  * @returns 文档详情 JSON 响应；文档不存在时返回 404。
  */
@@ -13,10 +20,35 @@ export async function GET(
   _request: Request,
   context: { params: Promise<{ docsId: string }> }
 ): Promise<Response> {
+  const { docsId } = await context.params;
+
+  if (isPrismaBackend()) {
+    try {
+      const user = await requireUser(_request);
+      const data = await findDocumentById(docsId, user.userId);
+
+      if (!data) {
+        return privateJson({
+          code: 404,
+          data: null,
+          message: '未找到对应文档',
+        }, { status: 404 });
+      }
+
+      return privateJson({
+        code: 200,
+        data: data as unknown as DocumentDetail,
+        message: 'success',
+      });
+    } catch (error) {
+      const response = dalErrorResponse(error);
+      return response ?? privateJson({ code: 500, data: null, message: 'error' }, { status: 500 });
+    }
+  }
+
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<DocumentDetail>('docs_detail');
-  const { docsId } = await context.params;
 
   try {
     const data = await collection.findOne({ _id: docsId });
@@ -54,10 +86,20 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ docsId: string }> }
 ): Promise<Response> {
+  const { docsId } = await context.params;
+
+  if (isPrismaBackend()) {
+    const body = (await request.json().catch(() => ({}))) as DocsDetailBody;
+
+    return upsertDocsDetailForRequest(request, docsId, body, {
+      create: '创建成功',
+      save: '保存成功',
+    });
+  }
+
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<DocumentDetail>('docs_detail');
-  const { docsId } = await context.params;
 
   try {
     const body = (await request.json()) as {

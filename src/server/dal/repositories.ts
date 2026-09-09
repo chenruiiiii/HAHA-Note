@@ -1,7 +1,10 @@
 import 'server-only';
 import { getPrisma } from '@/lib/prisma';
-import type { Repository, Document, User, Prisma } from '@/generated/prisma/client';
-import { Visibility } from '@/generated/prisma/client';
+import type { Document, Repository, User } from '@/generated/prisma/client';
+import { RepositoryRole, Visibility } from '@/generated/prisma/client';
+import { toLegacyDateTime } from './dto';
+import { getAccessibleRepository, repositoryAccessWhere } from './access';
+import { NotFoundError } from './errors';
 
 export type RepoListItem = {
   docs_id: string;
@@ -22,21 +25,18 @@ export type RepoDetailRecord = {
   isCollect: boolean;
 };
 
-function formatDateTime(date: Date): string {
-  const d = new Date(date);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+type RepoWithRelations = Repository & {
+  owner?: Pick<User, 'nickname' | 'avatarUrl'> | null;
+  documents?: Pick<Document, 'id' | 'title'>[];
+  favorites?: { userId: string }[];
+};
 
-function toRepoDetailRecord(
-  repo: Repository & { owner?: Pick<User, 'nickname' | 'avatarUrl'>; documents?: Pick<Document, 'id' | 'title'>[] },
-  isCollect = false
-): RepoDetailRecord {
+function toRepoDetailRecord(repo: RepoWithRelations, isCollect = false): RepoDetailRecord {
   return {
     _id: repo.id,
     isPublic: repo.visibility === Visibility.PUBLIC,
     description: repo.description,
-    update_time: formatDateTime(repo.updatedAt),
+    update_time: toLegacyDateTime(repo.updatedAt),
     creator: repo.owner?.nickname ?? '',
     avatar: repo.owner?.avatarUrl ? [repo.owner.avatarUrl] : [],
     docs_list: (repo.documents ?? []).map((doc) => ({
@@ -50,20 +50,22 @@ function toRepoDetailRecord(
   };
 }
 
-export async function listRepositories(viewerId?: string): Promise<RepoDetailRecord[]> {
+const repoInclude = (viewerId?: string) => ({
+  owner: { select: { nickname: true, avatarUrl: true } },
+  documents: {
+    where: { deletedAt: null },
+    orderBy: { updatedAt: 'desc' as const },
+    select: { id: true, title: true },
+  },
+  favorites: viewerId ? { where: { userId: viewerId } } : false as const,
+});
+
+export async function listRepositories(viewerId: string): Promise<RepoDetailRecord[]> {
   const prisma = getPrisma();
   const repos = await prisma.repository.findMany({
-    where: { deletedAt: null },
+    where: repositoryAccessWhere(viewerId),
     orderBy: { updatedAt: 'desc' },
-    include: {
-      owner: { select: { nickname: true, avatarUrl: true } },
-      documents: {
-        where: { deletedAt: null },
-        orderBy: { updatedAt: 'desc' },
-        select: { id: true, title: true },
-      },
-      favorites: viewerId ? { where: { userId: viewerId } } : false,
-    },
+    include: repoInclude(viewerId),
   });
 
   return repos.map((repo) => toRepoDetailRecord(repo, repo.favorites.length > 0));
@@ -71,20 +73,12 @@ export async function listRepositories(viewerId?: string): Promise<RepoDetailRec
 
 export async function findRepositoryById(
   id: string,
-  viewerId?: string
+  viewerId: string
 ): Promise<RepoDetailRecord | null> {
   const prisma = getPrisma();
-  const repo = await prisma.repository.findUnique({
-    where: { id, deletedAt: null },
-    include: {
-      owner: { select: { nickname: true, avatarUrl: true } },
-      documents: {
-        where: { deletedAt: null },
-        orderBy: { updatedAt: 'desc' },
-        select: { id: true, title: true },
-      },
-      favorites: viewerId ? { where: { userId: viewerId } } : false,
-    },
+  const repo = await prisma.repository.findFirst({
+    where: { id, ...repositoryAccessWhere(viewerId) },
+    include: repoInclude(viewerId),
   });
 
   if (!repo) {
@@ -105,13 +99,15 @@ export async function createRepository(
       title: payload.title,
       description: payload.description ?? '',
       type: payload.type ?? 'book',
-      visibility: Visibility.PUBLIC,
+      visibility: Visibility.PRIVATE,
+      members: {
+        create: {
+          userId: ownerId,
+          role: RepositoryRole.OWNER,
+        },
+      },
     },
-    include: {
-      owner: { select: { nickname: true, avatarUrl: true } },
-      documents: { select: { id: true, title: true } },
-      favorites: false,
-    },
+    include: repoInclude(ownerId),
   });
 
   return toRepoDetailRecord(repo, false);
@@ -122,6 +118,7 @@ export async function toggleRepositoryFavorite(
   userId: string,
   isCollect: boolean
 ): Promise<RepoDetailRecord | null> {
+  await getAccessibleRepository(repositoryId, userId);
   const prisma = getPrisma();
 
   await prisma.$transaction(async (tx) => {
@@ -145,12 +142,22 @@ export async function toggleRepositoryFavorite(
 
 export async function ensureRepositoryHasDocument(
   repositoryId: string,
-  documentId: string
+  documentId: string,
+  userId: string
 ): Promise<boolean> {
+  await getAccessibleRepository(repositoryId, userId);
   const prisma = getPrisma();
   const doc = await prisma.document.findFirst({
     where: { id: documentId, repositoryId, deletedAt: null },
     select: { id: true },
   });
   return !!doc;
+}
+
+export async function requireOwnedRepository(id: string, userId: string) {
+  const repo = await findRepositoryById(id, userId);
+  if (!repo) {
+    throw new NotFoundError('未找到对应的知识库');
+  }
+  return repo;
 }

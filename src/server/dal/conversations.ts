@@ -1,85 +1,120 @@
 import 'server-only';
 import { getPrisma } from '@/lib/prisma';
-import { ConversationStatus, MessageStatus, MessageRole } from '@/generated/prisma/client';
-import type { Message, Conversation } from '@/generated/prisma/client';
+import {
+  ConversationStatus,
+  MessageRole,
+  MessageStatus,
+} from '@/generated/prisma/client';
+import { toIsoDateTime } from './dto';
+import { NotFoundError } from './errors';
+import type { AiMissionDetail, AiMissionMessage, ListItem } from '@/models/ai-mission';
 
-export interface ChatMissionListItem {
-  _id: string;
-  title: string;
-  docs_id: string;
+function toListItem(id: string, title: string): ListItem {
+  return {
+    _id: id,
+    title,
+    docs_id: id,
+  };
 }
 
-export interface AiChatDetailRecord {
-  _id: string;
+function roleFromMessage(role: string): AiMissionMessage['role'] {
+  if (role === 'assistant' || role === 'system') {
+    return role;
+  }
+  return 'user';
+}
+
+function toMissionDetail(conversation: {
+  id: string;
   title: string;
+  summary: string;
+  isFavorite: boolean;
+  createdAt: Date;
+  updatedAt: Date;
   messages: Array<{
     id: string;
+    clientMessageId: string | null;
     role: MessageRole;
-    status: MessageStatus;
     content: string;
     parts: unknown;
-    createdAt: string;
   }>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-function toListItem(conversation: Conversation): ChatMissionListItem {
+}): AiMissionDetail {
   return {
     _id: conversation.id,
     title: conversation.title,
-    docs_id: conversation.id,
+    summary: conversation.summary,
+    category: conversation.isFavorite ? 'favorite' : 'recent',
+    types: conversation.messages.map((message) => {
+      const parts = Array.isArray(message.parts)
+        ? (message.parts as AiMissionMessage['parts'])
+        : message.content
+          ? [{ type: 'text' as const, text: message.content }]
+          : [];
+
+      return {
+        id: message.clientMessageId || message.id,
+        role: roleFromMessage(message.role),
+        parts,
+      };
+    }),
+    created_at: toIsoDateTime(conversation.createdAt),
+    updated_at: toIsoDateTime(conversation.updatedAt),
   };
 }
 
-function toAiChatDetailRecord(conversation: Conversation & { messages: Message[] }): AiChatDetailRecord {
-  return {
-    _id: conversation.id,
-    title: conversation.title,
-    messages: conversation.messages.map((message) => ({
-      id: message.id,
-      role: message.role,
-      status: message.status,
-      content: message.content,
-      parts: (message.parts as unknown) ?? null,
-      createdAt: message.createdAt.toISOString(),
-    })),
-    createdAt: conversation.createdAt.toISOString(),
-    updatedAt: conversation.updatedAt.toISOString(),
-  };
+function messagePlainText(parts: unknown, fallback = ''): string {
+  if (!Array.isArray(parts)) {
+    return fallback;
+  }
+
+  return parts
+    .map((part) => {
+      if (!part || typeof part !== 'object') return '';
+      const record = part as Record<string, unknown>;
+      if (record.type === 'text' && typeof record.text === 'string') return record.text;
+      if (record.type === 'markdown' && typeof record.markdown === 'string') {
+        return record.markdown;
+      }
+      return '';
+    })
+    .join('\n')
+    .trim();
 }
 
-export async function listConversations(userId: string): Promise<ChatMissionListItem[]> {
+export async function listConversations(userId: string): Promise<ListItem[]> {
   const prisma = getPrisma();
   const conversations = await prisma.conversation.findMany({
     where: { ownerId: userId, status: ConversationStatus.ACTIVE, deletedAt: null },
     orderBy: { updatedAt: 'desc' },
   });
 
-  return conversations.map(toListItem);
+  return conversations.map((conversation) => toListItem(conversation.id, conversation.title));
 }
 
-export async function listFavoriteConversations(userId: string): Promise<ChatMissionListItem[]> {
+export async function listFavoriteConversations(userId: string): Promise<ListItem[]> {
   const prisma = getPrisma();
   const conversations = await prisma.conversation.findMany({
-    where: { ownerId: userId, status: ConversationStatus.ACTIVE, isFavorite: true, deletedAt: null },
+    where: {
+      ownerId: userId,
+      status: ConversationStatus.ACTIVE,
+      isFavorite: true,
+      deletedAt: null,
+    },
     orderBy: { updatedAt: 'desc' },
   });
 
-  return conversations.map(toListItem);
+  return conversations.map((conversation) => toListItem(conversation.id, conversation.title));
 }
 
 export async function findConversationById(
   id: string,
   userId: string
-): Promise<AiChatDetailRecord | null> {
+): Promise<AiMissionDetail | null> {
   const prisma = getPrisma();
   const conversation = await prisma.conversation.findFirst({
-    where: { id, ownerId: userId },
+    where: { id, ownerId: userId, deletedAt: null },
     include: {
-      messages: {
-        orderBy: { createdAt: 'asc' },
-      },
+      messages: { orderBy: { createdAt: 'asc' } },
     },
   });
 
@@ -87,58 +122,128 @@ export async function findConversationById(
     return null;
   }
 
-  return toAiChatDetailRecord(conversation);
+  return toMissionDetail(conversation);
 }
 
-export async function saveConversationMessages(
-  userId: string,
-  conversationId: string,
-  messages: Array<{ role: MessageRole; content: string; parts?: unknown; status?: MessageStatus }>
-): Promise<AiChatDetailRecord | null> {
+export async function requireConversation(id: string, userId: string) {
+  const conversation = await findConversationById(id, userId);
+  if (!conversation) {
+    throw new NotFoundError('未找到对应聊天详情');
+  }
+  return conversation;
+}
+
+export async function upsertConversationMessages(params: {
+  userId: string;
+  conversationId: string;
+  title?: string;
+  summary?: string;
+  model?: string;
+  messages: Array<{
+    id?: string;
+    role: string;
+    content?: string;
+    parts?: unknown;
+    status?: MessageStatus;
+  }>;
+}): Promise<AiMissionDetail> {
   const prisma = getPrisma();
+  const model = params.model ?? 'deepseek-chat';
+
   const conversation = await prisma.$transaction(async (tx) => {
-    let conversation = await tx.conversation.findFirst({
-      where: { id: conversationId, ownerId: userId },
+    const existing = await tx.conversation.findFirst({
+      where: { id: params.conversationId, ownerId: params.userId },
     });
 
-    if (!conversation) {
-      conversation = await tx.conversation.create({
+    if (!existing) {
+      await tx.conversation.create({
         data: {
-          id: conversationId,
-          ownerId: userId,
-          title: messages[0]?.content?.slice(0, 80) ?? '新对话',
+          id: params.conversationId,
+          ownerId: params.userId,
+          title: params.title ?? params.messages[0]?.content?.slice(0, 80) ?? '新对话',
+          summary: params.summary ?? '',
           status: ConversationStatus.ACTIVE,
-          model: 'deepseek-chat',
+          model,
         },
       });
-    }
-
-    for (const message of messages) {
-      await tx.message.create({
+    } else {
+      await tx.conversation.update({
+        where: { id: existing.id },
         data: {
-          conversationId: conversation.id,
-          role: message.role,
-          status: message.status ?? MessageStatus.COMPLETED,
-          content: message.content,
-          parts: (message.parts as object) ?? undefined,
+          title: params.title ?? existing.title,
+          summary: params.summary ?? existing.summary,
+          updatedAt: new Date(),
         },
       });
     }
 
-    const updated = await tx.conversation.update({
-      where: { id: conversation.id },
-      data: { updatedAt: new Date() },
-    });
+    const keptIds: string[] = [];
+
+    for (const message of params.messages) {
+      const role =
+        message.role === 'assistant'
+          ? MessageRole.ASSISTANT
+          : message.role === 'system'
+            ? MessageRole.SYSTEM
+            : MessageRole.USER;
+      const clientMessageId = message.id?.slice(0, 120) || null;
+      const content = message.content ?? messagePlainText(message.parts);
+      // 空消息也要有合法 part；content 兜底为 text part，保持 AiMissionPartSchema 可解析
+      const parts = (message.parts as object) ??
+        (content ? [{ type: 'text', text: content }] : []);
+      const status = message.status ?? MessageStatus.COMPLETED;
+
+      if (clientMessageId) {
+        const row = await tx.message.upsert({
+          where: {
+            conversationId_clientMessageId: {
+              conversationId: params.conversationId,
+              clientMessageId,
+            },
+          },
+          update: { role, status, content, parts },
+          create: {
+            conversationId: params.conversationId,
+            clientMessageId,
+            role,
+            status,
+            content,
+            parts,
+          },
+        });
+        keptIds.push(row.id);
+      } else {
+        const row = await tx.message.create({
+          data: {
+            conversationId: params.conversationId,
+            role,
+            status,
+            content,
+            parts,
+          },
+        });
+        keptIds.push(row.id);
+      }
+    }
+
+    if (keptIds.length > 0) {
+      await tx.message.deleteMany({
+        where: {
+          conversationId: params.conversationId,
+          id: { notIn: keptIds },
+        },
+      });
+    }
 
     return tx.conversation.findFirst({
-      where: { id: updated.id },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-        },
-      },
+      where: { id: params.conversationId, ownerId: params.userId },
+      include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
   });
 
-  return conversation ? toAiChatDetailRecord(conversation) : null;
+  if (!conversation) {
+    throw new NotFoundError('未找到对应聊天详情');
+  }
+
+  return toMissionDetail(conversation);
 }
