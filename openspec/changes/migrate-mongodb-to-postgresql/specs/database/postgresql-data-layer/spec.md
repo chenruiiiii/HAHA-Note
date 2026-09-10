@@ -40,6 +40,10 @@ The system SHALL require the client to submit a `baseVersion` for document updat
 - **WHEN** two clients update the same document, the second with a stale `baseVersion`
 - **THEN** the second request returns 409 and the stored document keeps the first client's content
 
+#### Scenario: Concurrent save race resolves to 409
+- **WHEN** two requests with the same valid `baseVersion` pass validation simultaneously
+- **THEN** exactly one write succeeds and the other returns HTTP 409 with the latest document DTO; the rejected request SHALL NOT surface as HTTP 500
+
 ### Requirement: Secret values stored as hashes
 The system SHALL store user passwords as strong hashes and refresh tokens as hashes. Plaintext passwords, plaintext refresh tokens, and token secrets SHALL NOT be written to PostgreSQL or returned by any API.
 
@@ -54,9 +58,36 @@ The system SHALL keep existing HTTP URLs and DTO shapes compatible with current 
 - **WHEN** an API returns asset metadata containing a large `sizeBytes`
 - **THEN** the response contains a decimal string or safely bounded number and never fails JSON serialization
 
+#### Scenario: Frozen response envelopes
+- **WHEN** the Prisma backend serves `GET /api/repository`, `GET /api/start/browsed`, or `GET /api/start/edited`
+- **THEN** the response body is a bare JSON array, identical in shape to the MongoDB backend
+- **WHEN** the Prisma backend serves any other business endpoint
+- **THEN** the response body keeps the `{ code, data, message }` envelope used by the MongoDB backend
+
 ### Requirement: Private data cache policy
 Private repository, document, conversation, message, and asset APIs SHALL return `Cache-Control: private, no-store` and `Pragma: no-cache`.
 
 #### Scenario: Private API response headers
 - **WHEN** a client requests a private repository or document endpoint
 - **THEN** the response includes private, no-store and no-cache headers
+
+### Requirement: Backend switch for business APIs
+While MongoDB remains the rollback source, private business APIs SHALL honor `DATA_BACKEND=mongodb|prisma`. When the value is `prisma`, handlers SHALL call the DAL and SHALL NOT query MongoDB for that request. When the value is `mongodb`, handlers MAY keep the legacy collection queries. `/api/performance` is excluded from this requirement.
+
+#### Scenario: Prisma backend uses DAL
+- **WHEN** `DATA_BACKEND=prisma` and an authenticated user requests repository, document, conversation, activity, or explore data
+- **THEN** the handler reads and writes PostgreSQL through the DAL
+
+### Requirement: Document update compatibility window
+Document update requests MAY omit `baseVersion` during the compatibility window. An omitted `baseVersion` SHALL apply last-write-wins with a version increment. A provided stale `baseVersion` SHALL return HTTP 409 and SHALL NOT overwrite server content.
+
+#### Scenario: Legacy client omits baseVersion
+- **WHEN** an authenticated owner saves a document without `baseVersion`
+- **THEN** the document is updated and `version` increases by one
+
+### Requirement: New repositories are private
+Newly created Prisma repositories SHALL use `Visibility.PRIVATE` unless the authenticated owner explicitly sets another visibility. The handler SHALL NOT copy the legacy Mongo `isPublic: true` default.
+
+#### Scenario: Create repository without visibility
+- **WHEN** an authenticated user creates a repository and does not send a visibility field
+- **THEN** the stored row is `PRIVATE` and only that user can list or read it

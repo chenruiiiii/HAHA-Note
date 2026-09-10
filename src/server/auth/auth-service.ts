@@ -1,12 +1,12 @@
 import 'server-only';
 import { verifyPassword } from '@/lib/auth/password';
-import { getPrisma } from '@/lib/prisma';
 import {
   createAuthSession,
   revokeAuthSession,
   rotateAuthSession,
   type AuthSessionUser,
 } from './session-service';
+import { findUserByUsername } from '@/server/dal/user';
 
 export type AuthUser = AuthSessionUser;
 
@@ -30,8 +30,7 @@ export async function loginWithPrisma(
   userAgent?: string | null,
   ipHash?: string | null
 ) {
-  const prisma = getPrisma();
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = await findUserByUsername(username);
 
   if (!user || !user.enabled) {
     return null;

@@ -1,9 +1,17 @@
 import clientPromise from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { requireUser } from '@/server/dal/require-user';
+import { listActivities } from '@/server/dal/activities';
+import { ActivityType } from '@/generated/prisma/client';
+import { dalErrorResponse, privateJson } from '@/server/http/private-json';
 
 /**
  * 获取最近浏览过的文件列表。
  *
+ * Prisma 模式下返回当前用户的 DOCUMENT_VIEWED 活动；Mongo 模式保留历史行为。
+ *
+ * @param request - 请求对象，用于解析当前登录用户。
  * @returns 最近浏览记录的 JSON 响应；查询失败时返回错误信息。
  */
 export async function GET() {

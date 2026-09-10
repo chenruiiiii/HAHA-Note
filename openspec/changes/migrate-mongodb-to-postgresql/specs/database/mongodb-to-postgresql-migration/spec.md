@@ -32,6 +32,10 @@ The migration SHALL preserve MongoDB `_id` values as PostgreSQL `id`, map Reposi
 - **WHEN** `docs_list` references a document missing from `docs_detail`
 - **THEN** migration creates a DRAFT document and marks `MISSING_DETAIL` in the report
 
+#### Scenario: Admin user mapping
+- **WHEN** migration converts `ha_admin.users`
+- **THEN** `username` is the upsert key, role `admin` maps to `ADMIN` and any other role maps to `USER`, plaintext passwords are hashed, and users with a missing password are created with `passwordResetRequired = true` and an unguessable hash
+
 ### Requirement: Validation gate
 The migration SHALL generate a validation report with source/target/failed counts per entity, foreign-key violations, duplicate legacy IDs, and conversion failures. Before production cutover, critical failures SHALL be zero.
 
@@ -52,3 +56,17 @@ MongoDB SHALL remain read-only for at least 14 days after cutover, backups SHALL
 #### Scenario: Credentials remain until checklist
 - **WHEN** fewer than 14 days have passed or the checklist has not been signed
 - **THEN** the MongoDB application credentials remain unavailable for removal and the database connection string is not committed to Git
+
+### Requirement: Explicit legacy owner for execute
+`--execute` SHALL require `LEGACY_OWNER_ID` to exist as a PostgreSQL user id (created during user migration or already present). Dry-run MAY run without writing. Rows whose owner cannot be resolved SHALL be quarantined.
+
+#### Scenario: Execute without legacy owner
+- **WHEN** an operator runs `data:migrate --execute` without `LEGACY_OWNER_ID`
+- **THEN** the process exits non-zero before writing business rows
+
+### Requirement: Performance data excluded
+The migration SHALL NOT move `performance.performance_events` into PostgreSQL as part of this change.
+
+#### Scenario: Performance collection skipped
+- **WHEN** the migration reader enumerates source collections
+- **THEN** `performance.performance_events` is omitted from required entity counts
