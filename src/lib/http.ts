@@ -183,20 +183,20 @@ instance.interceptors.response.use(
 
 const http = {
   get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
-    instance.get(url, config).then((response) => response.data),
+    instance.get<T, T>(url, config),
 
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.post(url, data, config).then((response) => response.data),
+    instance.post<T, T>(url, data, config),
 
   delete: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
-    instance.delete(url, config).then((response) => response.data),
+    instance.delete<T, T>(url, config),
 
   put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.put(url, data, config).then((response) => response.data),
+    instance.put<T, T>(url, data, config),
 
   // 额外增加一个 patch，很多 RESTful 接口会用到
   patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.patch(url, data, config).then((response) => response.data),
+    instance.patch<T, T>(url, data, config),
 };
 
 export default http;
