@@ -33,9 +33,10 @@ const RepoSide = () => {
     handleToDetail,
     handleToHome,
   } = useRepoDetail(repoId);
-  console.log(repoDetail);
 
-  if (isLoading) return <HASkeleton num={1} />;
+  // useRepoDetail 的 isLoading 初始为 false，首帧 data 仍为空；若只判断
+  // `!repoDetail` 会先渲染空态再切到 loading，因此「无数据且无错误」一律按加载中处理。
+  if (isLoading || (!repoDetail && !error)) return <HASkeleton num={1} />;
   if (error || !repoDetail) return <HAEmpty />;
 
   return (
