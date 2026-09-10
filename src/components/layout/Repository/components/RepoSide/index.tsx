@@ -3,10 +3,12 @@ import logoImg from '@/assets/images/logo.png';
 import HAEmpty from '@/components/common/HAEmpty';
 import HASkeleton from '@/components/common/HASkeleton';
 import useRepoDetail from '@/hooks/layer/useRepoDetail';
-import { Tooltip } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
 import styles from './style.module.scss';
 import { useParams } from 'next/navigation';
 import HABack from '@/components/common/HABack';
+import { useAppSelector } from '@/store';
+import { useRepoDetailContext } from '../../context';
 
 const mainMenuList = [
   {
@@ -33,11 +35,21 @@ const RepoSide = () => {
     handleToDetail,
     handleToHome,
   } = useRepoDetail(repoId);
+  const cachedRepoDetail = useAppSelector((state) =>
+    repoId ? state.repoDetail.cacheById[repoId]?.data : undefined
+  );
+  const sidebarRepoDetail = cachedRepoDetail ?? repoDetail;
+  const loadingDocIds = useAppSelector(
+    (state) => state.repoDetail.loadingDocIds
+  );
+  const { docTitles } = useRepoDetailContext();
 
   // useRepoDetail 的 isLoading 初始为 false，首帧 data 仍为空；若只判断
-  // `!repoDetail` 会先渲染空态再切到 loading，因此「无数据且无错误」一律按加载中处理。
-  if (isLoading || (!repoDetail && !error)) return <HASkeleton num={1} />;
-  if (error || !repoDetail) return <HAEmpty />;
+  // 首帧缓存和局部状态都为空时按加载中处理，避免先闪现空态。
+  if (isLoading || (!sidebarRepoDetail && !error)) {
+    return <HASkeleton num={1} />;
+  }
+  if (error || !sidebarRepoDetail) return <HAEmpty />;
 
   return (
     <aside className={styles['repo-aside']}>
@@ -50,7 +62,7 @@ const RepoSide = () => {
             </HABack>
             <div className={styles['repo-title-row']}>
               <span className={[styles['repo-title'], 'cursor-pointer'].join(' ')}>
-                {repoDetail.title}
+                {sidebarRepoDetail.title}
               </span>
             </div>
           </div>
@@ -95,16 +107,25 @@ const RepoSide = () => {
 
       <section className={styles['repo-list-section']}>
         <div className={styles['repo-items']}>
-          {repoDetail.docs_list.length ? (
-            repoDetail.docs_list.map((item) => (
+          {sidebarRepoDetail.docs_list.length ? (
+            sidebarRepoDetail.docs_list.map((item) => (
               <div
                 key={item.docs_id}
                 className={[styles['repo-item'], 'cursor-pointer'].join(' ')}
                 onClick={() => handleToDetail(item.docs_id)}
               >
-                <span className={`${styles['repo-item-name']} ellipse-one-line`}>
-                  {item.docs_name}
-                </span>
+                {loadingDocIds[item.docs_id] ? (
+                  <Skeleton.Input
+                    active
+                    block
+                    size="small"
+                    className={styles['repo-item-name-skeleton']}
+                  />
+                ) : (
+                  <span className={`${styles['repo-item-name']} ellipse-one-line`}>
+                    {docTitles[item.docs_id] ?? item.docs_name}
+                  </span>
+                )}
                 <Tooltip title="目录操作">
                   <button type="button" className={styles['ghost-action']} aria-label="目录操作">
                     <i className="iconfont icon-gengduo"></i>
