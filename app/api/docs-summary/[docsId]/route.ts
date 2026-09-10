@@ -1,8 +1,11 @@
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { generateText } from 'ai';
-import clientPromise from '@/lib/mongodb';
 import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
+import { isPrismaBackend } from '@/server/auth/backend';
+import { upsertDocumentForUser } from '@/server/dal/documents';
+import { requireUser } from '@/server/dal/require-user';
+import { dalErrorResponse, privateJson } from '@/server/http/private-json';
 
 const DB_NAME = 'repository';
 const COLLECTION_NAME = 'docs_detail';
@@ -55,7 +58,8 @@ async function generateDocumentSummary(title: string, contentHtml: string) {
     });
 
     return result.text.trim().slice(0, 180);
-  } catch {
+  } catch (error) {
+    console.error('generate document summary failed', error);
     return truncatedContent.slice(0, 180);
   }
 }
@@ -97,6 +101,34 @@ export async function POST(
       });
     }
 
+    if (isPrismaBackend()) {
+      try {
+        const user = await requireUser(request);
+        const data = await upsertDocumentForUser(docsId, user.userId, {
+          title: body.title,
+          content_html: body.content_html,
+          repository_id: body.repository_id,
+          summary,
+        });
+
+        return privateJson({
+          code: 200,
+          data: data as unknown as DocumentDetail,
+          message: '总结并保存成功',
+        });
+      } catch (error) {
+        const response = dalErrorResponse(error);
+        return (
+          response ??
+          privateJson(
+            { code: 500, data: null, message: '总结失败' },
+            { status: 500 }
+          )
+        );
+      }
+    }
+
+    const { default: clientPromise } = await import('@/lib/mongodb');
     const client = await clientPromise;
     const db = client.db(DB_NAME);
     const collection = db.collection<DocumentDetail>(COLLECTION_NAME);
