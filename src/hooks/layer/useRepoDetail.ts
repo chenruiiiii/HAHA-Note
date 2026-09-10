@@ -1,14 +1,19 @@
 import { getRepoDetailData, normalizeRepoDetailData } from '@/services/repo-detail';
 import { RepoDetailType } from '@/components/layout/Repository/types';
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { REPO_DETAIL_CACHE_TTL, setRepoDetailCacheAction } from '@/store/modules/repoDetail';
+import {
+  REPO_DETAIL_CACHE_TTL,
+  setRepoDetailCacheAction,
+  setRepoDetailDocLoadingAction,
+} from '@/store/modules/repoDetail';
 
 const repoDetailRequestMap = new Map<string, Promise<RepoDetailType | null>>();
 
 export default function useRepoDetail(repoId?: string) {
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -96,9 +101,13 @@ export default function useRepoDetail(repoId?: string) {
   const handleToDetail = useCallback(
     (id: string) => {
       if (!repoId) return;
-      router.push(`/repo-detail/${repoId}/${id}`);
+      const targetPath = `/repo-detail/${repoId}/${id}`;
+      if (pathname === targetPath) return;
+
+      dispatch(setRepoDetailDocLoadingAction({ docsId: id, isLoading: true }));
+      router.push(targetPath);
     },
-    [repoId, router]
+    [dispatch, pathname, repoId, router]
   );
 
   const handleToHome = useCallback(

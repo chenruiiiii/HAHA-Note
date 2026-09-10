@@ -4,7 +4,7 @@ import LoginPage from './page';
 
 export default function LoginLayout() {
   return (
-    <Suspense fallback={<HALoading type="simple" />}>
+    <Suspense fallback={<HALoading type="simple" fill="viewport" />}>
       <LoginPage />
     </Suspense>
   );

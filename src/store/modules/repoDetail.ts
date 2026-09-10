@@ -12,12 +12,14 @@ export interface RepoDetailCacheItem {
 
 interface RepoDetailState {
   cacheById: Record<string, RepoDetailCacheItem>;
+  loadingDocIds: Record<string, boolean>;
   dirtyCollectById: Record<string, boolean>;
   syncingCollectById: Record<string, boolean>;
 }
 
 const initialState: RepoDetailState = {
   cacheById: {},
+  loadingDocIds: {},
   dirtyCollectById: {},
   syncingCollectById: {},
 };
@@ -61,13 +63,25 @@ const repoDetailStore = createSlice({
     },
     removeRepoDetailCacheAction(state, { payload }: PayloadAction<string>) {
       delete state.cacheById[payload];
+      delete state.loadingDocIds[payload];
       delete state.dirtyCollectById[payload];
       delete state.syncingCollectById[payload];
     },
     clearRepoDetailCacheAction(state) {
       state.cacheById = {};
+      state.loadingDocIds = {};
       state.dirtyCollectById = {};
       state.syncingCollectById = {};
+    },
+    setRepoDetailDocLoadingAction(
+      state,
+      { payload }: PayloadAction<{ docsId: string; isLoading: boolean }>
+    ) {
+      if (payload.isLoading) {
+        state.loadingDocIds[payload.docsId] = true;
+      } else {
+        delete state.loadingDocIds[payload.docsId];
+      }
     },
     upsertRepoDetailDocAction(
       state,
@@ -124,6 +138,7 @@ export const {
   setRepoDetailCacheAction,
   removeRepoDetailCacheAction,
   clearRepoDetailCacheAction,
+  setRepoDetailDocLoadingAction,
   upsertRepoDetailDocAction,
   toggleRepoDetailCollectOptimisticAction,
 } = repoDetailStore.actions;

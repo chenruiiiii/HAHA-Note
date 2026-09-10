@@ -65,6 +65,7 @@ export const ModelName = {
   Asset: 'Asset',
   MessageAsset: 'MessageAsset',
   Activity: 'Activity',
+  PerformanceEvent: 'PerformanceEvent',
   ExploreArticle: 'ExploreArticle'
 } as const
 
@@ -288,6 +289,32 @@ export const ActivityScalarFieldEnum = {
 } as const
 
 export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typeof ActivityScalarFieldEnum]
+
+
+export const PerformanceEventScalarFieldEnum = {
+  id: 'id',
+  event: 'event',
+  route: 'route',
+  metricName: 'metricName',
+  metricId: 'metricId',
+  value: 'value',
+  durationMs: 'durationMs',
+  rating: 'rating',
+  success: 'success',
+  errorType: 'errorType',
+  retryCount: 'retryCount',
+  firstTokenMs: 'firstTokenMs',
+  totalMs: 'totalMs',
+  statusCode: 'statusCode',
+  method: 'method',
+  release: 'release',
+  deviceType: 'deviceType',
+  networkType: 'networkType',
+  timestamp: 'timestamp',
+  receivedAt: 'receivedAt'
+} as const
+
+export type PerformanceEventScalarFieldEnum = (typeof PerformanceEventScalarFieldEnum)[keyof typeof PerformanceEventScalarFieldEnum]
 
 
 export const ExploreArticleScalarFieldEnum = {

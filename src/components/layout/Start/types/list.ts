@@ -26,6 +26,7 @@ export interface DocumentDetail {
 export interface EditDocument {
   _id: string;
   repository_id: string; // 所属知识库 ID
+  docs_id?: string; // 目标文档 ID；历史脏数据可能缺失，缺失时降级跳知识库首页
   title: string;
   author: string;
   repository_name: string;
@@ -36,6 +37,7 @@ export interface EditDocument {
 export interface BrowseDocument {
   _id: string;
   repository_id: string; // 所属知识库 ID
+  docs_id?: string; // 目标文档 ID；历史脏数据可能缺失，缺失时降级跳知识库首页
   title: string;
   author: string;
   repository_name: string;

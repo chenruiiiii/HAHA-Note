@@ -290,6 +290,17 @@
   line-height: 1.4;
 }
 
+.repo-item-name-skeleton {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+
+  :global(.ant-skeleton-input) {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .repo-item-action {
   width: 22px;
   height: 22px;

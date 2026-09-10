@@ -19,7 +19,6 @@ import {
   getSaveStatusText,
   injectHeadingIds,
 } from '../../../utils/editor';
-import { debounce } from '@/utils/debounce';
 import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
 
 type HAEditorProps = {
@@ -61,8 +60,6 @@ const HAEditor = ({
   const [messageApi, contextHolder] = message.useMessage();
   const titleRef = useRef(initialTitle);
   const onSaveRef = useRef(onSave);
-  const autoSaveRef = useRef<() => Promise<void>>(async () => {});
-  const debouncedAutoSaveRef = useRef<ReturnType<typeof debounce<() => void>> | null>(null);
   const editorMountStartedAtRef = useRef(now());
   const hasReportedEditorReadyRef = useRef(false);
 
@@ -81,7 +78,6 @@ const HAEditor = ({
       setOutlineItems(getOutlineFromEditor(currentEditor.getJSON()));
       setSaveStatusText('编辑中...');
       onChange?.(html);
-      debouncedAutoSaveRef.current?.();
     },
   });
 
@@ -142,23 +138,6 @@ const HAEditor = ({
   useEffect(() => {
     onSaveRef.current = onSave;
   }, [onSave]);
-
-  useEffect(() => {
-    autoSaveRef.current = handleSave;
-  }, [handleSave]);
-
-  useEffect(() => {
-    const debouncedAutoSave = debounce(() => {
-      void autoSaveRef.current();
-    }, 3000);
-
-    debouncedAutoSaveRef.current = debouncedAutoSave;
-
-    return () => {
-      debouncedAutoSave.cancel();
-      debouncedAutoSaveRef.current = null;
-    };
-  }, []);
 
   useEffect(() => {
     if (!editor) return;

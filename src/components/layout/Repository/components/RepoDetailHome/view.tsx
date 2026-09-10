@@ -7,10 +7,17 @@ import { RepoDetailType } from '../../types';
 
 interface RepoDetailHomeViewProps {
   repoDetail: RepoDetailType;
+  isCreatingDocument: boolean;
+  onCreateDocument: () => void;
   onToggleCollect: () => void;
 }
 
-const RepoDetailHomeView = ({ repoDetail, onToggleCollect }: RepoDetailHomeViewProps) => {
+const RepoDetailHomeView = ({
+  repoDetail,
+  isCreatingDocument,
+  onCreateDocument,
+  onToggleCollect,
+}: RepoDetailHomeViewProps) => {
   const { title, docs_list, avatar, repo_desc, isCollect } = repoDetail;
   const ownerAvatar = avatar?.[0];
   const safeDocsList = Array.isArray(docs_list) ? docs_list : [];
@@ -39,6 +46,15 @@ const RepoDetailHomeView = ({ repoDetail, onToggleCollect }: RepoDetailHomeViewP
           </div>
 
           <div className={styles['hero-actions']}>
+            <button
+              type="button"
+              className={styles['primary-action']}
+              onClick={onCreateDocument}
+              disabled={isCreatingDocument}
+            >
+              <i className="iconfont icon-xinjianwendang" />
+              <span>{isCreatingDocument ? '创建中...' : '新建文档'}</span>
+            </button>
             <Tooltip title={isCollect ? '已收藏' : '收藏'}>
               <button type="button" className={styles['outline-action']} onClick={onToggleCollect}>
                 <i

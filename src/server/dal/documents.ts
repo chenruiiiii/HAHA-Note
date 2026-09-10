@@ -1,6 +1,6 @@
 import 'server-only';
 import { getPrisma } from '@/lib/prisma';
-import { DocumentStatus } from '@/generated/prisma/client';
+import { ActivityType, DocumentStatus } from '@/generated/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import { convertDocumentHtml, emptyTiptapDoc, type TiptapDoc } from '@/lib/content';
 import { toIsoDateTime } from './dto';
@@ -181,19 +181,31 @@ export async function createDocument(
   const converted = convertDocumentHtml(payload.contentHtml ?? '');
   const prisma = getPrisma();
 
-  const doc = await prisma.document.create({
-    data: {
-      id: payload.id,
-      repositoryId: payload.repositoryId,
-      creatorId: payload.creatorId,
-      title: payload.title?.trim() || '新建文档',
-      content: asTiptapJson(converted.json ?? emptyTiptapDoc()),
-      contentHtml: converted.html,
-      contentText: converted.text,
-      summary: payload.summary?.trim() || '',
-      status: DocumentStatus.DRAFT,
-    },
-    include: { creator: { select: { nickname: true } } },
+  const doc = await prisma.$transaction(async (tx) => {
+    const created = await tx.document.create({
+      data: {
+        id: payload.id,
+        repositoryId: payload.repositoryId,
+        creatorId: payload.creatorId,
+        title: payload.title?.trim() || '新建文档',
+        content: asTiptapJson(converted.json ?? emptyTiptapDoc()),
+        contentHtml: converted.html,
+        contentText: converted.text,
+        summary: payload.summary?.trim() || '',
+        status: DocumentStatus.DRAFT,
+      },
+      include: { creator: { select: { nickname: true } } },
+    });
+
+    await tx.activity.create({
+      data: {
+        userId: payload.creatorId,
+        documentId: created.id,
+        type: ActivityType.DOCUMENT_CREATED,
+      },
+    });
+
+    return created;
   });
 
   return toDocumentDetailRecord(doc);

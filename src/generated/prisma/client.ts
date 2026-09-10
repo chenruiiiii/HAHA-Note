@@ -112,6 +112,11 @@ export type MessageAsset = Prisma.MessageAssetModel
  */
 export type Activity = Prisma.ActivityModel
 /**
+ * Model PerformanceEvent
+ * 
+ */
+export type PerformanceEvent = Prisma.PerformanceEventModel
+/**
  * Model ExploreArticle
  * 
  */

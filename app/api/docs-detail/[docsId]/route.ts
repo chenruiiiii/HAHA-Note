@@ -1,4 +1,3 @@
-import clientPromise from '@/lib/mongodb';
 import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
@@ -46,6 +45,7 @@ export async function GET(
     }
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<DocumentDetail>('docs_detail');
@@ -97,6 +97,7 @@ export async function POST(
     });
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<DocumentDetail>('docs_detail');

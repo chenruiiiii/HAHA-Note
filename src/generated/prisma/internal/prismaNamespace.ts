@@ -411,6 +411,7 @@ export const ModelName = {
   Asset: 'Asset',
   MessageAsset: 'MessageAsset',
   Activity: 'Activity',
+  PerformanceEvent: 'PerformanceEvent',
   ExploreArticle: 'ExploreArticle'
 } as const
 
@@ -427,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "repository" | "repositoryMember" | "repositoryFavorite" | "document" | "documentRevision" | "documentFavorite" | "documentShareLink" | "conversation" | "message" | "asset" | "messageAsset" | "activity" | "exploreArticle"
+    modelProps: "user" | "session" | "repository" | "repositoryMember" | "repositoryFavorite" | "document" | "documentRevision" | "documentFavorite" | "documentShareLink" | "conversation" | "message" | "asset" | "messageAsset" | "activity" | "performanceEvent" | "exploreArticle"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1467,6 +1468,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PerformanceEvent: {
+      payload: Prisma.$PerformanceEventPayload<ExtArgs>
+      fields: Prisma.PerformanceEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PerformanceEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PerformanceEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>
+        }
+        findFirst: {
+          args: Prisma.PerformanceEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PerformanceEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>
+        }
+        findMany: {
+          args: Prisma.PerformanceEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>[]
+        }
+        create: {
+          args: Prisma.PerformanceEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>
+        }
+        createMany: {
+          args: Prisma.PerformanceEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PerformanceEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>[]
+        }
+        delete: {
+          args: Prisma.PerformanceEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>
+        }
+        update: {
+          args: Prisma.PerformanceEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.PerformanceEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PerformanceEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PerformanceEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.PerformanceEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PerformanceEventPayload>
+        }
+        aggregate: {
+          args: Prisma.PerformanceEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePerformanceEvent>
+        }
+        groupBy: {
+          args: Prisma.PerformanceEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PerformanceEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PerformanceEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PerformanceEventCountAggregateOutputType> | number
+        }
+      }
+    }
     ExploreArticle: {
       payload: Prisma.$ExploreArticlePayload<ExtArgs>
       fields: Prisma.ExploreArticleFieldRefs
@@ -1784,6 +1859,32 @@ export const ActivityScalarFieldEnum = {
 } as const
 
 export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typeof ActivityScalarFieldEnum]
+
+
+export const PerformanceEventScalarFieldEnum = {
+  id: 'id',
+  event: 'event',
+  route: 'route',
+  metricName: 'metricName',
+  metricId: 'metricId',
+  value: 'value',
+  durationMs: 'durationMs',
+  rating: 'rating',
+  success: 'success',
+  errorType: 'errorType',
+  retryCount: 'retryCount',
+  firstTokenMs: 'firstTokenMs',
+  totalMs: 'totalMs',
+  statusCode: 'statusCode',
+  method: 'method',
+  release: 'release',
+  deviceType: 'deviceType',
+  networkType: 'networkType',
+  timestamp: 'timestamp',
+  receivedAt: 'receivedAt'
+} as const
+
+export type PerformanceEventScalarFieldEnum = (typeof PerformanceEventScalarFieldEnum)[keyof typeof PerformanceEventScalarFieldEnum]
 
 
 export const ExploreArticleScalarFieldEnum = {
@@ -2258,6 +2359,7 @@ export type GlobalOmitConfig = {
   asset?: Prisma.AssetOmit
   messageAsset?: Prisma.MessageAssetOmit
   activity?: Prisma.ActivityOmit
+  performanceEvent?: Prisma.PerformanceEventOmit
   exploreArticle?: Prisma.ExploreArticleOmit
 }
 

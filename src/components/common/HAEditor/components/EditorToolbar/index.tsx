@@ -13,7 +13,6 @@ import {
   ItalicOutlined,
   OrderedListOutlined,
   RedoOutlined,
-  SaveOutlined,
   UploadOutlined,
   ShareAltOutlined,
   StrikethroughOutlined,
@@ -22,7 +21,6 @@ import {
 } from '@ant-design/icons';
 import HAUploadFileModal from '@/components/common/HAUploadFileModal';
 import EditorShareModal from '../EditorShareModal';
-import { color } from 'echarts';
 
 const ToolbarButton = ({
   title,
@@ -108,30 +106,6 @@ const EditorToolbar = ({
     <>
       {contextHolder}
       <div className="ha-editor-toolbar">
-        <Button
-          type="primary"
-          icon={
-            <i
-              className="iconfont icon-baocun"
-              style={{ backgroundColor: 'transparent', color: '#efefef!important' }}
-            />
-          }
-          onClick={() => void onSave?.()}
-        >
-          保存
-        </Button>
-        <Dropdown menu={{ items: exportMenus, onClick: handleExport }} trigger={['click']}>
-          <Button
-            icon={
-              <i
-                className="iconfont icon-daochu"
-                style={{ backgroundColor: 'transparent', color: '#fff!important' }}
-              />
-            }
-          >
-            导出
-          </Button>
-        </Dropdown>
         <ToolbarButton title="撤销" onClick={() => editor.chain().focus().undo().run()}>
           <UndoOutlined />
         </ToolbarButton>
@@ -209,6 +183,30 @@ const EditorToolbar = ({
         <ToolbarButton title="分享" onClick={() => setIsShareOpen(true)}>
           <ShareAltOutlined />
         </ToolbarButton>
+        <Button
+          type="primary"
+          icon={
+            <i
+              className="iconfont icon-baocun"
+              style={{ backgroundColor: 'transparent', color: '#efefef!important' }}
+            />
+          }
+          onClick={() => void onSave?.()}
+        >
+          保存
+        </Button>
+        <Dropdown menu={{ items: exportMenus, onClick: handleExport }} trigger={['click']}>
+          <Button
+            icon={
+              <i
+                className="iconfont icon-daochu"
+                style={{ backgroundColor: 'transparent', color: '#fff!important' }}
+              />
+            }
+          >
+            导出
+          </Button>
+        </Dropdown>
       </div>
 
       <HAUploadFileModal

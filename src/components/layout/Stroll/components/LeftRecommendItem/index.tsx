@@ -30,9 +30,9 @@ const RecommendItem = ({
     });
   };
 
-  // 跳转详情页
+  // 跳转详情页（同源相对路径，避免构建期 env 未配置拼出 /undefined/...）
   const handleToDetail = () => {
-    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${_id}`, '_blank');
+    window.open(`/public-note/${_id}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenSource = () => {

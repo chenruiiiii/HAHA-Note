@@ -1,6 +1,5 @@
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { generateText } from 'ai';
-import clientPromise from '@/lib/mongodb';
 import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
@@ -57,7 +56,8 @@ async function generateDocumentSummary(title: string, contentHtml: string) {
     });
 
     return result.text.trim().slice(0, 180);
-  } catch {
+  } catch (error) {
+    console.error('generate document summary failed', error);
     return truncatedContent.slice(0, 180);
   }
 }
@@ -111,6 +111,7 @@ export async function POST(
       );
     }
 
+    const { default: clientPromise } = await import('@/lib/mongodb');
     const client = await clientPromise;
     const db = client.db(DB_NAME);
     const collection = db.collection<DocumentDetail>(COLLECTION_NAME);

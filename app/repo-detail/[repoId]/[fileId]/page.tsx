@@ -7,15 +7,20 @@ import useRepoDetail from '@/hooks/layer/useRepoDetail';
 import { generateDocsSummary } from '@/services/docs-summary';
 import { updateDocsDetailData } from '@/services/docs-detail';
 import { useAppDispatch } from '@/store';
-import { upsertRepoDetailDocAction } from '@/store/modules/repoDetail';
+import {
+  setRepoDetailDocLoadingAction,
+  upsertRepoDetailDocAction,
+} from '@/store/modules/repoDetail';
 import { DocumentDetail } from '@/models/docs';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import styles from './page.module.scss';
+import { useRepoDetailContext } from '@/components/layout/Repository/context';
 
 const FileDetail = () => {
   const params = useParams();
   const dispatch = useAppDispatch();
+  const { setDocTitle } = useRepoDetailContext();
   const repoId = params.repoId as string;
   const docsId = params.fileId as string;
   const { data: repoDetail } = useRepoDetail(repoId);
@@ -23,7 +28,7 @@ const FileDetail = () => {
     () => repoDetail?.docs_list.find((item) => item.docs_id === docsId)?.docs_name,
     [docsId, repoDetail?.docs_list]
   );
-  const { data, isLoading, isRepositoryMismatch } = useDocsDetail(
+  const { data, isLoading, error, isRepositoryMismatch } = useDocsDetail(
     docsId,
     repoId,
     currentRepoDocName
@@ -31,7 +36,7 @@ const FileDetail = () => {
   const editorData: DocumentDetail = data ?? {
     _id: docsId,
     repository_id: repoId,
-    title: '新建文档',
+    title: currentRepoDocName || '新建文档',
     content_html: '',
     summary: '',
     author: '',
@@ -106,16 +111,44 @@ const FileDetail = () => {
   }, [docsId, repoId]);
 
   useEffect(() => {
-    if (!repoId || !docsId || isRepositoryMismatch) return;
+    if (!docsId) return;
+
+    dispatch(
+      setRepoDetailDocLoadingAction({
+        docsId,
+        isLoading: isLoading || (!data && !error),
+      })
+    );
+
+    return () => {
+      dispatch(
+        setRepoDetailDocLoadingAction({
+          docsId,
+          isLoading: false,
+        })
+      );
+    };
+  }, [data, dispatch, docsId, error, isLoading]);
+
+  useEffect(() => {
+    const resolvedTitle = data?.title || currentRepoDocName;
+    if (!repoId || !docsId || isRepositoryMismatch || !resolvedTitle) return;
 
     dispatch(
       upsertRepoDetailDocAction({
         repoId,
         docsId,
-        docsName: editorData.title || '新建文档',
+        docsName: resolvedTitle,
       })
     );
-  }, [dispatch, docsId, editorData.title, isRepositoryMismatch, repoId]);
+  }, [
+    currentRepoDocName,
+    data?.title,
+    dispatch,
+    docsId,
+    isRepositoryMismatch,
+    repoId,
+  ]);
 
   useEffect(() => {
     titleRef.current = editorData.title;
@@ -268,7 +301,7 @@ const FileDetail = () => {
                   <div className={styles.summaryBody}>
                     {summaryLoading ? (
                       <div className={styles.summaryLoading}>
-                        <HALoading type="simple" />
+                        <HALoading type="simple" fill="compact" />
                       </div>
                     ) : summary ? (
                       <>
@@ -304,17 +337,19 @@ const FileDetail = () => {
             </section>
           }
           onTitleChange={(title) => {
-            titleRef.current = title || '新建文档';
+            const nextTitle = title || '新建文档';
+            titleRef.current = nextTitle;
             docDirtyRef.current = true;
             hasFlushedDocRef.current = false;
             summaryDirtyRef.current = true;
             setIsSummaryDirty(true);
+            setDocTitle(docsId, nextTitle);
 
             dispatch(
               upsertRepoDetailDocAction({
                 repoId,
                 docsId,
-                docsName: title || '新建文档',
+                docsName: nextTitle,
               })
             );
           }}

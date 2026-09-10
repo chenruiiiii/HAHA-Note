@@ -23,6 +23,7 @@ export async function proxy(request: NextRequest) {
 
 export async function authProxyWithLogin(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  const isPrismaBackend = process.env.DATA_BACKEND === 'prisma';
 
   if (shouldBypassAuth(pathname) || isPublicAuthPath(pathname)) {
     return NextResponse.next();
@@ -32,10 +33,7 @@ export async function authProxyWithLogin(request: NextRequest) {
   const accessResult = await verifyAccessToken(accessToken);
 
   if (accessResult.valid && accessResult.payload) {
-    if (
-      process.env.DATA_BACKEND === 'prisma' ||
-      !shouldRefreshAccessToken(accessResult.payload.exp)
-    ) {
+    if (isPrismaBackend || !shouldRefreshAccessToken(accessResult.payload.exp)) {
       return NextResponse.next();
     }
 
@@ -47,9 +45,13 @@ export async function authProxyWithLogin(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Prisma sessions are rotated only by /api/auth/refresh. JWT-only refresh
-  // would mint a new refresh token that is not stored as Session.refreshTokenHash.
-  if (process.env.DATA_BACKEND !== 'prisma') {
+  if (isPrismaBackend) {
+    // Prisma refresh token 是不透明随机串，只能由 Node Route Handler
+    // 调用数据库完成轮换；proxy 不能生成未入库的新 token。
+    if (request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value) {
+      return NextResponse.next();
+    }
+  } else {
     const refreshedResponse = await tryRefreshSession(request);
     if (refreshedResponse) {
       return refreshedResponse;

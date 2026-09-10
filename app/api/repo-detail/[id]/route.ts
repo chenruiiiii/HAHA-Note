@@ -1,5 +1,4 @@
 import { RepoDetailType } from '@/components/layout/Repository/types';
-import clientPromise from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
 import { requireUser } from '@/server/dal/require-user';
@@ -44,6 +43,7 @@ export async function GET(
     }
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<RepoDetailType>('repo_list');
@@ -117,6 +117,7 @@ export async function POST(
     }
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<RepoDetailType>('repo_list');

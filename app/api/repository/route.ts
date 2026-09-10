@@ -1,4 +1,3 @@
-import clientPromise from '@/lib/mongodb';
 import { RepoDetailType } from '@/components/layout/Repository/types';
 import { RepositorySchema } from '@/models/docs';
 import { NextResponse } from 'next/server';
@@ -29,6 +28,7 @@ export async function GET(request: Request): Promise<Response> {
     }
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const db = clientPromise.then((client) => client.db('repository'));
   const collection = (await db).collection('repo_list');
 
@@ -82,6 +82,7 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db('repository');
   const collection = db.collection<RepoDetailType>('repo_list');

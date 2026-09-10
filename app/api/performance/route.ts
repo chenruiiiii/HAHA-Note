@@ -1,4 +1,3 @@
-import clientPromise from '@/lib/mongodb';
 import {
   ALLOWED_EVENTS,
   MAX_PERFORMANCE_PAYLOAD_BYTES,
@@ -8,6 +7,11 @@ import {
 import { normalizeRoute } from '@/lib/performance/route';
 import type { PerformanceMetricPayload } from '@/lib/performance/types';
 import { NextResponse } from 'next/server';
+import { isPrismaBackend } from '@/server/auth/backend';
+import {
+  listPerformanceEvents,
+  savePerformanceEvent,
+} from '@/server/dal/performance';
 
 const DB_NAME = 'performance';
 const COLLECTION_NAME = 'performance_events';
@@ -86,6 +90,26 @@ function buildQuery(searchParams: URLSearchParams, since: Date) {
   return query;
 }
 
+function buildPrismaFilters(searchParams: URLSearchParams, since: Date) {
+  const route = toLimitedText(searchParams.get('route'), 512);
+  const event = toLimitedText(searchParams.get('event'), 64);
+  const device = toLimitedText(searchParams.get('device'), 16);
+  const network = toLimitedText(searchParams.get('network'), 16);
+
+  return {
+    since,
+    route: route ? normalizeRoute(route) : undefined,
+    event:
+      event && ALLOWED_EVENTS.has(event as PerformanceMetricPayload['event'])
+        ? event
+        : undefined,
+    deviceType: device && ALLOWED_DEVICES.has(device) ? device : undefined,
+    networkType: network && ALLOWED_NETWORKS.has(network) ? network : undefined,
+    release: toLimitedText(searchParams.get('release'), 80),
+    take: MAX_QUERY_LIMIT,
+  };
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
     const bodyResult = await readRequestBody(request);
@@ -112,6 +136,15 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
+    if (isPrismaBackend()) {
+      await savePerformanceEvent(event);
+      return NextResponse.json({
+        code: 200,
+        message: 'ok',
+      });
+    }
+
+    const { default: clientPromise } = await import('@/lib/mongodb');
     const client = await clientPromise;
     const collection = client.db(DB_NAME).collection(COLLECTION_NAME);
     const document = {
@@ -149,6 +182,20 @@ export async function GET(request: Request): Promise<Response> {
     const { searchParams } = new URL(request.url);
     const hours = getHours(searchParams);
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+    if (isPrismaBackend()) {
+      const events = await listPerformanceEvents(
+        buildPrismaFilters(searchParams, since)
+      );
+
+      return NextResponse.json({
+        code: 200,
+        data: buildDashboardData(events),
+        message: 'ok',
+      });
+    }
+
+    const { default: clientPromise } = await import('@/lib/mongodb');
     const client = await clientPromise;
     const collection = client.db(DB_NAME).collection<PerformanceMetricPayload & { received_at: Date }>(
       COLLECTION_NAME

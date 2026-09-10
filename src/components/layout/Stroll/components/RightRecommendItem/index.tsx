@@ -5,7 +5,7 @@ import { RecommendDetailType } from '../../types/recommend';
 
 const RightRecommendItem = ({ _id, author: { avatar, name }, title_html }: RecommendDetailType) => {
   const handleToDetail = () => {
-    window.open(`${process.env.NEXT_PUBLIC_BASE_URL}/public-note/${_id}`, '_blank');
+    window.open(`/public-note/${_id}`, '_blank', 'noopener,noreferrer');
   };
   return (
     <div className={[styles['recommend-item']].join(' ')}>
