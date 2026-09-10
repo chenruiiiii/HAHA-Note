@@ -334,6 +334,33 @@ model Activity {
   @@map("activities")
 }
 
+model PerformanceEvent {
+  id           String   @id @default(cuid())
+  event        String   @db.VarChar(64)
+  route        String   @default("unknown") @db.VarChar(160)
+  metricName   String?  @map("metric_name") @db.VarChar(80)
+  metricId     String?  @unique @map("metric_id") @db.VarChar(120)
+  value        Float?
+  durationMs   Float?   @map("duration_ms")
+  rating       String?  @db.VarChar(30)
+  success      Boolean?
+  errorType    String?  @map("error_type") @db.VarChar(80)
+  retryCount   Int?     @map("retry_count")
+  firstTokenMs Float?   @map("first_token_ms")
+  totalMs      Float?   @map("total_ms")
+  statusCode   Int?     @map("status_code")
+  method       String?  @db.VarChar(12)
+  release      String   @default("local") @db.VarChar(80)
+  deviceType   String   @default("unknown") @map("device_type") @db.VarChar(16)
+  networkType  String   @default("unknown") @map("network_type") @db.VarChar(16)
+  timestamp    DateTime
+  receivedAt   DateTime @default(now()) @map("received_at")
+
+  @@index([receivedAt])
+  @@index([event, receivedAt])
+  @@map("performance_events")
+}
+
 model ExploreArticle {
   id              String   @id @default(cuid())
   legacyNumericId String?  @unique @map("legacy_numeric_id")

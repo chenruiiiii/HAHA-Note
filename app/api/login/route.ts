@@ -5,7 +5,6 @@ import {
   getAccessTokenCookieOptions,
   getRefreshTokenCookieOptions,
 } from '@/lib/auth-token';
-import clientPromise from '@/lib/mongodb';
 import { loginWithPrisma } from '@/server/auth/auth-service';
 import { isPrismaBackend } from '@/server/auth/backend';
 import { AdminUser, LoginPayloadSchema } from '@/models/admin';
@@ -65,6 +64,7 @@ export async function POST(request: Request): Promise<Response> {
       return response;
     }
 
+    const { default: clientPromise } = await import('@/lib/mongodb');
     const client = await clientPromise;
     const db = client.db(DB_NAME);
     const collection = db.collection<AdminUser>(COLLECTION_NAME);

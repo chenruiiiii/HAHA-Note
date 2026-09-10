@@ -1,8 +1,6 @@
 import 'server-only';
 import { ACCESS_TOKEN_COOKIE_NAME } from '@/constants/auth';
 import { verifyAccessToken } from '@/lib/auth-token';
-import type { NextRequest } from 'next/server';
-
 export class UnauthorizedError extends Error {
   constructor(message = '未登录或登录已过期') {
     super(message);
@@ -17,8 +15,24 @@ export interface SessionUser {
   nickname: string;
 }
 
-export async function requireUser(request: NextRequest): Promise<SessionUser> {
-  const token = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)?.value;
+function readCookie(request: Request, name: string): string | undefined {
+  const header = request.headers.get('cookie');
+  if (!header) {
+    return undefined;
+  }
+
+  for (const part of header.split(';')) {
+    const [key, ...rest] = part.trim().split('=');
+    if (key === name) {
+      return decodeURIComponent(rest.join('='));
+    }
+  }
+
+  return undefined;
+}
+
+export async function requireUser(request: Request): Promise<SessionUser> {
+  const token = readCookie(request, ACCESS_TOKEN_COOKIE_NAME);
   const result = await verifyAccessToken(token);
 
   if (!result.valid || !result.payload?.userId) {
