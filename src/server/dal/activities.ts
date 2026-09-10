@@ -6,6 +6,7 @@ import { toIsoDateTime } from './dto';
 export interface ActivityListItem {
   _id: string;
   repository_id: string;
+  docs_id: string;
   title: string;
   author: string;
   repository_name: string;
@@ -16,6 +17,7 @@ function toActivityItem(row: {
   id: string;
   occurredAt: Date;
   document: {
+    id: string;
     title: string;
     repositoryId: string;
     repository: { title: string };
@@ -25,6 +27,7 @@ function toActivityItem(row: {
   return {
     _id: row.id,
     repository_id: row.document.repositoryId,
+    docs_id: row.document.id,
     title: row.document.title,
     author: row.document.creator.nickname,
     repository_name: row.document.repository.title,

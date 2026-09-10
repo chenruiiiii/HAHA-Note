@@ -15,7 +15,13 @@ const SOURCE_SPEC = [
   { entity: 'repositories', db: 'repository', collection: 'repo_list', target: 'repository' },
   { entity: 'documents', db: 'repository', collection: 'docs_detail', target: 'document' },
   { entity: 'conversations', db: 'ai-chat', collection: 'ai_chat_detail', target: 'conversation' },
-  { entity: 'activities', db: 'user_activity', collection: 'edit_history', target: 'activity' },
+  {
+    // 首页两个活动集合都迁入同一 Activity 表，源计数取两集合之和
+    entity: 'activities',
+    db: 'user_activity',
+    collections: ['edit_history', 'browse_history'],
+    target: 'activity',
+  },
   { entity: 'exploreArticles', db: 'stroll-recommend', collection: 'recommend_details', target: 'exploreArticle' },
 ];
 
@@ -24,15 +30,25 @@ interface Counters {
   target: number;
 }
 
-async function countBy(dbName: string, collection: string): Promise<number> {
+async function countBy(dbName: string, collections: string[]): Promise<number> {
   const mongoUri = process.env.APP_MONGODB_MONGODB_URI!;
   const client = new MongoClient(mongoUri);
   try {
     await client.connect();
-    return await client.db(dbName).collection(collection).countDocuments();
+    const counts = await Promise.all(
+      collections.map((name) => client.db(dbName).collection(name).countDocuments())
+    );
+    return counts.reduce((sum, n) => sum + n, 0);
   } finally {
     await client.close();
   }
+}
+
+// 兼容单集合(collection)与多集合并集(collections)两种源声明
+function sourceCollections(spec: (typeof SOURCE_SPEC)[number]): string[] {
+  return 'collections' in spec && spec.collections
+    ? spec.collections
+    : [spec.collection as string];
 }
 
 async function main() {
@@ -41,7 +57,7 @@ async function main() {
 
   const counts: Counters[] = [];
   for (const spec of SOURCE_SPEC) {
-    counts.push({ source: await countBy(spec.db, spec.collection), target: 0 });
+    counts.push({ source: await countBy(spec.db, sourceCollections(spec)), target: 0 });
   }
 
   const adapter = new PrismaPg({ connectionString: pgUrl });

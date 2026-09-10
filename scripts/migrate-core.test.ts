@@ -6,11 +6,15 @@ import {
   convertRepository,
   convertExploreArticle,
   convertConversation,
+  convertActivity,
   type DbLike,
 } from './migrate-core';
 
-function makeDb(): { db: DbLike; calls: Array<{ op: string; entity: string; args: unknown }> } {
+function makeDb(options?: {
+  document?: { id: string } | null;
+}): { db: DbLike; calls: Array<{ op: string; entity: string; args: unknown }> } {
   const calls: Array<{ op: string; entity: string; args: unknown }> = [];
+  const documentRow = options?.document ?? null;
   const record =
     (entity: string, op: string) =>
     (args: unknown): Promise<unknown> => {
@@ -22,7 +26,7 @@ function makeDb(): { db: DbLike; calls: Array<{ op: string; entity: string; args
     repository: { upsert: record('repository', 'upsert') },
     document: {
       upsert: record('document', 'upsert'),
-      findFirst: () => Promise.resolve(null),
+      findFirst: () => Promise.resolve(documentRow),
     },
     conversation: {
       upsert: record('conversation', 'upsert'),
@@ -157,5 +161,46 @@ describe('migrate-core field mapping', () => {
     expect(state.report.counts).toEqual({});
     state.counts('documents');
     expect(state.report.counts.documents).toBeDefined();
+  });
+
+  it('maps activity via docs_id and keeps browse type distinct', async () => {
+    const state = new MigrationState('execute', 'owner-1');
+    const { db, calls } = makeDb({ document: { id: 'D_1' } });
+
+    await convertActivity(
+      state,
+      db,
+      { _id: 'EDIT_1', repository_id: 'R_1', docs_id: 'D_1', updated_time: '2026-04-16T10:00:00Z' },
+      'DOCUMENT_UPDATED'
+    );
+    await convertActivity(
+      state,
+      db,
+      { _id: 'BROWSE_1', repository_id: 'R_1', docs_id: 'D_1' },
+      'DOCUMENT_VIEWED'
+    );
+
+    const activities = calls.filter((c) => c.entity === 'activity');
+    expect(activities).toHaveLength(2);
+    const first = activities[0].args as { data: { documentId: string; type: string } };
+    const second = activities[1].args as { data: { type: string } };
+    expect(first.data.documentId).toBe('D_1');
+    expect(first.data.type).toBe('DOCUMENT_UPDATED');
+    expect(second.data.type).toBe('DOCUMENT_VIEWED');
+    expect(state.report.quarantine).toHaveLength(0);
+  });
+
+  it('quarantines activities missing docs_id or pointing at a missing document', async () => {
+    const state = new MigrationState('execute', 'owner-1');
+    const { db } = makeDb({ document: null });
+
+    // 缺 docs_id（旧种子数据的典型形态）
+    await convertActivity(state, db, { _id: 'EDIT_1', repository_id: 'R_1' });
+    // docs_id 指向不存在的文档
+    await convertActivity(state, db, { _id: 'BROWSE_1', docs_id: 'D_missing' });
+
+    const reasons = state.report.quarantine.map((q) => q.reason);
+    expect(reasons).toEqual(['ORPHAN_DOCUMENT', 'ORPHAN_DOCUMENT']);
+    expect(state.report.counts.activities.skipped).toBe(2);
   });
 });

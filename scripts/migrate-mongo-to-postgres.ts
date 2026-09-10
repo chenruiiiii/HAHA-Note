@@ -42,7 +42,7 @@ interface SourceCollections {
   repositories: LegacyRepoRow[];
   documents: LegacyDocRow[];
   conversations: LegacyChatDetail[];
-  activities: LegacyActivityRow[];
+  activities: Array<{ row: LegacyActivityRow; type: 'DOCUMENT_UPDATED' | 'DOCUMENT_VIEWED' }>;
   exploreArticles: LegacyExploreRow[];
 }
 
@@ -63,9 +63,18 @@ const MONGO_DBS: Record<string, { db: string; collection: string }> = {
   repositories: { db: 'repository', collection: 'repo_list' },
   documents: { db: 'repository', collection: 'docs_detail' },
   conversations: { db: 'ai-chat', collection: 'ai_chat_detail' },
-  activities: { db: 'user_activity', collection: 'edit_history' },
   exploreArticles: { db: 'stroll-recommend', collection: 'recommend_details' },
 };
+
+// 首页两个活动集合各自映射到不同 ActivityType
+const ACTIVITY_SOURCES: Array<{
+  db: string;
+  collection: string;
+  type: 'DOCUMENT_UPDATED' | 'DOCUMENT_VIEWED';
+}> = [
+  { db: 'user_activity', collection: 'edit_history', type: 'DOCUMENT_UPDATED' },
+  { db: 'user_activity', collection: 'browse_history', type: 'DOCUMENT_VIEWED' },
+];
 
 async function readSources(client: MongoClient, limit?: number): Promise<SourceCollections> {
   const out: Record<string, unknown> = {};
@@ -74,7 +83,22 @@ async function readSources(client: MongoClient, limit?: number): Promise<SourceC
     if (limit) cursor.limit(limit);
     out[key] = await cursor.toArray();
   }
+  out.activities = await readActivities(client, limit);
   return out as unknown as SourceCollections;
+}
+
+async function readActivities(
+  client: MongoClient,
+  limit?: number
+): Promise<Array<{ row: LegacyActivityRow; type: 'DOCUMENT_UPDATED' | 'DOCUMENT_VIEWED' }>> {
+  const rows: Array<{ row: LegacyActivityRow; type: 'DOCUMENT_UPDATED' | 'DOCUMENT_VIEWED' }> = [];
+  for (const source of ACTIVITY_SOURCES) {
+    const cursor = client.db(source.db).collection(source.collection).find({});
+    if (limit) cursor.limit(limit);
+    const found = (await cursor.toArray()) as unknown as LegacyActivityRow[];
+    rows.push(...found.map((row) => ({ row, type: source.type })));
+  }
+  return rows;
 }
 
 async function main() {
@@ -117,7 +141,7 @@ async function main() {
     for (const row of sources.repositories) await convertRepository(state, db, row);
     for (const row of sources.documents) await convertDocument(state, db, row);
     for (const row of sources.conversations) await convertConversation(state, db, row, {});
-    for (const row of sources.activities) await convertActivity(state, db, row);
+    for (const { row, type } of sources.activities) await convertActivity(state, db, row, type);
     for (const row of sources.exploreArticles) await convertExploreArticle(state, db, row);
 
     state.report.finishedAt = new Date().toISOString();

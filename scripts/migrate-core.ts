@@ -337,29 +337,42 @@ export async function convertConversation(
 export interface LegacyActivityRow {
   _id?: string;
   repository_id?: string;
+  docs_id?: string;
   title?: string;
   repository_name?: string;
   updated_time?: string;
 }
 
 /**
- * 历史活动（browse/edit_history）只引用仓库，没有 Document id，无法满足 Activity.documentId
- * 外键。诚实策略：无法定位到 Document 的行 quarantine（spec: orphan activity skipped）。
+ * 历史活动迁入 Activity。
+ *
+ * 必须按 `docs_id` 解析目标文档（Activity.documentId 有外键约束）；
+ * `docs_id` 缺失或指向不存在的文档时按 spec 隔离为 ORPHAN_DOCUMENT，
+ * 不猜测归属。`type` 由来源集合决定：edit_history -> DOCUMENT_UPDATED，
+ * browse_history -> DOCUMENT_VIEWED。
  */
 export async function convertActivity(
   state: MigrationState,
   db: DbLike,
-  row: LegacyActivityRow
+  row: LegacyActivityRow,
+  type: 'DOCUMENT_UPDATED' | 'DOCUMENT_VIEWED' = 'DOCUMENT_UPDATED'
 ): Promise<void> {
   const counts = state.counts('activities');
   counts.read++;
 
-  const legacyDocId = row.repository_id;
-  const doc = legacyDocId
-    ? await db.document.findFirst({ where: { id: legacyDocId } })
-    : null;
+  if (isBlank(row.docs_id)) {
+    state.quarantine('activities', String(row._id ?? ''), 'ORPHAN_DOCUMENT', {
+      reason: 'missing docs_id',
+    });
+    counts.skipped++;
+    return;
+  }
+
+  const doc = await db.document.findFirst({ where: { id: row.docs_id } });
   if (!doc) {
-    state.quarantine('activities', String(row._id ?? ''), 'ORPHAN_DOCUMENT');
+    state.quarantine('activities', String(row._id ?? ''), 'ORPHAN_DOCUMENT', {
+      docs_id: row.docs_id,
+    });
     counts.skipped++;
     return;
   }
@@ -370,7 +383,7 @@ export async function convertActivity(
         id: row._id,
         userId: state.legacyOwnerId,
         documentId: String((doc as { id: string }).id),
-        type: 'DOCUMENT_UPDATED',
+        type,
         occurredAt: asDate(row.updated_time) ?? new Date(),
       },
     });
