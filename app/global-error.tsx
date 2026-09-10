@@ -4,13 +4,20 @@ import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
 import { useEffect } from "react";
 
+const isSentryEnabled =
+  process.env.NODE_ENV === 'production' &&
+  process.env.APP_VERCEL_ENV === 'production' &&
+  process.env.SENTRY_DISABLED !== 'true';
+
 export default function GlobalError({
   error,
 }: {
   error: Error & { digest?: string };
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    if (isSentryEnabled) {
+      Sentry.captureException(error);
+    }
   }, [error]);
 
   return (

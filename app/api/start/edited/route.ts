@@ -14,30 +14,20 @@ import { dalErrorResponse, privateJson } from '@/server/http/private-json';
  * @param request - 请求对象，用于解析当前登录用户。
  * @returns 最近编辑记录的 JSON 响应；查询失败时返回错误信息。
  */
-export async function GET(request: Request) {
-  if (isPrismaBackend()) {
-    try {
-      const user = await requireUser(request);
-      const data = await listActivities(user.userId, ActivityType.DOCUMENT_UPDATED);
-      // 兼容历史契约：返回裸数组
-      return NextResponse.json(data);
-    } catch (error) {
-      const response = dalErrorResponse(error);
-      return response ?? privateJson({ code: 500, data: null, message: 'error' }, { status: 500 });
-    }
-  }
-
-  const client = await clientPromise;
-  const db = client.db('user_activity');
-  const collection = db.collection('edit_history');
+export async function GET() {
   try {
+    const client = await clientPromise;
+    const db = client.db('user_activity');
+    const collection = db.collection('edit_history');
     const data = await collection.find().toArray();
     return NextResponse.json(data);
   } catch (err) {
+    console.error('start/edited route error', err);
+
     return NextResponse.json({
       code: 500,
-      data: err,
-      message: 'error',
-    });
+      data: [],
+      message: '获取最近编辑记录失败',
+    }, { status: 500 });
   }
 }

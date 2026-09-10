@@ -4,7 +4,10 @@
 
 import * as Sentry from '@sentry/nextjs';
 
-const isSentryEnabled = process.env.NODE_ENV === 'production';
+const isSentryEnabled =
+  process.env.NODE_ENV === 'production' &&
+  process.env.APP_VERCEL_ENV === 'production' &&
+  process.env.SENTRY_DISABLED !== 'true';
 
 Sentry.init({
   enabled: isSentryEnabled,

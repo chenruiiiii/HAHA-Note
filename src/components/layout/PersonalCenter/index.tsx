@@ -1,17 +1,14 @@
+'use client';
 import React from 'react';
 import './style.scss';
 import Link from 'next/link';
 import Image from 'next/image';
 import logoImg from '@/assets/images/logo.png';
 import avatarImg from '@/assets/images/avatar.png';
-import recommendBg from '@/assets/images/recommen_bg.png';
 import {
   EnvironmentOutlined,
   InboxOutlined,
-  MessageOutlined,
-  SafetyCertificateOutlined,
 } from '@ant-design/icons';
-import HABack from '@/components/common/HABack';
 
 const userProfile = {
   name: '月淮',

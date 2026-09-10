@@ -22,6 +22,8 @@ export function shouldBypassAuth(pathname: string) {
     pathname.startsWith('/api/login') ||
     pathname.startsWith('/api/auth/refresh') ||
     pathname.startsWith('/api/logout') ||
+    pathname.startsWith('/public-note') ||
+    pathname.startsWith('/stroll-recommend') ||
     pathname.match(/\.[^/]+$/) !== null
   );
 }

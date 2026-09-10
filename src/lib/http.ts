@@ -1,10 +1,18 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
 
-const baseURL = process.env.NEXT_PUBLIC_APP_API_URL;
+// NEXT_PUBLIC_APP_API_URL 约定为 API origin（须以 /api 结尾）。
+// 未配置或缺少 /api 后缀时自动规整，避免相对路径的 API 调用
+// 打到页面路由（如 POST /login）从而被 Next.js 返回 405。
+const rawBaseUrl = process.env.NEXT_PUBLIC_APP_API_URL;
+const baseURL = rawBaseUrl
+  ? rawBaseUrl.endsWith('/api')
+    ? rawBaseUrl
+    : `${rawBaseUrl.replace(/\/+$/, '')}/api`
+  : '/api';
 
 const TIME_OUT = 10000;
-const refreshEndpoint = baseURL ? `${baseURL}/auth/refresh` : '/api/auth/refresh';
+const refreshEndpoint = `${baseURL}/auth/refresh`;
 
 interface RetryableAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -174,19 +182,21 @@ instance.interceptors.response.use(
 );
 
 const http = {
-  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> => instance.get(url, config),
+  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    instance.get(url, config).then((response) => response.data),
 
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.post(url, data, config),
+    instance.post(url, data, config).then((response) => response.data),
 
-  delete: <T>(url: string, config?: AxiosRequestConfig): Promise<T> => instance.delete(url, config),
+  delete: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    instance.delete(url, config).then((response) => response.data),
 
   put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.put(url, data, config),
+    instance.put(url, data, config).then((response) => response.data),
 
   // 额外增加一个 patch，很多 RESTful 接口会用到
   patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.patch(url, data, config),
+    instance.patch(url, data, config).then((response) => response.data),
 };
 
 export default http;

@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
   },
   env: {
     APP_ENV: process.env.NODE_ENV,
+    APP_VERCEL_ENV: process.env.VERCEL_ENV,
     NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(), // 添加构建时间，防止vercel缓存导致代码不是最新
   },
   // 修改这里：移除 experimental.serverComponentsExternalPackages
@@ -26,7 +27,10 @@ const nextConfig: NextConfig = {
 };
 
 // Sentry 仅在生产环境启用；如需临时关闭，可设置 SENTRY_DISABLED=true。
-const isSentryEnabled = process.env.NODE_ENV === 'production' && process.env.SENTRY_DISABLED !== 'true';
+const isSentryEnabled =
+  process.env.NODE_ENV === 'production' &&
+  process.env.VERCEL_ENV === 'production' &&
+  process.env.SENTRY_DISABLED !== 'true';
 
 const finalConfig = isSentryEnabled
   ? withSentryConfig(nextConfig, {

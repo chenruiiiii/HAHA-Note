@@ -16,6 +16,7 @@ import type { AiMissionDetail, AiMissionPart } from '@/models/ai-mission';
 import http from '@/lib/http';
 import type { ResponseData } from '@/types/response';
 import { useAIChatStream } from '@/hooks/common/useAIChatStream';
+import { mergeChatMessagesForHydration } from '@/lib/ai/snapshot';
 
 interface AiChatProps {
   id: string;
@@ -88,7 +89,10 @@ const AiChat = ({ id: _id }: AiChatProps) => {
 
       startTransition(() => {
         setChatTitle(response.data.title || '新建文档');
-        setMessages((response.data.types ?? []) as unknown as UIMessage[]);
+        const snapshotMessages = (response.data.types ?? []) as unknown as UIMessage[];
+        setMessages((currentMessages) =>
+          mergeChatMessagesForHydration(currentMessages as UIMessage[], snapshotMessages)
+        );
       });
 
       return response.data;
@@ -205,7 +209,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
                     className="message-part"
                     data-color-mode={role !== 'user' ? 'light' : undefined}
                   >
-                    {showPostingBox && i === 0 && role !== 'user' && <PostingBox />}
+                    {showPostingBox && i === 0 && role !== 'user' && <PostingBox chatId={_id} />}
                     {role === 'user' ? (
                       <div className="message-text">{block.content}</div>
                     ) : (
@@ -219,7 +223,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
               case 'markdown':
                 return (
                   <div key={`${id}-${i}`} className="message-part" data-color-mode="light">
-                    {showPostingBox && i === 0 && role !== 'user' && <PostingBox />}
+                    {showPostingBox && i === 0 && role !== 'user' && <PostingBox chatId={_id} />}
                     <MDEditor.Markdown source={block.content} className="chat-markdown-preview" />
                   </div>
                 );
@@ -244,7 +248,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
         </>
       );
     },
-    [getImageMeta, getRenderableBlocks]
+    [getImageMeta, getRenderableBlocks, _id]
   );
 
   // 处理信息展示为为用户还是ai类型
@@ -276,16 +280,16 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   useEffect(() => {
     // 再次变为submitted时，说明开始新的请求，新对话滚动到可视窗口最上方
     if (status == 'submitted') {
-      emitter.emit('start-streaming');
+      emitter.emit('start-streaming', { chatId: _id });
       handleScroll();
     }
 
     // 再次变为ready时，流式传输结束
     if (status == 'ready') {
       handlePostingClose(); // 关闭发送中按钮
-      emitter.emit('quit-streaming'); // 发布事件通知posting-box组件停止流式展示
+      emitter.emit('quit-streaming', { chatId: _id }); // 发布事件通知posting-box组件停止流式展示
     }
-  }, [handlePostingClose, handleScroll, status]);
+  }, [handlePostingClose, handleScroll, status, _id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -313,8 +317,8 @@ const AiChat = ({ id: _id }: AiChatProps) => {
 
   // 结束流式传输，停止发送中状态（只处理属于当前会话的事件）
   useEffect(() => {
-    const handler = (payload: unknown) => {
-      const { chatId } = payload as { chatId: string };
+    const handler = (payload: { chatId: string }) => {
+      const { chatId } = payload;
       if (chatId !== _id) return;
       void stopStream().finally(() => {
         handlePostingClose();
@@ -328,8 +332,8 @@ const AiChat = ({ id: _id }: AiChatProps) => {
 
   // chat-put组件发布 chat-message 消息时候发送消息（携带 chatId，只处理当前会话）
   useEffect(() => {
-    const handler = (payload: unknown) => {
-      const { message, chatId } = payload as { message: string; chatId: string };
+    const handler = (payload: { message: string; chatId: string }) => {
+      const { message, chatId } = payload;
       if (chatId !== _id) return;
       if (checkDuplicate(message, {})) return;
       sendMessage({ text: message });
