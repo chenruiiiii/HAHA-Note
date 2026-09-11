@@ -20,8 +20,8 @@ export async function GET(request: Request): Promise<Response> {
     try {
       const user = await requireUser(request);
       const data = await listRepositories(user.userId);
-      // 兼容历史契约：列表接口返回裸数组
-      return NextResponse.json(data);
+      // 兼容历史契约：列表接口返回裸数组；用 privateJson 保持与其他私有接口一致的禁缓存
+      return privateJson(data);
     } catch (error) {
       const response = dalErrorResponse(error);
       return (
@@ -37,7 +37,7 @@ export async function GET(request: Request): Promise<Response> {
 
   try {
     const data = await collection.find({}).toArray();
-    return NextResponse.json(data);
+    return privateJson(data);
   } catch (err) {
     return NextResponse.json(err);
   }

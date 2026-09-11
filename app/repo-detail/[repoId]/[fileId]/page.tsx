@@ -6,6 +6,7 @@ import useDocsDetail from '@/hooks/layer/useDocsDetail';
 import useRepoDetail from '@/hooks/layer/useRepoDetail';
 import { generateDocsSummary } from '@/services/docs-summary';
 import { updateDocsDetailData } from '@/services/docs-detail';
+import { invalidateDocumentLists } from '@/store/invalidate';
 import { useAppDispatch } from '@/store';
 import {
   setRepoDetailDocLoadingAction,
@@ -364,6 +365,8 @@ const FileDetail = () => {
               author: editorData.author || '当前用户',
               summary: summaryRef.current,
             });
+
+            invalidateDocumentLists(dispatch);
 
             docDirtyRef.current = false;
             hasFlushedDocRef.current = false;
