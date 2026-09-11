@@ -4,14 +4,7 @@ import type { RootState } from '@/store';
 interface ChatSessionState {
   isPosting: boolean;
   requestStatus:
-    | 'idle'
-    | 'submitted'
-    | 'streaming'
-    | 'retrying'
-    | 'ready'
-    | 'success'
-    | 'aborted'
-    | 'error';
+    'idle' | 'submitted' | 'streaming' | 'retrying' | 'ready' | 'success' | 'aborted' | 'error';
   lastError: string;
   retryCount: number;
 }

@@ -1,5 +1,4 @@
-# 包管理器生成的锁文件，交给 npm / pnpm 维护，不参与格式化
-package-lock.json
+# 包管理器生成的锁文件，交给 pnpm 维护，不参与格式化
 pnpm-lock.yaml
 
 # 由 Trellis 管理的指令文件，会被 trellis update 覆盖，避免无意义的格式改动

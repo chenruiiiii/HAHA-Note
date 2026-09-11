@@ -56,7 +56,7 @@ Router 的知识笔记与 AI 写作应用。项目集成了文档管理、知识
 ## 环境要求
 
 - Node.js：建议使用 20.x 或更高版本
-- npm：项目当前使用 `package-lock.json`
+- pnpm：项目使用 pnpm 10（见 `package.json` 的 `packageManager`），锁文件为 `pnpm-lock.yaml`
 - MongoDB：本地或云端 MongoDB 实例
 - DeepSeek API Key：使用 AI 对话与摘要能力时需要
 
@@ -93,13 +93,13 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 安装依赖：
 
 ```bash
-npm install
+pnpm install
 ```
 
 启动开发服务器：
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 浏览器打开：
@@ -111,13 +111,13 @@ http://localhost:3000
 构建生产包：
 
 ```bash
-npm run build
+pnpm build
 ```
 
 启动生产服务：
 
 ```bash
-npm run start
+pnpm start
 ```
 
 ## 数据初始化
@@ -125,32 +125,32 @@ npm run start
 项目提供了 MongoDB 种子脚本。脚本默认读取 `.env.development`：
 
 ```bash
-npm run seed
+pnpm seed
 ```
 
 该命令等价于填充知识库数据：
 
 ```bash
-npx tsx --env-file=.env.development src/scripts/index.ts repos
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts repos
 ```
 
 初始化管理员账号：
 
 ```bash
-npm run seed:admin
+pnpm seed:admin
 ```
 
 可用任务：
 
 ```bash
-npx tsx --env-file=.env.development src/scripts/index.ts repos
-npx tsx --env-file=.env.development src/scripts/index.ts docs
-npx tsx --env-file=.env.development src/scripts/index.ts activity
-npx tsx --env-file=.env.development src/scripts/index.ts favorite
-npx tsx --env-file=.env.development src/scripts/index.ts ai-chat
-npx tsx --env-file=.env.development src/scripts/index.ts admin
-npx tsx --env-file=.env.development src/scripts/index.ts stroll
-npx tsx --env-file=.env.development src/scripts/index.ts all
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts repos
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts docs
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts activity
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts favorite
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts ai-chat
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts admin
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts stroll
+pnpm exec tsx --env-file=.env.development src/scripts/index.ts all
 ```
 
 开发环境内置演示账号：
@@ -164,14 +164,15 @@ npx tsx --env-file=.env.development src/scripts/index.ts all
 
 ## 常用脚本
 
-| 命令                 | 说明                    |
-| -------------------- | ----------------------- |
-| `npm run dev`        | 启动 Next.js 开发服务器 |
-| `npm run build`      | 构建生产版本            |
-| `npm run start`      | 启动生产服务            |
-| `npm run lint`       | 运行 ESLint             |
-| `npm run seed`       | 初始化知识库数据        |
-| `npm run seed:admin` | 初始化管理员账号        |
+| 命令              | 说明                    |
+| ----------------- | ----------------------- |
+| `pnpm dev`        | 启动 Next.js 开发服务器 |
+| `pnpm build`      | 构建生产版本            |
+| `pnpm start`      | 启动生产服务            |
+| `pnpm lint`       | 运行 ESLint             |
+| `pnpm test`       | 运行 Vitest 单元测试    |
+| `pnpm seed`       | 初始化知识库数据        |
+| `pnpm seed:admin` | 初始化管理员账号        |
 
 ## 主要页面
 

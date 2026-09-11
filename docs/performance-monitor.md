@@ -107,7 +107,7 @@ query、token、cookie、鉴权 header、用户输入内容和可直接识别用
 先安装依赖：
 
 ```bash
-npm install web-vitals
+pnpm add web-vitals
 ```
 
 ```ts
@@ -251,7 +251,7 @@ export const PERFORMANCE_BUDGET = {
 - 检查浏览器 Network 中 `/api/performance` 是否成功。
 - 检查数据库中没有正文、prompt、真实资源 ID 或 token。
 - 用两个 release 对比 LCP p75 是否能按版本筛选。
-- 运行 `npm run lint` 和 `npm run build`。
+- 运行 `pnpm lint` 和 `pnpm build`。
 
 ## 9. 个人项目的取舍
 
