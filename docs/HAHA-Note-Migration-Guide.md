@@ -6,6 +6,19 @@
 > 基线仓库：`chenruiiiii/HAHA-Note@7a7237f9fbd6133788d2332064a18d9692c479c8`  
 > 多模态参考：`Hii897/vision-talk@8afdbf948729253a7ca22594e6fab8ac427c5a9b`
 
+> **现状说明（2026-09-11 补充）**：本文档是迁移前的完整方案，落地情况与部分内容已不一致，按现状执行时以以下为准：
+>
+> - **已落地**：PostgreSQL + Prisma 7（`prisma/`、`src/server/dal`）、`DATA_BACKEND`
+>   双后端开关、旧数据迁移 / 校验 / 回滚 CLI（`pnpm data:migrate:dry`、`pnpm data:migrate`、`pnpm data:validate`、
+>   `pnpm rollback:reverse-sync`）；MongoDB 旧后端保留为回滚路径。
+> - **未采纳**：TanStack Query 与 Zustand（前端仍是 Redux Toolkit + RTK
+>   Query）、对象存储与多模态（`Asset` / `MessageAsset` 只建了表，未接入）、`QWEN_API_KEY`
+>   等未使用变量。
+> - 日常开发、环境变量与部署命令以 `README.md` 为准；仓库包管理器是 pnpm 10，文中出现的
+>   `npm install` / `npm run ...` 都应理解为对应的 `pnpm` 命令。
+>
+> 下文的迁移阶段划分、数据结构设计与验收标准仍然有效，可作为迁移期的设计依据。
+
 ## 1. 文档目的
 
 本文档用于指导 HAHA-Note 在不中断现有产品演进的前提下完成以下工作：
@@ -546,10 +559,11 @@ model ExploreArticle {
 ### 6.2 依赖
 
 ```bash
-npm install @prisma/client @prisma/adapter-pg pg dotenv
-npm install @tanstack/react-query zustand
-npm install sanitize-html
-npm install prisma tsx @types/pg @types/sanitize-html --save-dev
+pnpm add @prisma/client @prisma/adapter-pg pg dotenv
+pnpm add sanitize-html
+pnpm add -D prisma tsx @types/pg @types/sanitize-html
+# 方案未采纳，见文首现状说明
+pnpm add @tanstack/react-query zustand
 ```
 
 Prisma 7 使用 `prisma-client` generator 和数据库 driver adapter。迁移分支应给 `package.json` 增加
@@ -560,26 +574,31 @@ Prisma 7 使用 `prisma-client` generator 和数据库 driver adapter。迁移�
 
 ```dotenv
 # 应用运行时使用连接池地址
-DATABASE_URL=postgres://...pooled-host.../haha_note?sslmode=require
+DATABASE_URL=postgresql://...pooled-host.../haha_note?sslmode=require
 
 # Prisma CLI、迁移、dump/restore 使用直连地址
-MIGRATION_DATABASE_URL=postgres://...direct-host.../haha_note?sslmode=require
+MIGRATION_DATABASE_URL=postgresql://...direct-host.../haha_note?sslmode=require
 
-# 只在数据迁移期间保留，迁移结束后从部署环境删除
-MONGODB_URI=mongodb+srv://...
+# 数据后端开关：prisma | mongodb
+DATA_BACKEND=prisma
+
+# 旧 MongoDB：只服务 mongodb 后端与迁移/校验/回滚脚本，迁移结束后可从部署环境移除
+# 代码同时兼容 MONGODB_URI / MONGODB_URL 两个名字
+APP_MONGODB_MONGODB_URI=mongodb+srv://...
 
 AUTH_TOKEN_SECRET=...
 PASSWORD_PEPPER=...
 
-OBJECT_STORAGE_ENDPOINT=...
-OBJECT_STORAGE_REGION=...
-OBJECT_STORAGE_BUCKET=...
-OBJECT_STORAGE_ACCESS_KEY_ID=...
-OBJECT_STORAGE_SECRET_ACCESS_KEY=...
+# 迁移期专用：data:migrate --execute 需要 LEGACY_OWNER_ID，reverse-sync 需要 CUTOVER_TIMESTAMP
+LEGACY_OWNER_ID=...
+# CUTOVER_TIMESTAMP=2026-09-09T03:00:00Z
 
 DEEPSEEK_API_KEY=...
-QWEN_API_KEY=...
+# 可选：AI_PROVIDER_BASE_URL、AI_CHAT_MODEL
 ```
+
+对象存储（`OBJECT_STORAGE_*`）与 `QWEN_API_KEY` 未接入实现：`Asset` / `MessageAsset`
+目前只有数据模型，多模态与对象存储尚未落地（见文首现状说明）。
 
 不得将任何真实环境变量提交到 Git。开发、预发布和生产使用不同密钥。
 
@@ -1244,13 +1263,13 @@ branch，不使用 SQLite 替代 PostgreSQL，因为 SQL 方言和约束行为�
 每个 PR 执行：
 
 ```bash
-npm run db:format
-npm run db:validate
-npm run db:generate
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+pnpm db:format
+pnpm db:validate
+pnpm db:generate
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
 部署规则：

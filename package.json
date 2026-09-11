@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "seed": "tsx --env-file=.env.development src/scripts/index.ts repos",
     "seed:admin": "tsx --env-file=.env.development src/scripts/index.ts admin",
     "data:validate": "tsx scripts/validate-migration.ts",

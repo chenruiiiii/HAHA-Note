@@ -2,7 +2,7 @@
  * 回滚辅助 CLI：把 cutover 时间戳之后、PostgreSQL 中发生变化的核心业务行
  * 反向同步回 MongoDB，供切回 DATA_BACKEND=mongodb 前使用。
  *
- * 用法：CUTOVER_TIMESTAMP="2026-09-09T03:00:00Z" npm run rollback:reverse-sync
+ * 用法：CUTOVER_TIMESTAMP="2026-09-09T03:00:00Z" pnpm rollback:reverse-sync
  * 依赖：APP_MONGODB_MONGODB_URI、MIGRATION_DATABASE_URL/DATABASE_URL。
  *
  * 仅同步 repositories/documents/conversations+messages/activities；users/sessions/

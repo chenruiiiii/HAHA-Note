@@ -1,7 +1,7 @@
 /**
  * 迁移校验 CLI：核对源(Mongo)与目标(PostgreSQL)计数 + 隔离区，任何关键不一致退出非零。
  *
- * 用法：npm run data:validate
+ * 用法：pnpm data:validate
  * 依赖：APP_MONGODB_MONGODB_URI、MIGRATION_DATABASE_URL/DATABASE_URL。
  * 在切 DATA_BACKEND=prisma 前执行；critical > 0 时 SHALL 停止 cutover。
  */

@@ -2,14 +2,14 @@
  * 一次性 MongoDB → PostgreSQL 迁移 CLI。
  *
  * 用法（见 package.json）：
- *   npm run data:migrate:dry            # --dry-run：只读取与转换，不写库
- *   npm run data:migrate                # --execute：需要 LEGACY_OWNER_ID
- *   tsx scripts/migrate-mongo-to-postgres.ts --dry-run --limit 500
+ *   pnpm data:migrate:dry               # --dry-run：只读取与转换，不写库
+ *   pnpm data:migrate                   # --execute：需要 LEGACY_OWNER_ID
+ *   pnpm exec tsx scripts/migrate-mongo-to-postgres.ts --dry-run --limit 500
  *
  * 依赖环境变量：APP_MONGODB_MONGODB_URI（读取源）、MIGRATION_DATABASE_URL 或
  * DATABASE_URL（写入目标）、LEGACY_OWNER_ID（--execute 必需）。
  *
- * 先 `npx prisma generate`（src/generated 已被 gitignore，新 clone 需先生成）。
+ * 先 `pnpm db:generate`（src/generated 已被 gitignore，新 clone 需先生成）。
  */
 import 'dotenv/config';
 import { MongoClient } from 'mongodb';
