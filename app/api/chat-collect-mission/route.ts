@@ -1,4 +1,3 @@
-import clientPromise from '@/lib/mongodb';
 import { type ListItem } from '@/models/ai-mission';
 import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
@@ -34,6 +33,7 @@ export async function GET(request: Request): Promise<Response> {
     }
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection<ListItem>(COLLECTION_NAME);

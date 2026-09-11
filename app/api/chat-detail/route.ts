@@ -1,7 +1,6 @@
 import { generateText, streamText, UIMessage, convertToModelMessages } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
-import clientPromise from '@/lib/mongodb';
 import {
   type AiChatListItem,
   type AiMissionDetail,
@@ -278,6 +277,7 @@ async function generateConversationSummary(messages: AiMissionMessage[]) {
  * @returns MongoDB upsert 操作完成后的 Promise。
  */
 async function saveChatListItem(chatId: string, title: string) {
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection<AiChatListItem>(CHAT_LIST_COLLECTION_NAME);
@@ -310,6 +310,7 @@ async function saveChatDetail(
     summaryOverride?: string;
   }
 ) {
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection<AiMissionDetail>(COLLECTION_NAME);
@@ -341,6 +342,7 @@ async function saveChatDetail(
  * @returns 不存在会话或标题仍为默认值时返回 `true`。
  */
 async function shouldGenerateTitle(chatId: string) {
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection<AiMissionDetail>(COLLECTION_NAME);

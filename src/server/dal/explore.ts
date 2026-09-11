@@ -121,3 +121,36 @@ export async function findExploreArticleById(id: string): Promise<PublicNoteDeta
 
   return row ? toPublicNoteDetail(row) : null;
 }
+
+export interface ExploreArticleBrief {
+  /** 用于公开笔记详情页 URL 的 id。 */
+  id: string;
+  /** keyset 分页游标（ExploreArticle 主键）。 */
+  cursorId: string;
+  title: string;
+}
+
+/**
+ * 按主键升序 keyset 分页读取公开笔记的 (id, title)。
+ *
+ * 供 sitemap 等需要遍历全量公开笔记的场景使用：keyset 分页在数据变动时不会像
+ * offset 分页那样漏读或重复。
+ */
+export async function listExploreArticleBriefs(
+  limit: number,
+  cursor?: string
+): Promise<ExploreArticleBrief[]> {
+  const prisma = getPrisma();
+  const rows = await prisma.exploreArticle.findMany({
+    where: cursor ? { id: { gt: cursor } } : undefined,
+    orderBy: { id: 'asc' },
+    take: Math.min(Math.max(limit, 1), 500),
+    select: { id: true, legacyNumericId: true, titleHtml: true },
+  });
+
+  return rows.map((row) => ({
+    id: row.legacyNumericId || row.id,
+    cursorId: row.id,
+    title: strip(row.titleHtml),
+  }));
+}

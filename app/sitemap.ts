@@ -43,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (items.length < SITEMAP_PAGE_SIZE) {
       break;
     }
-    cursor = items[items.length - 1].id;
+    cursor = items[items.length - 1].cursorId ?? items[items.length - 1].id;
   }
 
   return entries;

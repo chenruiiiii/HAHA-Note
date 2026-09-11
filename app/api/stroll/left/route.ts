@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
 import { isPrismaBackend } from '@/server/auth/backend';
 import { listExploreArticles } from '@/server/dal/explore';
 import { dalErrorResponse, privateJson } from '@/server/http/private-json';
@@ -24,6 +23,7 @@ export async function GET() {
     }
   }
 
+  const { default: clientPromise } = await import('@/lib/mongodb');
   const client = await clientPromise;
   const db = client.db('stroll-recommend'); // 逛逛数据库
   const collection = db.collection('recommend_details'); // 集合
