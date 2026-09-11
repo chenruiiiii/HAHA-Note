@@ -14,8 +14,8 @@ export const userHistorySlice = createApi({
       query: ({ type }) => ({
         url: type === '编辑过' ? '/edited' : '/browsed',
       }),
-      // 这里的 result 类型会被推断为 ListResponse
-      providesTags: (result, error, arg) => [{ type: 'edited', id: arg.type }],
+      // 按请求的列表类型打标签，供 invalidateDocumentLists 精确失效
+      providesTags: (result, error, arg) => [arg.type === '编辑过' ? 'edited' : 'browsed'],
     }),
   }),
 });

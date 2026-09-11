@@ -8,9 +8,12 @@ import HAEmpty from '@/components/common/HAEmpty';
 import { nanoid } from 'nanoid';
 import { message } from 'antd';
 import { createDocsDetailData } from '@/services/docs-detail';
+import { useAppDispatch } from '@/store';
+import { invalidateDocumentLists } from '@/store/invalidate';
 
 const NewFileModal = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [messageApi, contextHolder] = message.useMessage();
   const [creatingRepositoryId, setCreatingRepositoryId] = useState<string>();
   const { data: repositories, isLoading, error } = useGetRepositoryListQuery();
@@ -28,6 +31,8 @@ const NewFileModal = () => {
       if (response.code !== 200) {
         throw new Error(response.message || '新建文档失败');
       }
+
+      invalidateDocumentLists(dispatch);
 
       const targetUrl = `/repo-detail/${id}/${docsId}`;
       if (newWindow) {

@@ -44,6 +44,42 @@ function toDocumentDetailRecord(doc: {
   };
 }
 
+/**
+ * 记录一次用户活动；同一 (userId, documentId, type) 只保留一行并刷新 occurredAt。
+ *
+ * 编辑器会自动保存，若每次保存都追加新行，首页「最近编辑」会被同一篇文档刷满，
+ * 因此这里按文档去重，只把时间更新到最新一次。
+ */
+async function recordActivity(
+  tx: Prisma.TransactionClient,
+  input: { userId: string; documentId: string; type: ActivityType }
+): Promise<void> {
+  const existing = await tx.activity.findFirst({
+    where: {
+      userId: input.userId,
+      documentId: input.documentId,
+      type: input.type,
+    },
+    select: { id: true },
+  });
+
+  if (existing) {
+    await tx.activity.update({
+      where: { id: existing.id },
+      data: { occurredAt: new Date() },
+    });
+    return;
+  }
+
+  await tx.activity.create({
+    data: {
+      userId: input.userId,
+      documentId: input.documentId,
+      type: input.type,
+    },
+  });
+}
+
 async function loadDocumentForUser(id: string, userId: string) {
   const prisma = getPrisma();
   const doc = await prisma.document.findFirst({
@@ -67,6 +103,22 @@ export async function findDocumentById(
 ): Promise<DocumentDetailRecord | null> {
   const doc = await loadDocumentForUser(id, userId);
   return doc ? toDocumentDetailRecord(doc) : null;
+}
+
+/**
+ * 记录文档浏览活动，供 `/api/start/browsed` 使用。
+ *
+ * 同一用户重复浏览同一文档只刷新时间，不追加行。
+ */
+export async function markDocumentViewed(id: string, userId: string): Promise<void> {
+  const prisma = getPrisma();
+  await prisma.$transaction((tx) =>
+    recordActivity(tx, {
+      userId,
+      documentId: id,
+      type: ActivityType.DOCUMENT_VIEWED,
+    })
+  );
 }
 
 export async function updateDocument(
@@ -148,6 +200,12 @@ export async function updateDocument(
         },
       });
 
+      await recordActivity(tx, {
+        userId,
+        documentId: id,
+        type: ActivityType.DOCUMENT_UPDATED,
+      });
+
       return updated;
     });
 
@@ -194,12 +252,17 @@ export async function createDocument(payload: {
       include: { creator: { select: { nickname: true } } },
     });
 
-    await tx.activity.create({
-      data: {
-        userId: payload.creatorId,
-        documentId: created.id,
-        type: ActivityType.DOCUMENT_CREATED,
-      },
+    // 新建的文档同时计入「最近编辑」，否则首页刚建好的文档不会出现在该列表里
+    await recordActivity(tx, {
+      userId: payload.creatorId,
+      documentId: created.id,
+      type: ActivityType.DOCUMENT_CREATED,
+    });
+
+    await recordActivity(tx, {
+      userId: payload.creatorId,
+      documentId: created.id,
+      type: ActivityType.DOCUMENT_UPDATED,
     });
 
     return created;
