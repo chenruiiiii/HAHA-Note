@@ -41,7 +41,13 @@ export async function GET(
       });
     } catch (error) {
       const response = dalErrorResponse(error);
-      return response ?? privateJson({ code: 500, data: null, message: 'error' }, { status: 500 });
+      return (
+        response ??
+        privateJson(
+          { code: 500, data: null, message: '查询文档失败' },
+          { status: 500 }
+        )
+      );
     }
   }
 

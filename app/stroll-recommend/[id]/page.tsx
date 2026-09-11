@@ -1,7 +1,14 @@
 import FileDetail from '@/components/layout/Stroll/components/FileDetail';
 import { RecommendDetailType } from '@/components/layout/Stroll/types/recommend';
 
-const StrollRecommend = async ({ params: { _id } }: { params: { _id: string } }) => {
+type StrollRecommendProps = {
+  params: Promise<{ _id: string }>;
+};
+
+const StrollRecommend = async ({ params }: StrollRecommendProps) => {
+  // 该页数据为 mock，不依赖路由参数
+  await params;
+
   const detail: RecommendDetailType = {
     _id: '65a3b2c1d4e5f67890ab1234',
     source: {
