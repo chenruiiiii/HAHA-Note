@@ -31,10 +31,7 @@ const CommonUse = () => {
               <div className={styles['name']}>
                 {item.title}
                 <i
-                  className={[
-                    'iconfont',
-                    item.isPublic ? 'icon-jiesuo' : 'icon-suoding',
-                  ].join(' ')}
+                  className={['iconfont', item.isPublic ? 'icon-jiesuo' : 'icon-suoding'].join(' ')}
                 ></i>
               </div>
             </Link>

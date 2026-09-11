@@ -8,10 +8,7 @@ import { normalizeRoute } from '@/lib/performance/route';
 import type { PerformanceMetricPayload } from '@/lib/performance/types';
 import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
-import {
-  listPerformanceEvents,
-  savePerformanceEvent,
-} from '@/server/dal/performance';
+import { listPerformanceEvents, savePerformanceEvent } from '@/server/dal/performance';
 
 const DB_NAME = 'performance';
 const COLLECTION_NAME = 'performance_events';
@@ -100,9 +97,7 @@ function buildPrismaFilters(searchParams: URLSearchParams, since: Date) {
     since,
     route: route ? normalizeRoute(route) : undefined,
     event:
-      event && ALLOWED_EVENTS.has(event as PerformanceMetricPayload['event'])
-        ? event
-        : undefined,
+      event && ALLOWED_EVENTS.has(event as PerformanceMetricPayload['event']) ? event : undefined,
     deviceType: device && ALLOWED_DEVICES.has(device) ? device : undefined,
     networkType: network && ALLOWED_NETWORKS.has(network) ? network : undefined,
     release: toLimitedText(searchParams.get('release'), 80),
@@ -184,9 +179,7 @@ export async function GET(request: Request): Promise<Response> {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
     if (isPrismaBackend()) {
-      const events = await listPerformanceEvents(
-        buildPrismaFilters(searchParams, since)
-      );
+      const events = await listPerformanceEvents(buildPrismaFilters(searchParams, since));
 
       return NextResponse.json({
         code: 200,
@@ -197,9 +190,9 @@ export async function GET(request: Request): Promise<Response> {
 
     const { default: clientPromise } = await import('@/lib/mongodb');
     const client = await clientPromise;
-    const collection = client.db(DB_NAME).collection<PerformanceMetricPayload & { received_at: Date }>(
-      COLLECTION_NAME
-    );
+    const collection = client
+      .db(DB_NAME)
+      .collection<PerformanceMetricPayload & { received_at: Date }>(COLLECTION_NAME);
     const events = (await collection
       .find(buildQuery(searchParams, since))
       .sort({ received_at: -1 })

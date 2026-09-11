@@ -29,11 +29,14 @@ export async function GET(
       const data = await findConversationById(id, user.userId);
 
       if (!data) {
-        return privateJson({
-          code: 404,
-          data: null,
-          message: '未找到对应聊天详情',
-        }, { status: 404 });
+        return privateJson(
+          {
+            code: 404,
+            data: null,
+            message: '未找到对应聊天详情',
+          },
+          { status: 404 }
+        );
       }
 
       return privateJson({

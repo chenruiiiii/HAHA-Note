@@ -25,9 +25,7 @@ function buildArticleJsonLd(detail: PublicNoteDetail) {
     headline: detail.title,
     description: detail.summary,
     ...(url ? { mainEntityOfPage: url, url } : {}),
-    ...(detail.authorName
-      ? { author: { '@type': 'Person', name: detail.authorName } }
-      : {}),
+    ...(detail.authorName ? { author: { '@type': 'Person', name: detail.authorName } } : {}),
     publisher: {
       '@type': 'Organization',
       name: SITE_NAME,
@@ -56,9 +54,7 @@ export async function generateMetadata({ params }: PublicNotePageProps): Promise
     },
     description: detail.summary || SITE_DEFAULT_DESCRIPTION,
     alternates: url ? { canonical: url } : undefined,
-    robots: canIndex
-      ? { index: true, follow: true }
-      : { index: false, follow: false },
+    robots: canIndex ? { index: true, follow: true } : { index: false, follow: false },
     openGraph: {
       type: 'article',
       title: detail.title || SITE_NAME,

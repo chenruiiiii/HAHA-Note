@@ -141,14 +141,7 @@ const FileDetail = () => {
         docsName: resolvedTitle,
       })
     );
-  }, [
-    currentRepoDocName,
-    data?.title,
-    dispatch,
-    docsId,
-    isRepositoryMismatch,
-    repoId,
-  ]);
+  }, [currentRepoDocName, data?.title, dispatch, docsId, isRepositoryMismatch, repoId]);
 
   useEffect(() => {
     titleRef.current = editorData.title;

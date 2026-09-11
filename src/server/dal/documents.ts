@@ -86,17 +86,12 @@ export async function updateDocument(
     throw new NotFoundError('未找到对应文档');
   }
 
-  if (
-    typeof payload.baseVersion === 'number' &&
-    payload.baseVersion !== existing.version
-  ) {
+  if (typeof payload.baseVersion === 'number' && payload.baseVersion !== existing.version) {
     throw new VersionConflictError(toDocumentDetailRecord(existing));
   }
 
   const converted =
-    payload.content_html !== undefined
-      ? convertDocumentHtml(payload.content_html)
-      : null;
+    payload.content_html !== undefined ? convertDocumentHtml(payload.content_html) : null;
 
   const prisma = getPrisma();
   const nextVersion = existing.version + 1;
@@ -120,7 +115,9 @@ export async function updateDocument(
           status: payload.status ?? existing.status,
           contentHtml: converted ? converted.html : existing.contentHtml,
           contentText: converted ? converted.text : existing.contentText,
-          content: converted ? asTiptapJson(converted.json) : (existing.content as Prisma.InputJsonValue),
+          content: converted
+            ? asTiptapJson(converted.json)
+            : (existing.content as Prisma.InputJsonValue),
         },
       });
 
@@ -143,7 +140,9 @@ export async function updateDocument(
           createdById: userId,
           version: nextVersion,
           title: updated.title,
-          content: converted ? asTiptapJson(converted.json) : (existing.content as Prisma.InputJsonValue),
+          content: converted
+            ? asTiptapJson(converted.json)
+            : (existing.content as Prisma.InputJsonValue),
           contentHtml: updated.contentHtml,
           summary: updated.summary,
         },
@@ -167,16 +166,14 @@ export async function updateDocument(
   }
 }
 
-export async function createDocument(
-  payload: {
-    id?: string;
-    repositoryId: string;
-    creatorId: string;
-    title?: string;
-    contentHtml?: string;
-    summary?: string;
-  }
-): Promise<DocumentDetailRecord> {
+export async function createDocument(payload: {
+  id?: string;
+  repositoryId: string;
+  creatorId: string;
+  title?: string;
+  contentHtml?: string;
+  summary?: string;
+}): Promise<DocumentDetailRecord> {
   await getAccessibleRepository(payload.repositoryId, payload.creatorId);
   const converted = convertDocumentHtml(payload.contentHtml ?? '');
   const prisma = getPrisma();
@@ -240,7 +237,10 @@ export async function upsertDocumentForUser(
   }
 
   if (payload.repository_id && payload.repository_id !== existing.repositoryId) {
-    throw new VersionConflictError(toDocumentDetailRecord(existing), '文档所属知识库不匹配，请刷新目录后重试');
+    throw new VersionConflictError(
+      toDocumentDetailRecord(existing),
+      '文档所属知识库不匹配，请刷新目录后重试'
+    );
   }
 
   return updateDocument(id, userId, payload);

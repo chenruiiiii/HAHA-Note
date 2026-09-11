@@ -1,16 +1,11 @@
 type Procedure = (...args: readonly unknown[]) => void;
 
-export type DebouncedFunction<T extends Procedure> = ((
-  ...args: Parameters<T>
-) => void) & {
+export type DebouncedFunction<T extends Procedure> = ((...args: Parameters<T>) => void) & {
   cancel: () => void;
   flush: (...args: Parameters<T>) => void;
 };
 
-export const debounce = <T extends Procedure>(
-  fn: T,
-  wait = 800
-): DebouncedFunction<T> => {
+export const debounce = <T extends Procedure>(fn: T, wait = 800): DebouncedFunction<T> => {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let latestArgs: Parameters<T> | null = null;
 

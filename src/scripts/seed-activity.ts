@@ -41,12 +41,8 @@ interface DetailDoc {
  * - 源集合为空时退出非零，绝不把线上列表清成空。
  */
 async function buildSourceData(client: MongoClient) {
-  const repoCollection = client
-    .db(REPO_DB_NAME)
-    .collection<RepoDoc>('repo_list');
-  const detailCollection = client
-    .db(REPO_DB_NAME)
-    .collection<DetailDoc>('docs_detail');
+  const repoCollection = client.db(REPO_DB_NAME).collection<RepoDoc>('repo_list');
+  const detailCollection = client.db(REPO_DB_NAME).collection<DetailDoc>('docs_detail');
 
   const [repos, details] = await Promise.all([
     repoCollection.find().toArray(),
@@ -114,9 +110,9 @@ const generateData = (count: number, prefix: 'EDIT' | 'BROWSE', pairs: ActivityP
 
 async function rebuildHistory(
   client: MongoClient,
-  collectionName: "edit_history" | "browse_history",
-  prefix: "EDIT" | "BROWSE",
-  pairs: ActivityPair[],
+  collectionName: 'edit_history' | 'browse_history',
+  prefix: 'EDIT' | 'BROWSE',
+  pairs: ActivityPair[]
 ) {
   const db = client.db(DB_NAME);
   const collection = db.collection<EditDocument & BrowseDocument>(collectionName);

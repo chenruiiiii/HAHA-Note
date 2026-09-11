@@ -1,6 +1,7 @@
 # Haha Note
 
-Haha Note 是一个基于 Next.js App Router 的知识笔记与 AI 写作应用。项目集成了文档管理、知识库浏览、收藏、公开笔记、AI 对话生成、对话记录沉淀和推荐内容浏览等能力，数据主要存储在 MongoDB 中。
+Haha Note 是一个基于 Next.js App
+Router 的知识笔记与 AI 写作应用。项目集成了文档管理、知识库浏览、收藏、公开笔记、AI 对话生成、对话记录沉淀和推荐内容浏览等能力，数据主要存储在 MongoDB 中。
 
 ## 功能概览
 
@@ -154,61 +155,61 @@ npx tsx --env-file=.env.development src/scripts/index.ts all
 
 开发环境内置演示账号：
 
-| 账号 | 密码 | 角色 |
-| --- | --- | --- |
-| `admin` | `admin` | 管理员 |
+| 账号     | 密码        | 角色     |
+| -------- | ----------- | -------- |
+| `admin`  | `admin`     | 管理员   |
 | `editor` | `editor123` | 内容编辑 |
 
 这些账号只适合本地开发或演示，生产环境请改为真实用户体系或至少更换密码。
 
 ## 常用脚本
 
-| 命令 | 说明 |
-| --- | --- |
-| `npm run dev` | 启动 Next.js 开发服务器 |
-| `npm run build` | 构建生产版本 |
-| `npm run start` | 启动生产服务 |
-| `npm run lint` | 运行 ESLint |
-| `npm run seed` | 初始化知识库数据 |
-| `npm run seed:admin` | 初始化管理员账号 |
+| 命令                 | 说明                    |
+| -------------------- | ----------------------- |
+| `npm run dev`        | 启动 Next.js 开发服务器 |
+| `npm run build`      | 构建生产版本            |
+| `npm run start`      | 启动生产服务            |
+| `npm run lint`       | 运行 ESLint             |
+| `npm run seed`       | 初始化知识库数据        |
+| `npm run seed:admin` | 初始化管理员账号        |
 
 ## 主要页面
 
-| 路径 | 说明 |
-| --- | --- |
-| `/` | 开始页，展示文档入口与最近记录 |
-| `/repository` | 知识库列表 |
-| `/repo-detail/[repoId]/home` | 知识库首页 |
-| `/repo-detail/[repoId]/[fileId]` | 知识库文档详情 |
-| `/ai-chat-home` | AI 写作首页 |
-| `/ai-chat/[id]` | AI 对话详情 |
-| `/collect` | 收藏页 |
-| `/stroll` | 漫游推荐 |
-| `/stroll-recommend/[id]` | 推荐详情 |
-| `/public-note/[id]` | 公开笔记 |
-| `/personal-center/[id]` | 个人中心 |
-| `/login` | 登录页 |
+| 路径                             | 说明                           |
+| -------------------------------- | ------------------------------ |
+| `/`                              | 开始页，展示文档入口与最近记录 |
+| `/repository`                    | 知识库列表                     |
+| `/repo-detail/[repoId]/home`     | 知识库首页                     |
+| `/repo-detail/[repoId]/[fileId]` | 知识库文档详情                 |
+| `/ai-chat-home`                  | AI 写作首页                    |
+| `/ai-chat/[id]`                  | AI 对话详情                    |
+| `/collect`                       | 收藏页                         |
+| `/stroll`                        | 漫游推荐                       |
+| `/stroll-recommend/[id]`         | 推荐详情                       |
+| `/public-note/[id]`              | 公开笔记                       |
+| `/personal-center/[id]`          | 个人中心                       |
+| `/login`                         | 登录页                         |
 
 ## 主要接口
 
-| 接口 | 说明 |
-| --- | --- |
-| `/api/login` | 登录并写入鉴权 Cookie |
-| `/api/logout` | 退出登录并清理 Cookie |
-| `/api/auth/refresh` | 刷新 access token |
-| `/api/repository` | 获取知识库列表 |
-| `/api/repo-detail/[id]` | 获取知识库详情 |
-| `/api/docs-detail/[docsId]` | 获取文档详情 |
-| `/api/docs-summary/[docsId]` | 生成文档摘要 |
-| `/api/chat-detail` | AI 流式对话与会话持久化 |
-| `/api/chat/[id]` | 获取 AI 会话详情 |
-| `/api/chat-latest-mission` | 获取最近 AI 会话 |
-| `/api/chat-collect-mission` | 获取收藏 AI 会话 |
-| `/api/start/edited` | 获取最近编辑记录 |
-| `/api/start/browsed` | 获取最近浏览记录 |
-| `/api/public-note/[id]` | 获取公开笔记 |
-| `/api/stroll/left` | 获取左侧推荐列表 |
-| `/api/stroll/right` | 获取右侧推荐列表 |
+| 接口                         | 说明                    |
+| ---------------------------- | ----------------------- |
+| `/api/login`                 | 登录并写入鉴权 Cookie   |
+| `/api/logout`                | 退出登录并清理 Cookie   |
+| `/api/auth/refresh`          | 刷新 access token       |
+| `/api/repository`            | 获取知识库列表          |
+| `/api/repo-detail/[id]`      | 获取知识库详情          |
+| `/api/docs-detail/[docsId]`  | 获取文档详情            |
+| `/api/docs-summary/[docsId]` | 生成文档摘要            |
+| `/api/chat-detail`           | AI 流式对话与会话持久化 |
+| `/api/chat/[id]`             | 获取 AI 会话详情        |
+| `/api/chat-latest-mission`   | 获取最近 AI 会话        |
+| `/api/chat-collect-mission`  | 获取收藏 AI 会话        |
+| `/api/start/edited`          | 获取最近编辑记录        |
+| `/api/start/browsed`         | 获取最近浏览记录        |
+| `/api/public-note/[id]`      | 获取公开笔记            |
+| `/api/stroll/left`           | 获取左侧推荐列表        |
+| `/api/stroll/right`          | 获取右侧推荐列表        |
 
 ## 鉴权说明
 
@@ -217,28 +218,31 @@ npx tsx --env-file=.env.development src/scripts/index.ts all
 - `ha_note_access_token`：短期 access token，默认 15 分钟。
 - `ha_note_refresh_token`：长期 refresh token，默认 7 天。
 
-`src/lib/http.ts` 会在接口返回 401 时尝试调用 `/api/auth/refresh` 自动刷新登录态。`proxy.ts` 中保留了完整的页面级鉴权逻辑，不过当前 `proxy()` 默认直接放行，方便开发调试；需要恢复页面鉴权时，可以将入口切换到 `authProxyWithLogin`。
+`src/lib/http.ts` 会在接口返回 401 时尝试调用 `/api/auth/refresh` 自动刷新登录态。`proxy.ts`
+中保留了完整的页面级鉴权逻辑，不过当前 `proxy()`
+默认直接放行，方便开发调试；需要恢复页面鉴权时，可以将入口切换到 `authProxyWithLogin`。
 
 ## 数据库说明
 
 项目会使用多个 MongoDB database/collection：
 
-| Database | Collection | 用途 |
-| --- | --- | --- |
-| `ha_admin` | `users` | 管理员账号 |
-| `repository` | `repo_list` | 知识库列表 |
-| `repository` | `docs_detail` | 文档详情 |
-| `user_activity` | `edit_history` | 编辑历史 |
-| `user_activity` | `browse_history` | 浏览历史 |
-| `user_activity` | `favorite_repos` | 收藏知识库 |
-| `ai-chat` | `latest_mission` | 最近 AI 会话 |
-| `ai-chat` | `collect_mission` | 收藏 AI 会话 |
-| `ai-chat` | `ai_chat_detail` | AI 会话详情 |
+| Database           | Collection          | 用途         |
+| ------------------ | ------------------- | ------------ |
+| `ha_admin`         | `users`             | 管理员账号   |
+| `repository`       | `repo_list`         | 知识库列表   |
+| `repository`       | `docs_detail`       | 文档详情     |
+| `user_activity`    | `edit_history`      | 编辑历史     |
+| `user_activity`    | `browse_history`    | 浏览历史     |
+| `user_activity`    | `favorite_repos`    | 收藏知识库   |
+| `ai-chat`          | `latest_mission`    | 最近 AI 会话 |
+| `ai-chat`          | `collect_mission`   | 收藏 AI 会话 |
+| `ai-chat`          | `ai_chat_detail`    | AI 会话详情  |
 | `stroll-recommend` | `recommend_details` | 漫游推荐详情 |
 
 ## 部署注意事项
 
-- 在 Vercel 或其他平台部署时，需要配置 `APP_MONGODB_MONGODB_URI`、`DEEPSEEK_API_KEY`、`AUTH_TOKEN_SECRET`、`NEXT_PUBLIC_APP_API_URL`、`NEXT_PUBLIC_BASE_URL`。
+- 在 Vercel 或其他平台部署时，需要配置
+  `APP_MONGODB_MONGODB_URI`、`DEEPSEEK_API_KEY`、`AUTH_TOKEN_SECRET`、`NEXT_PUBLIC_APP_API_URL`、`NEXT_PUBLIC_BASE_URL`。
 - 生产环境会启用 Sentry 配置，相关 org/project 在 `next.config.ts` 中维护。
 - `NEXT_PUBLIC_APP_API_URL` 和 `NEXT_PUBLIC_BASE_URL` 需要改为线上域名，避免页面仍请求本地接口。
 - 当前演示账号密码是明文种子数据，不应直接用于生产环境。

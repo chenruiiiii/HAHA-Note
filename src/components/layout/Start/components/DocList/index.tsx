@@ -29,7 +29,9 @@ function DocList({
   const [internalFilterType, setInternalFilterType] = useState<Align>('编辑过');
   const filterType = controlledFilterType ?? internalFilterType;
   const hasControlledQuery =
-    controlledList !== undefined || controlledIsLoading !== undefined || controlledError !== undefined;
+    controlledList !== undefined ||
+    controlledIsLoading !== undefined ||
+    controlledError !== undefined;
 
   useEffect(() => {
     if (controlledFilterType) {

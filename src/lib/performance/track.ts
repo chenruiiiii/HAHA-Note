@@ -5,7 +5,9 @@ import type { PerformanceEventName, PerformanceMetricPayload } from './types';
 const PERFORMANCE_ENDPOINT = '/api/performance';
 
 function getRelease() {
-  return process.env.NEXT_PUBLIC_APP_VERSION || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || 'local';
+  return (
+    process.env.NEXT_PUBLIC_APP_VERSION || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || 'local'
+  );
 }
 
 function getSampleRate() {

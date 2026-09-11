@@ -64,12 +64,7 @@ export async function rotateAuthSession(
     include: { user: true },
   });
 
-  if (
-    !session ||
-    session.revokedAt ||
-    session.expiresAt <= new Date() ||
-    !session.user.enabled
-  ) {
+  if (!session || session.revokedAt || session.expiresAt <= new Date() || !session.user.enabled) {
     return null;
   }
 

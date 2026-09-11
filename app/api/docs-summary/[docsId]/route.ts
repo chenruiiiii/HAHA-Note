@@ -100,15 +100,10 @@ export async function POST(
     }
 
     if (isPrismaBackend()) {
-      return upsertDocsDetailForRequest(
-        request,
-        docsId,
-        { ...body, summary } as DocsDetailBody,
-        {
-          create: '总结并创建成功',
-          save: '总结并保存成功',
-        }
-      );
+      return upsertDocsDetailForRequest(request, docsId, { ...body, summary } as DocsDetailBody, {
+        create: '总结并创建成功',
+        save: '总结并保存成功',
+      });
     }
 
     const { default: clientPromise } = await import('@/lib/mongodb');

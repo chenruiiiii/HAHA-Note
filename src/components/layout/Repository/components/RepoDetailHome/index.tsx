@@ -56,9 +56,7 @@ const RepoDetailHome = () => {
       );
       router.push(`/repo-detail/${repoId}/${docsId}`);
     } catch (createError) {
-      messageApi.error(
-        createError instanceof Error ? createError.message : '新建文档失败'
-      );
+      messageApi.error(createError instanceof Error ? createError.message : '新建文档失败');
     } finally {
       setIsCreatingDocument(false);
     }

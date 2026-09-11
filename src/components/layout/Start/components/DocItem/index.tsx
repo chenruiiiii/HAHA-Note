@@ -4,7 +4,15 @@ import { EditDocument } from '../../types/list';
 import './style.scss';
 import { handleUTCTime } from '@/utils/timeFormatter';
 
-function DocItem({ _id, repository_id, docs_id, title, author, updated_time, repository_name }: EditDocument) {
+function DocItem({
+  _id,
+  repository_id,
+  docs_id,
+  title,
+  author,
+  updated_time,
+  repository_name,
+}: EditDocument) {
   const router = useRouter();
 
   // 活动条目 = 私有工作区文档：优先进文档详情，缺 docs_id 降级知识库首页，

@@ -4,7 +4,8 @@ import { MongoClient, MongoClientOptions } from 'mongodb';
 
 // Vercel MongoDB Atlas integration typically injects `MONGODB_URI`.
 // The project historically also used `APP_MONGODB_MONGODB_URI`, so we accept both.
-const url = process.env.MONGODB_URI || process.env.APP_MONGODB_MONGODB_URI || process.env.MONGODB_URL;
+const url =
+  process.env.MONGODB_URI || process.env.APP_MONGODB_MONGODB_URI || process.env.MONGODB_URL;
 const options: MongoClientOptions = {
   appName: 'devrel.vercel.integration',
   maxIdleTimeMS: 5000,

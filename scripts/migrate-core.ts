@@ -78,7 +78,13 @@ export class MigrationState {
   }
 
   counts(entity: string): MigrationCounts {
-    return (this.report.counts[entity] ??= { read: 0, inserted: 0, updated: 0, skipped: 0, failed: 0 });
+    return (this.report.counts[entity] ??= {
+      read: 0,
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+    });
   }
 
   quarantine(source: string, legacyId: string, reason: string, detail?: unknown) {
@@ -86,7 +92,13 @@ export class MigrationState {
   }
 }
 
-export const emptyCounts = (): MigrationCounts => ({ read: 0, inserted: 0, updated: 0, skipped: 0, failed: 0 });
+export const emptyCounts = (): MigrationCounts => ({
+  read: 0,
+  inserted: 0,
+  updated: 0,
+  skipped: 0,
+  failed: 0,
+});
 
 export const isBlank = (v: unknown): boolean => typeof v !== 'string' || v.trim() === '';
 
@@ -127,17 +139,28 @@ export async function convertUser(
   const plain = isBlank(row.password) ? null : row.password!;
   // 迁移不校验明文强度，只做哈希；无法哈希的历史空密码 -> 随机 hash + 强制重置
   const passwordHash =
-    plain === null
-      ? await hashPassword(cryptoRandom())
-      : await hashPassword(plain);
+    plain === null ? await hashPassword(cryptoRandom()) : await hashPassword(plain);
   const role = row.role === 'admin' ? 'ADMIN' : 'USER';
   const passwordResetRequired = plain === null;
 
   if (state.mode === 'execute') {
     await db.user.upsert({
       where: { username },
-      update: { passwordHash, nickname, role, enabled: row.enabled !== false, passwordResetRequired },
-      create: { username, passwordHash, nickname, role, enabled: row.enabled !== false, passwordResetRequired },
+      update: {
+        passwordHash,
+        nickname,
+        role,
+        enabled: row.enabled !== false,
+        passwordResetRequired,
+      },
+      create: {
+        username,
+        passwordHash,
+        nickname,
+        role,
+        enabled: row.enabled !== false,
+        passwordResetRequired,
+      },
     });
     counts.inserted++;
   }
@@ -172,8 +195,11 @@ export async function convertRepository(
   }
 
   const type = isBlank(row.type) ? 'book' : row.type!.trim().slice(0, 30);
-  const description = !isBlank(row.repo_desc) ? row.repo_desc!.trim()
-    : !isBlank(row.description) ? row.description!.trim() : '';
+  const description = !isBlank(row.repo_desc)
+    ? row.repo_desc!.trim()
+    : !isBlank(row.description)
+      ? row.description!.trim()
+      : '';
 
   if (state.mode === 'execute') {
     await db.repository.upsert({
@@ -290,7 +316,11 @@ export async function convertConversation(
     return;
   }
 
-  const title = !isBlank(row.title) ? row.title!.trim() : !isBlank(extra.listTitle) ? extra.listTitle!.trim() : '新对话';
+  const title = !isBlank(row.title)
+    ? row.title!.trim()
+    : !isBlank(extra.listTitle)
+      ? extra.listTitle!.trim()
+      : '新对话';
   const messages = Array.isArray(row.types) ? row.types : [];
 
   if (state.mode === 'execute') {

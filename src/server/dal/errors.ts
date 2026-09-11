@@ -32,8 +32,6 @@ export class VersionConflictError<T = unknown> extends Error {
 // Prisma 唯一约束冲突（P2002），用于把并发写竞争映射为 409
 export function isUniqueConstraintError(error: unknown): boolean {
   return (
-    typeof error === 'object' &&
-    error !== null &&
-    (error as { code?: unknown }).code === 'P2002'
+    typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002'
   );
 }

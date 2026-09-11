@@ -46,15 +46,7 @@ const ALLOWED_FIELDS = new Set([
 ]);
 
 const DEVICE_TYPES = new Set<DeviceType>(['mobile', 'tablet', 'desktop', 'unknown']);
-const NETWORK_TYPES = new Set<NetworkType>([
-  'slow-2g',
-  '2g',
-  '3g',
-  '4g',
-  '5g',
-  'wifi',
-  'unknown',
-]);
+const NETWORK_TYPES = new Set<NetworkType>(['slow-2g', '2g', '3g', '4g', '5g', 'wifi', 'unknown']);
 const RATINGS = new Set<PerformanceRating>(['good', 'needs-improvement', 'poor']);
 const WEB_VITALS = new Set(['CLS', 'FCP', 'INP', 'LCP', 'TTFB']);
 const SAFE_TEXT_RE = /^[A-Za-z0-9._:/-]+$/;
@@ -166,7 +158,8 @@ export function normalizePerformanceEvent(body: unknown): PerformanceMetricPaylo
     statusCode === null ||
     !DEVICE_TYPES.has(deviceType as DeviceType) ||
     !NETWORK_TYPES.has(networkType as NetworkType) ||
-    (rating !== undefined && (typeof rating !== 'string' || !RATINGS.has(rating as PerformanceRating))) ||
+    (rating !== undefined &&
+      (typeof rating !== 'string' || !RATINGS.has(rating as PerformanceRating))) ||
     (success !== undefined && typeof success !== 'boolean') ||
     (method !== undefined && !SAFE_TEXT_RE.test(method)) ||
     (releaseText !== undefined && !SAFE_TEXT_RE.test(releaseText)) ||
@@ -177,7 +170,10 @@ export function normalizePerformanceEvent(body: unknown): PerformanceMetricPaylo
     return null;
   }
 
-  if (event === 'web_vital' && (!metricName || !WEB_VITALS.has(metricName) || !metricId || value === undefined)) {
+  if (
+    event === 'web_vital' &&
+    (!metricName || !WEB_VITALS.has(metricName) || !metricId || value === undefined)
+  ) {
     return null;
   }
 

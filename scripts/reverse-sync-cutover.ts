@@ -54,8 +54,12 @@ async function main() {
     let docsSynced = 0;
     for (const doc of docs) {
       const docAny = doc as unknown as {
-        id: string; title: string; contentHtml: string | null;
-        summary: string; repositoryId: string; updatedAt: Date;
+        id: string;
+        title: string;
+        contentHtml: string | null;
+        summary: string;
+        repositoryId: string;
+        updatedAt: Date;
       };
       await docsCol.updateOne(
         { _id: docAny.id },
@@ -79,8 +83,17 @@ async function main() {
     const convs = await prisma.conversation.findMany({ where: { updatedAt: { gte: since } } });
     const chatDetailCol = chatDb.collection<LegacyDoc>('ai_chat_detail');
     for (const conv of convs) {
-      const c = conv as unknown as { id: string; title: string; summary: string; updatedAt: Date; createdAt: Date };
-      const messages = await prisma.message.findMany({ where: { conversationId: c.id }, orderBy: { createdAt: 'asc' } });
+      const c = conv as unknown as {
+        id: string;
+        title: string;
+        summary: string;
+        updatedAt: Date;
+        createdAt: Date;
+      };
+      const messages = await prisma.message.findMany({
+        where: { conversationId: c.id },
+        orderBy: { createdAt: 'asc' },
+      });
       await chatDetailCol.updateOne(
         { _id: c.id },
         {
@@ -90,8 +103,17 @@ async function main() {
             summary: c.summary,
             category: 'recent',
             types: messages.map((m) => {
-              const mm = m as unknown as { id: string; role: string; parts: unknown; clientMessageId: string | null };
-              return { id: mm.clientMessageId || mm.id, role: mm.role.toLowerCase(), parts: mm.parts };
+              const mm = m as unknown as {
+                id: string;
+                role: string;
+                parts: unknown;
+                clientMessageId: string | null;
+              };
+              return {
+                id: mm.clientMessageId || mm.id,
+                role: mm.role.toLowerCase(),
+                parts: mm.parts,
+              };
             }),
             created_at: c.createdAt.toISOString(),
             updated_at: c.updatedAt.toISOString(),
@@ -108,9 +130,16 @@ async function main() {
     let actsSynced = 0;
     for (const act of acts) {
       const a = act as unknown as { id: string; documentId: string; occurredAt: Date };
-      const doc = await prisma.document.findUnique({ where: { id: a.documentId }, include: { repository: true } });
+      const doc = await prisma.document.findUnique({
+        where: { id: a.documentId },
+        include: { repository: true },
+      });
       if (!doc) continue;
-      const d = doc as unknown as { title: string; contentHtml: string | null; repositoryId: string };
+      const d = doc as unknown as {
+        title: string;
+        contentHtml: string | null;
+        repositoryId: string;
+      };
       await actCol.updateOne(
         { _id: a.id },
         {

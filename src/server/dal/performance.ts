@@ -1,11 +1,7 @@
 import 'server-only';
 import type { Prisma } from '@/generated/prisma/client';
 import { getPrisma } from '@/lib/prisma';
-import type {
-  DeviceType,
-  NetworkType,
-  PerformanceMetricPayload,
-} from '@/lib/performance/types';
+import type { DeviceType, NetworkType, PerformanceMetricPayload } from '@/lib/performance/types';
 
 export interface PerformanceEventFilters {
   since: Date;
@@ -17,9 +13,7 @@ export interface PerformanceEventFilters {
   take: number;
 }
 
-export async function savePerformanceEvent(
-  event: PerformanceMetricPayload
-): Promise<void> {
+export async function savePerformanceEvent(event: PerformanceMetricPayload): Promise<void> {
   const prisma = getPrisma();
   const data = {
     event: event.event,

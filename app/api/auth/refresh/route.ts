@@ -11,11 +11,7 @@ import { refreshWithPrisma } from '@/server/auth/auth-service';
 import { isPrismaBackend } from '@/server/auth/backend';
 import { NextRequest, NextResponse } from 'next/server';
 
-function setAuthCookies(
-  response: NextResponse,
-  accessToken: string,
-  refreshToken: string
-) {
+function setAuthCookies(response: NextResponse, accessToken: string, refreshToken: string) {
   response.cookies.set({
     name: ACCESS_TOKEN_COOKIE_NAME,
     value: accessToken,
@@ -32,13 +28,10 @@ function setAuthCookies(
 export async function POST(request: NextRequest): Promise<Response> {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
   const userAgent = request.headers.get('user-agent');
-  const ipHash =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+  const ipHash = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
 
   if (isPrismaBackend()) {
-    const rotated = refreshToken
-      ? await refreshWithPrisma(refreshToken, userAgent, ipHash)
-      : null;
+    const rotated = refreshToken ? await refreshWithPrisma(refreshToken, userAgent, ipHash) : null;
 
     if (!rotated) {
       const failed = NextResponse.json(

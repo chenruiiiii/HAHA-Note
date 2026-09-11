@@ -83,8 +83,7 @@ const baseTemplates = [
     },
     title_html: 'AI 时代的前端工程效率',
     description_html: '从代码生成、测试辅助到知识沉淀，分析 AI 工具真正能提升交付效率的几个节点。',
-    content_html:
-      '<h2>实践结论</h2><p>真正的提效来自把 AI 接进规范流程，而不是单次问答本身。</p>',
+    content_html: '<h2>实践结论</h2><p>真正的提效来自把 AI 接进规范流程，而不是单次问答本身。</p>',
     quality_level: 'normal' as const,
     like_count: 119,
     comment_count: 22,
@@ -146,15 +145,17 @@ export async function seedStrollRecommend() {
 
   await collection.createIndex({ id: 1 }, { unique: true });
 
-  const operations: AnyBulkWriteOperation<RecommendDetailType>[] = recommendSeedData.map((item) => ({
-    updateOne: {
-      filter: { _id: item._id },
-      update: {
-        $set: item,
+  const operations: AnyBulkWriteOperation<RecommendDetailType>[] = recommendSeedData.map(
+    (item) => ({
+      updateOne: {
+        filter: { _id: item._id },
+        update: {
+          $set: item,
+        },
+        upsert: true,
       },
-      upsert: true,
-    },
-  }));
+    })
+  );
 
   const result = await collection.bulkWrite(operations, { ordered: false });
 

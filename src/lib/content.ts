@@ -108,9 +108,7 @@ export function sha256(value: string): string {
 }
 
 export function htmlToPlainText(html: string): string {
-  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
-    .replace(/\s+/g, ' ')
-    .trim();
+  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }).replace(/\s+/g, ' ').trim();
 }
 
 interface StackEntry {

@@ -116,11 +116,7 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   (response) => {
-    reportApiPerformance(
-      response.config as RetryableAxiosRequestConfig,
-      true,
-      response.status
-    );
+    reportApiPerformance(response.config as RetryableAxiosRequestConfig, true, response.status);
     return response.data;
   },
   (error: AxiosError<{ message?: string }>) => {
@@ -182,8 +178,7 @@ instance.interceptors.response.use(
 );
 
 const http = {
-  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
-    instance.get<T, T>(url, config),
+  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> => instance.get<T, T>(url, config),
 
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
     instance.post<T, T>(url, data, config),

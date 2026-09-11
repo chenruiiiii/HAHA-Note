@@ -491,7 +491,10 @@ export async function POST(req: Request) {
       const status =
         typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
 
-      return jsonError(status, status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试');
+      return jsonError(
+        status,
+        status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试'
+      );
     }
   }
 
@@ -542,8 +545,12 @@ export async function POST(req: Request) {
       err instanceof Error && 'statusCode' in err
         ? (err as { statusCode?: number }).statusCode
         : undefined;
-    const status = typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
+    const status =
+      typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
 
-    return jsonError(status, status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试');
+    return jsonError(
+      status,
+      status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试'
+    );
   }
 }

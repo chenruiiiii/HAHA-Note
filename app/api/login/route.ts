@@ -13,11 +13,7 @@ import { NextResponse } from 'next/server';
 const DB_NAME = 'ha_admin';
 const COLLECTION_NAME = 'users';
 
-function setAuthCookies(
-  response: NextResponse,
-  accessToken: string,
-  refreshToken: string
-) {
+function setAuthCookies(response: NextResponse, accessToken: string, refreshToken: string) {
   response.cookies.set({
     name: ACCESS_TOKEN_COOKIE_NAME,
     value: accessToken,
@@ -36,16 +32,10 @@ export async function POST(request: Request): Promise<Response> {
     const rawBody = await request.json();
     const payload = LoginPayloadSchema.parse(rawBody);
     const userAgent = request.headers.get('user-agent');
-    const ipHash =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+    const ipHash = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
 
     if (isPrismaBackend()) {
-      const result = await loginWithPrisma(
-        payload.username,
-        payload.password,
-        userAgent,
-        ipHash
-      );
+      const result = await loginWithPrisma(payload.username, payload.password, userAgent, ipHash);
 
       if (!result) {
         return NextResponse.json(

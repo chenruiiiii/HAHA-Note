@@ -23,7 +23,9 @@
 - 后端使用 `@ai-sdk/deepseek` 创建 DeepSeek provider
 - 页面层仍直接引用 `UIMessage`
 
-这些依赖让业务代码和 AI SDK 的消息协议、流式协议、hook 状态机绑定在一起。后续如果要接入自研封装、多个 provider、统一网关、请求审计或更细的取消/重试策略，继续让页面依赖 AI SDK 会越来越难维护。
+这些依赖让业务代码和 AI
+SDK 的消息协议、流式协议、hook 状态机绑定在一起。后续如果要接入自研封装、多个 provider、统一网关、请求审计或更细的取消/重试策略，继续让页面依赖 AI
+SDK 会越来越难维护。
 
 ### 1.3 目标
 
@@ -134,7 +136,8 @@ data: {"message":"错误信息","retryable":true}
 
 ### 3.4 上游模型调用
 
-后端自封装 provider client，使用 `fetch` 直接请求 DeepSeek 的 OpenAI-compatible chat completions 接口。
+后端自封装 provider client，使用 `fetch` 直接请求 DeepSeek 的 OpenAI-compatible chat
+completions 接口。
 
 建议保留这些配置：
 
@@ -545,6 +548,7 @@ await fetch(providerUrl, {
 
 ## 11. 参考
 
-- `@microsoft/fetch-event-source`：支持基于 Fetch API 的 SSE 客户端能力，包括自定义 method、headers、body 和 signal。
-- DeepSeek API：继续按 OpenAI-compatible chat completions 方式封装，具体 base URL 与模型名以当前环境变量为准。
-
+- `@microsoft/fetch-event-source`：支持基于 Fetch
+  API 的 SSE 客户端能力，包括自定义 method、headers、body 和 signal。
+- DeepSeek API：继续按 OpenAI-compatible chat completions 方式封装，具体 base
+  URL 与模型名以当前环境变量为准。

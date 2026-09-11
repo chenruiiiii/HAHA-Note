@@ -38,9 +38,7 @@ const NewFileModal = () => {
       }
     } catch (createError) {
       newWindow?.close();
-      messageApi.error(
-        createError instanceof Error ? createError.message : '新建文档失败'
-      );
+      messageApi.error(createError instanceof Error ? createError.message : '新建文档失败');
     } finally {
       setCreatingRepositoryId(undefined);
     }

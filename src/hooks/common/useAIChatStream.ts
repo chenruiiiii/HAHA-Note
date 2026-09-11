@@ -128,116 +128,108 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     }
   }, []);
 
-  const {
-    messages,
-    status,
-    error,
-    sendMessage,
-    setMessages,
-    regenerate,
-    stop,
-    clearError,
-  } = useChat({
-    id: chatId,
-    transport: new DefaultChatTransport({
-      api: '/api/chat-detail',
-      body: {
-        chatId,
+  const { messages, status, error, sendMessage, setMessages, regenerate, stop, clearError } =
+    useChat({
+      id: chatId,
+      transport: new DefaultChatTransport({
+        api: '/api/chat-detail',
+        body: {
+          chatId,
+        },
+      }),
+      onError: (chatError) => {
+        if (!isMountedRef.current) return;
+        // 用户手动停止产生的 AbortError：不展示错误提示，不计入重试
+        if (chatError.name === 'AbortError') return;
+
+        dispatch(setChatErrorAction({ chatId, error: getFriendlyError(chatError) }));
       },
-    }),
-    onError: (chatError) => {
-      if (!isMountedRef.current) return;
-      // 用户手动停止产生的 AbortError：不展示错误提示，不计入重试
-      if (chatError.name === 'AbortError') return;
+      onFinish: async ({ isAbort, isDisconnect, isError }) => {
+        if (!isMountedRef.current) return;
 
-      dispatch(setChatErrorAction({ chatId, error: getFriendlyError(chatError) }));
-    },
-    onFinish: async ({ isAbort, isDisconnect, isError }) => {
-      if (!isMountedRef.current) return;
+        const totalMs = requestStartedAtRef.current
+          ? Math.round(now() - requestStartedAtRef.current)
+          : undefined;
 
-      const totalMs = requestStartedAtRef.current
-        ? Math.round(now() - requestStartedAtRef.current)
-        : undefined;
+        try {
+          if (isAbort) {
+            reportCancelled({ totalMs, retryCount: retryCountRef.current });
 
-      try {
-        if (isAbort) {
-          reportCancelled({ totalMs, retryCount: retryCountRef.current });
+            dispatch(
+              setChatRequestStateAction({
+                chatId,
+                requestStatus: 'aborted',
+                isPosting: false,
+              })
+            );
+            retryCountRef.current = 0;
+            hasPendingRetryRef.current = false;
+            clearRetryTimer();
+            await onPersisted?.();
+            return;
+          }
 
-          dispatch(
-            setChatRequestStateAction({
-              chatId,
-              requestStatus: 'aborted',
-              isPosting: false,
-            })
-          );
+          // 仅网络断开执行有限自动重试；业务错误（isError）不自动重试
+          if (isDisconnect && retryCountRef.current < MAX_AUTO_RETRY) {
+            hasPendingRetryRef.current = true;
+            const nextRetryCount = retryCountRef.current + 1;
+
+            dispatch(
+              setChatRequestStateAction({
+                chatId,
+                requestStatus: 'retrying',
+                isPosting: true,
+                retryCount: nextRetryCount,
+                lastError: '流式连接中断，正在重试',
+              })
+            );
+
+            clearRetryTimer();
+            retryTimerRef.current = setTimeout(() => {
+              if (!isMountedRef.current) return;
+
+              retryCountRef.current = nextRetryCount;
+              requestStartedAtRef.current = now();
+              hasReportedFirstTokenRef.current = false;
+              reportStarted(nextRetryCount);
+              clearError();
+              void regenerate({
+                body: {
+                  chatId,
+                },
+              });
+            }, RETRY_DELAY_MS);
+
+            return;
+          }
+
+          // 正常结束 / 错误且不自动重试：进入终结态
+          const completedRetryCount = retryCountRef.current;
           retryCountRef.current = 0;
           hasPendingRetryRef.current = false;
           clearRetryTimer();
-          await onPersisted?.();
-          return;
-        }
 
-        // 仅网络断开执行有限自动重试；业务错误（isError）不自动重试
-        if (isDisconnect && retryCountRef.current < MAX_AUTO_RETRY) {
-          hasPendingRetryRef.current = true;
-          const nextRetryCount = retryCountRef.current + 1;
+          reportFinished({
+            totalMs,
+            success: !(isDisconnect || isError),
+            errorType: isDisconnect ? 'disconnect' : isError ? 'ai_error' : undefined,
+            retryCount: completedRetryCount,
+          });
 
           dispatch(
             setChatRequestStateAction({
               chatId,
-              requestStatus: 'retrying',
-              isPosting: true,
-              retryCount: nextRetryCount,
-              lastError: '流式连接中断，正在重试',
+              requestStatus: isDisconnect || isError ? 'error' : 'success',
+              isPosting: false,
+              lastError: isDisconnect || isError ? '生成失败，可点击重试' : '',
             })
           );
-
-          clearRetryTimer();
-          retryTimerRef.current = setTimeout(() => {
-            if (!isMountedRef.current) return;
-
-            retryCountRef.current = nextRetryCount;
-            requestStartedAtRef.current = now();
-            hasReportedFirstTokenRef.current = false;
-            reportStarted(nextRetryCount);
-            clearError();
-            void regenerate({
-              body: {
-                chatId,
-              },
-            });
-          }, RETRY_DELAY_MS);
-
-          return;
+          await onPersisted?.();
+        } catch (err) {
+          console.error('消息持久化异常', err);
         }
-
-        // 正常结束 / 错误且不自动重试：进入终结态
-        const completedRetryCount = retryCountRef.current;
-        retryCountRef.current = 0;
-        hasPendingRetryRef.current = false;
-        clearRetryTimer();
-
-        reportFinished({
-          totalMs,
-          success: !(isDisconnect || isError),
-          errorType: isDisconnect ? 'disconnect' : isError ? 'ai_error' : undefined,
-          retryCount: completedRetryCount,
-        });
-
-        dispatch(
-          setChatRequestStateAction({
-            chatId,
-            requestStatus: isDisconnect || isError ? 'error' : 'success',
-            isPosting: false,
-            lastError: isDisconnect || isError ? '生成失败，可点击重试' : '',
-          })
-        );
-        await onPersisted?.();
-      } catch (err) {
-        console.error('消息持久化异常', err);
-      }
-    },
-  });
+      },
+    });
 
   // 中间态驱动（Q6）：effect 只负责 status 的中间态映射（submitted / streaming），
   // 终结态（success / error / aborted / retrying）统一由业务回调写入，

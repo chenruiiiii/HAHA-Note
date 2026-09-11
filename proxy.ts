@@ -100,11 +100,7 @@ async function tryRefreshSession(request: NextRequest) {
   return response;
 }
 
-function setAuthCookies(
-  response: NextResponse,
-  accessToken: string,
-  refreshToken: string
-) {
+function setAuthCookies(response: NextResponse, accessToken: string, refreshToken: string) {
   response.cookies.set({
     name: ACCESS_TOKEN_COOKIE_NAME,
     value: accessToken,

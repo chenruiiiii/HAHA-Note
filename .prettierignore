@@ -1,0 +1,12 @@
+# 包管理器生成的锁文件，交给 npm / pnpm 维护，不参与格式化
+package-lock.json
+pnpm-lock.yaml
+
+# 由 Trellis 管理的指令文件，会被 trellis update 覆盖，避免无意义的格式改动
+AGENTS.md
+
+# 本地 AI / IDE 上下文与规则文件，随编辑器使用习惯变动，不参与格式化
+.cursor/
+
+# Prisma 生成的客户端（已在 .gitignore 中，此处显式声明，避免重新生成后又被改写）
+/src/generated/

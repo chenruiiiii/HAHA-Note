@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  convertDocumentHtml,
-  emptyTiptapDoc,
-  sha256,
-  type TiptapDoc,
-} from '@/lib/content';
+import { convertDocumentHtml, emptyTiptapDoc, sha256, type TiptapDoc } from '@/lib/content';
 
 function nodeByType(doc: TiptapDoc, type: string) {
   return doc.content.find((n) => n.type === type);

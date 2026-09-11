@@ -1,6 +1,5 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 
-export default function useScroll(ref:ReactNode) {
-
-  return {}
+export default function useScroll(ref: ReactNode) {
+  return {};
 }

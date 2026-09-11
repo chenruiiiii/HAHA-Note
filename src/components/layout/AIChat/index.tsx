@@ -64,7 +64,8 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const chatRef = useRef<HTMLDivElement>(null);
   const loadChatDetailRef = useRef<() => Promise<unknown> | unknown>(() => null);
-  const { handlePostingClose, handlePostingOpen, requestStatus, lastError, retryCount } = useHaChat();
+  const { handlePostingClose, handlePostingOpen, requestStatus, lastError, retryCount } =
+    useHaChat();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pendingMessage = searchParams.get('q');
@@ -213,10 +214,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
                     {role === 'user' ? (
                       <div className="message-text">{block.content}</div>
                     ) : (
-                      <MDEditor.Markdown
-                        source={block.content}
-                        className="chat-markdown-preview"
-                      />
+                      <MDEditor.Markdown source={block.content} className="chat-markdown-preview" />
                     )}
                   </div>
                 );
@@ -353,14 +351,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     handlePostingOpen();
     sendMessage({ text: pendingMessage });
     router.replace(`/ai-chat/${_id}`);
-  }, [
-    _id,
-    handlePostingOpen,
-    isInitialLoading,
-    pendingMessage,
-    router,
-    sendMessage,
-  ]);
+  }, [_id, handlePostingOpen, isInitialLoading, pendingMessage, router, sendMessage]);
 
   return (
     <div className="ai-chat-container">

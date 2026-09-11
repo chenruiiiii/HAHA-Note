@@ -16,7 +16,11 @@ export async function GET() {
     try {
       const data = await listExploreArticles(100);
 
-      return privateJson({ code: 200, data: data as unknown as RecommendDetailType[], message: 'success' });
+      return privateJson({
+        code: 200,
+        data: data as unknown as RecommendDetailType[],
+        message: 'success',
+      });
     } catch (error) {
       const response = dalErrorResponse(error);
       return response ?? privateJson({ code: 500, data: null, message: 'error' }, { status: 500 });

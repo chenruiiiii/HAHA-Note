@@ -1,8 +1,7 @@
 import 'dotenv/config';
 import { defineConfig } from 'prisma/config';
 
-const fallbackUrl =
-  'postgresql://user:password@localhost:5432/haha_note?sslmode=require';
+const fallbackUrl = 'postgresql://user:password@localhost:5432/haha_note?sslmode=require';
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

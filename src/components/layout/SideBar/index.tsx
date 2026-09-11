@@ -54,10 +54,7 @@ const ITEMS_UP: MenuItem[] = [
 
 const handleRepoItems = (repoList: Repository[] = []) => {
   return repoList.map((repo) =>
-    getItem(
-      <Link href={`/repo-detail/${repo._id}/home`}>{repo.title}</Link>,
-      repo._id
-    )
+    getItem(<Link href={`/repo-detail/${repo._id}/home`}>{repo.title}</Link>, repo._id)
   );
 };
 

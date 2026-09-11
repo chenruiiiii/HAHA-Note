@@ -17,19 +17,13 @@ export async function GET(request: Request) {
   if (isPrismaBackend()) {
     try {
       const user = await requireUser(request);
-      const data = await listActivities(
-        user.userId,
-        ActivityType.DOCUMENT_VIEWED
-      );
+      const data = await listActivities(user.userId, ActivityType.DOCUMENT_VIEWED);
       return privateJson(data);
     } catch (error) {
       const response = dalErrorResponse(error);
       return (
         response ??
-        privateJson(
-          { code: 500, data: [], message: '获取最近浏览记录失败' },
-          { status: 500 }
-        )
+        privateJson({ code: 500, data: [], message: '获取最近浏览记录失败' }, { status: 500 })
       );
     }
   }

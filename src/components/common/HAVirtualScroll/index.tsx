@@ -1,13 +1,6 @@
 'use client';
 
-import React, {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './style.scss';
 
 type VirtualScrollEventMap<T> = {
@@ -185,10 +178,7 @@ function HAVirtualScroll<T>({
           maxStartIndex,
           Math.max(0, Math.floor(scrollTop / itemHeight) - overscan)
         );
-        const endIndex = Math.min(
-          dataLayer.loadedTotal,
-          startIndex + visibleCount + overscan * 2
-        );
+        const endIndex = Math.min(dataLayer.loadedTotal, startIndex + visibleCount + overscan * 2);
 
         setRange((current) => {
           if (current.startIndex === startIndex && current.endIndex === endIndex) {
@@ -299,7 +289,9 @@ function HAVirtualScroll<T>({
   );
 
   if (!dataLayer.total) {
-    return <div className={['ha-virtual-scroll', className].filter(Boolean).join(' ')}>{empty}</div>;
+    return (
+      <div className={['ha-virtual-scroll', className].filter(Boolean).join(' ')}>{empty}</div>
+    );
   }
 
   return (

@@ -10,9 +10,10 @@ import {
   type DbLike,
 } from './migrate-core';
 
-function makeDb(options?: {
-  document?: { id: string } | null;
-}): { db: DbLike; calls: Array<{ op: string; entity: string; args: unknown }> } {
+function makeDb(options?: { document?: { id: string } | null }): {
+  db: DbLike;
+  calls: Array<{ op: string; entity: string; args: unknown }>;
+} {
   const calls: Array<{ op: string; entity: string; args: unknown }> = [];
   const documentRow = options?.document ?? null;
   const record =
@@ -45,7 +46,11 @@ describe('migrate-core field mapping', () => {
     const { db, calls } = makeDb();
     await convertUser(state, db, { username: 'admin', password: 'x', role: 'admin' });
     await convertRepository(state, db, { _id: 'R_1', title: 'T', isPublic: true });
-    await convertDocument(state, db, { _id: 'D_1', repository_id: 'R_1', content_html: '<p>hi</p>' });
+    await convertDocument(state, db, {
+      _id: 'D_1',
+      repository_id: 'R_1',
+      content_html: '<p>hi</p>',
+    });
     expect(calls).toHaveLength(0);
     expect(state.report.quarantine).toHaveLength(0);
   });

@@ -27,11 +27,14 @@ export async function GET(
       const data = await findDocumentById(docsId, user.userId);
 
       if (!data) {
-        return privateJson({
-          code: 404,
-          data: null,
-          message: '未找到对应文档',
-        }, { status: 404 });
+        return privateJson(
+          {
+            code: 404,
+            data: null,
+            message: '未找到对应文档',
+          },
+          { status: 404 }
+        );
       }
 
       return privateJson({
@@ -42,11 +45,7 @@ export async function GET(
     } catch (error) {
       const response = dalErrorResponse(error);
       return (
-        response ??
-        privateJson(
-          { code: 500, data: null, message: '查询文档失败' },
-          { status: 500 }
-        )
+        response ?? privateJson({ code: 500, data: null, message: '查询文档失败' }, { status: 500 })
       );
     }
   }

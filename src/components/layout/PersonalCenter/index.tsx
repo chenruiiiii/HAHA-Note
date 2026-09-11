@@ -5,10 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import logoImg from '@/assets/images/logo.png';
 import avatarImg from '@/assets/images/avatar.png';
-import {
-  EnvironmentOutlined,
-  InboxOutlined,
-} from '@ant-design/icons';
+import { EnvironmentOutlined, InboxOutlined } from '@ant-design/icons';
 
 const userProfile = {
   name: '月淮',

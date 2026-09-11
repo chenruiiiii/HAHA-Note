@@ -57,7 +57,7 @@ const repoInclude = (viewerId?: string) => ({
     orderBy: { updatedAt: 'desc' as const },
     select: { id: true, title: true },
   },
-  favorites: viewerId ? { where: { userId: viewerId } } : false as const,
+  favorites: viewerId ? { where: { userId: viewerId } } : (false as const),
 });
 
 export async function listRepositories(viewerId: string): Promise<RepoDetailRecord[]> {

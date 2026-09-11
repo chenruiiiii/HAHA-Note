@@ -20,20 +20,20 @@ module.exports = {
       files: '*.md',
       options: {
         proseWrap: 'always',
-        tabWidth: 2
-      }
+        tabWidth: 2,
+      },
     },
     {
       files: '*.json',
       options: {
-        tabWidth: 2
-      }
+        tabWidth: 2,
+      },
     },
     {
       files: '*.scss',
       options: {
-        singleQuote: false
-      }
-    }
-  ]
+        singleQuote: false,
+      },
+    },
+  ],
 };

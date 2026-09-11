@@ -19,7 +19,7 @@ const handleLoadingType = (type: string) => {
       return <Spin size="large" />;
     case 'ai': // ai 打字机效果前加载
       return (
-        <div className='ha-loading-ai'>
+        <div className="ha-loading-ai">
           <i className="iconfont icon-aixiezuo"></i>
         </div>
       );

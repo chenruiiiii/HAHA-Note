@@ -45,7 +45,8 @@ Sentry.init({
 });
 ```
 
-如果需要保留 Replay，优先只在测试环境或短时间排障期间开启。生产环境的性能数据改由 `web-vitals` 采集。
+如果需要保留 Replay，优先只在测试环境或短时间排障期间开启。生产环境的性能数据改由 `web-vitals`
+采集。
 
 ## 3. 指标范围
 
@@ -96,7 +97,8 @@ type PerformanceEvent = {
 
 允许上报：耗时、数值、成功状态、评级、脱敏后的路由模式、设备类型、网络类型和版本号。
 
-禁止上报：笔记正文、AI prompt、AI 回复、真实资源 ID、完整 URL query、token、cookie、鉴权 header、用户输入内容和可直接识别用户的个人信息。
+禁止上报：笔记正文、AI prompt、AI 回复、真实资源 ID、完整 URL
+query、token、cookie、鉴权 header、用户输入内容和可直接识别用户的个人信息。
 
 ## 5. 上报规则
 
@@ -111,12 +113,7 @@ npm install web-vitals
 ```ts
 import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 
-function reportMetric(metric: {
-  name: string;
-  value: number;
-  id: string;
-  rating?: string;
-}) {
+function reportMetric(metric: { name: string; value: number; id: string; rating?: string }) {
   const body = JSON.stringify({
     name: metric.name,
     value: metric.value,
@@ -201,7 +198,8 @@ reportPerformance({
 - 超过预算的指标和最慢的接口/业务动作。
 - AI 首 token 的 p75、完成率、失败率、取消率。
 
-MongoDB 聚合时使用 `$percentile`（MongoDB 版本支持时）或在服务端读取有限样本后计算分位数。不要用平均值替代 p75。
+MongoDB 聚合时使用
+`$percentile`（MongoDB 版本支持时）或在服务端读取有限样本后计算分位数。不要用平均值替代 p75。
 
 第一版预算：
 
@@ -266,7 +264,9 @@ MongoDB      复用项目现有数据库，保存 30 天原始数据
 Dashboard    复用现有 /performance 页面
 ```
 
-如果不想维护接口和页面，可以把 Web Analytics 交给 Cloudflare Web Analytics；如果想看事件、来源和漏斗，可以使用 Umami。无论选哪种方案，业务“首屏可用”仍然需要 `performance.mark()` 或统一业务埋点，因为平台无法自动知道“笔记已经可编辑”或“AI 首 token 已到达”。
+如果不想维护接口和页面，可以把 Web Analytics 交给 Cloudflare Web
+Analytics；如果想看事件、来源和漏斗，可以使用 Umami。无论选哪种方案，业务“首屏可用”仍然需要
+`performance.mark()` 或统一业务埋点，因为平台无法自动知道“笔记已经可编辑”或“AI 首 token 已到达”。
 
 ## 10. 参考资料
 

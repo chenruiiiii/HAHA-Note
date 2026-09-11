@@ -77,14 +77,22 @@ function getSuccessRate(items: PerformanceMetricPayload[]) {
 function getFacets(events: PerformanceMetricPayload[]) {
   return {
     routes: Array.from(new Set(events.map((event) => event.route ?? 'unknown'))).sort(),
-    devices: Array.from(new Set(events.map((event) => event.device_type ?? 'unknown'))).sort() as DeviceType[],
-    networks: Array.from(new Set(events.map((event) => event.network_type ?? 'unknown'))).sort() as NetworkType[],
+    devices: Array.from(
+      new Set(events.map((event) => event.device_type ?? 'unknown'))
+    ).sort() as DeviceType[],
+    networks: Array.from(
+      new Set(events.map((event) => event.network_type ?? 'unknown'))
+    ).sort() as NetworkType[],
     releases: Array.from(new Set(events.map((event) => event.release ?? 'local'))).sort(),
-    events: Array.from(new Set(events.map((event) => event.event))).sort() as PerformanceEventName[],
+    events: Array.from(
+      new Set(events.map((event) => event.event))
+    ).sort() as PerformanceEventName[],
   };
 }
 
-export function buildDashboardData(inputEvents: PerformanceMetricPayload[]): PerformanceDashboardData {
+export function buildDashboardData(
+  inputEvents: PerformanceMetricPayload[]
+): PerformanceDashboardData {
   const events = dedupePerformanceEvents(inputEvents);
   const grouped = new Map<string, PerformanceMetricPayload[]>();
 
@@ -142,10 +150,14 @@ export function buildDashboardData(inputEvents: PerformanceMetricPayload[]): Per
     .slice(0, 10);
 
   const aiTerminal = events.filter((event) =>
-    ['ai_generation_completed', 'ai_generation_failed', 'ai_generation_cancelled'].includes(event.event)
+    ['ai_generation_completed', 'ai_generation_failed', 'ai_generation_cancelled'].includes(
+      event.event
+    )
   );
   const apiCompleted = events.filter((event) => event.event === 'api_request_completed');
-  const confidence = summary.some((item) => item.confidence === 'reliable') ? 'reliable' : 'insufficient';
+  const confidence = summary.some((item) => item.confidence === 'reliable')
+    ? 'reliable'
+    : 'insufficient';
 
   return {
     summary: summary.sort((a, b) => b.p75 - a.p75).slice(0, 100),

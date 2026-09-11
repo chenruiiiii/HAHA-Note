@@ -19,10 +19,10 @@ function isRegressedTextPart(currentPart: unknown, snapshotPart: unknown) {
   const snapshotText = readTextContent(snapshotPart);
 
   return (
-    currentText !== ''
-    && snapshotText !== ''
-    && snapshotText.length < currentText.length
-    && currentText.startsWith(snapshotText)
+    currentText !== '' &&
+    snapshotText !== '' &&
+    snapshotText.length < currentText.length &&
+    currentText.startsWith(snapshotText)
   );
 }
 
@@ -35,19 +35,19 @@ function mergeChatMessage(currentMessage: UIMessage, snapshotMessage: UIMessage)
   const snapshotText = readComparableText(snapshotMessage);
 
   if (
-    currentText !== ''
-    && snapshotText !== ''
-    && currentText.length > snapshotText.length
-    && currentText.startsWith(snapshotText)
+    currentText !== '' &&
+    snapshotText !== '' &&
+    currentText.length > snapshotText.length &&
+    currentText.startsWith(snapshotText)
   ) {
     return currentMessage;
   }
 
   if (
-    currentText !== ''
-    && snapshotText !== ''
-    && snapshotText.length > currentText.length
-    && snapshotText.startsWith(currentText)
+    currentText !== '' &&
+    snapshotText !== '' &&
+    snapshotText.length > currentText.length &&
+    snapshotText.startsWith(currentText)
   ) {
     return snapshotMessage;
   }
@@ -66,9 +66,7 @@ function mergeChatMessage(currentMessage: UIMessage, snapshotMessage: UIMessage)
     return snapshotPart;
   });
 
-  const mergedMessage = partsChanged
-    ? { ...snapshotMessage, parts: mergedParts }
-    : snapshotMessage;
+  const mergedMessage = partsChanged ? { ...snapshotMessage, parts: mergedParts } : snapshotMessage;
 
   return JSON.stringify(currentMessage) === JSON.stringify(mergedMessage)
     ? currentMessage

@@ -42,7 +42,9 @@ const FileICON = ({ file_name, type }: FileICONProps) => {
 
   return (
     <div className="file-icon">
-      {FILE_ICON_LIST.find((item) => item.file_name === iconKey)?.icon || <Image src={code} alt="code" />}
+      {FILE_ICON_LIST.find((item) => item.file_name === iconKey)?.icon || (
+        <Image src={code} alt="code" />
+      )}
     </div>
   );
 };

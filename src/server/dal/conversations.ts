@@ -1,10 +1,6 @@
 import 'server-only';
 import { getPrisma } from '@/lib/prisma';
-import {
-  ConversationStatus,
-  MessageRole,
-  MessageStatus,
-} from '@/generated/prisma/client';
+import { ConversationStatus, MessageRole, MessageStatus } from '@/generated/prisma/client';
 import { toIsoDateTime } from './dto';
 import { NotFoundError } from './errors';
 import type { AiMissionDetail, AiMissionMessage, ListItem } from '@/models/ai-mission';
@@ -189,8 +185,7 @@ export async function upsertConversationMessages(params: {
       const clientMessageId = message.id?.slice(0, 120) || null;
       const content = message.content ?? messagePlainText(message.parts);
       // 空消息也要有合法 part；content 兜底为 text part，保持 AiMissionPartSchema 可解析
-      const parts = (message.parts as object) ??
-        (content ? [{ type: 'text', text: content }] : []);
+      const parts = (message.parts as object) ?? (content ? [{ type: 'text', text: content }] : []);
       const status = message.status ?? MessageStatus.COMPLETED;
 
       if (clientMessageId) {

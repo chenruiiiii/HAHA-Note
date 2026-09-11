@@ -1,5 +1,10 @@
 import clientPromise from '@/lib/mongodb';
-import { AiMissionDetailSchema, ListItemSchema, type AiMissionDetail, type ListItem } from '@/models/ai-mission';
+import {
+  AiMissionDetailSchema,
+  ListItemSchema,
+  type AiMissionDetail,
+  type ListItem,
+} from '@/models/ai-mission';
 
 const DB_NAME = 'ai-chat';
 const RECENT_COLLECTION = '最近任务';
@@ -51,7 +56,11 @@ function buildList(prefix: 'RECENT' | 'FAVORITE', titles: string[]): ListItem[] 
   );
 }
 
-function buildDetail(item: ListItem, category: 'recent' | 'favorite', index: number): AiMissionDetail {
+function buildDetail(
+  item: ListItem,
+  category: 'recent' | 'favorite',
+  index: number
+): AiMissionDetail {
   const createdAt = `2026-04-${String((index % 9) + 10).padStart(2, '0')} 10:${String(
     (index * 3) % 60
   ).padStart(2, '0')}`;

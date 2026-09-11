@@ -29,14 +29,21 @@ export async function GET(
       const data = await findRepositoryById(id, user.userId);
 
       if (!data) {
-        return privateJson({
-          code: 404,
-          data: null,
-          message: '未找到对应的知识库',
-        }, { status: 404 });
+        return privateJson(
+          {
+            code: 404,
+            data: null,
+            message: '未找到对应的知识库',
+          },
+          { status: 404 }
+        );
       }
 
-      return privateJson({ code: 200, data: data as unknown as RepoDetailType, message: 'success' });
+      return privateJson({
+        code: 200,
+        data: data as unknown as RepoDetailType,
+        message: 'success',
+      });
     } catch (error) {
       const response = dalErrorResponse(error);
       return response ?? privateJson({ code: 500, data: null, message: 'error' }, { status: 500 });
@@ -99,11 +106,14 @@ export async function POST(
       const data = await toggleRepositoryFavorite(id, user.userId, body.isCollect);
 
       if (!data) {
-        return privateJson({
-          code: 404,
-          data: null,
-          message: '未找到对应的知识库',
-        }, { status: 404 });
+        return privateJson(
+          {
+            code: 404,
+            data: null,
+            message: '未找到对应的知识库',
+          },
+          { status: 404 }
+        );
       }
 
       return privateJson({

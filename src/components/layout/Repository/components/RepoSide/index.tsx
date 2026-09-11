@@ -39,9 +39,7 @@ const RepoSide = () => {
     repoId ? state.repoDetail.cacheById[repoId]?.data : undefined
   );
   const sidebarRepoDetail = cachedRepoDetail ?? repoDetail;
-  const loadingDocIds = useAppSelector(
-    (state) => state.repoDetail.loadingDocIds
-  );
+  const loadingDocIds = useAppSelector((state) => state.repoDetail.loadingDocIds);
   const { docTitles } = useRepoDetailContext();
 
   // useRepoDetail 的 isLoading 初始为 false，首帧 data 仍为空；若只判断

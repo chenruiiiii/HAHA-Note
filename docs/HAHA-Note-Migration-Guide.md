@@ -23,16 +23,16 @@
 
 ### 2.1 采用的技术方案
 
-| 领域 | 目标方案 | 说明 |
-| --- | --- | --- |
-| 数据库 | 托管 PostgreSQL | 开发、预发布和生产分别使用独立云数据库或数据库分支 |
-| ORM | Prisma 7 | 使用 Prisma Schema、Prisma Client 和 Prisma Migrate |
-| 服务端状态 | TanStack Query 5 | 请求、缓存、失效、重试和乐观更新 |
-| 客户端状态 | Zustand 5 | UI、设备权限和短生命周期交互状态 |
-| 编辑器正文 | PostgreSQL `Json`/JSONB | TipTap JSON 是权威格式，过滤后的 HTML 仅作兼容缓存 |
-| 多媒体 | S3 兼容对象存储 | PostgreSQL 只保存对象 key、MIME、大小、归属等元数据 |
-| 鉴权 | 数据访问层强制鉴权 | HttpOnly Cookie + 服务端 Session/Refresh Token 哈希 |
-| 部署 | 维护窗口一次性迁移 | 当前规模下不引入长期双写 |
+| 领域       | 目标方案                | 说明                                                |
+| ---------- | ----------------------- | --------------------------------------------------- |
+| 数据库     | 托管 PostgreSQL         | 开发、预发布和生产分别使用独立云数据库或数据库分支  |
+| ORM        | Prisma 7                | 使用 Prisma Schema、Prisma Client 和 Prisma Migrate |
+| 服务端状态 | TanStack Query 5        | 请求、缓存、失效、重试和乐观更新                    |
+| 客户端状态 | Zustand 5               | UI、设备权限和短生命周期交互状态                    |
+| 编辑器正文 | PostgreSQL `Json`/JSONB | TipTap JSON 是权威格式，过滤后的 HTML 仅作兼容缓存  |
+| 多媒体     | S3 兼容对象存储         | PostgreSQL 只保存对象 key、MIME、大小、归属等元数据 |
+| 鉴权       | 数据访问层强制鉴权      | HttpOnly Cookie + 服务端 Session/Refresh Token 哈希 |
+| 部署       | 维护窗口一次性迁移      | 当前规模下不引入长期双写                            |
 
 ### 2.2 明确不采用的方案
 
@@ -60,18 +60,18 @@
 
 ### 3.2 当前 MongoDB 数据分布
 
-| MongoDB database.collection | 当前用途 | PostgreSQL 目标 |
-| --- | --- | --- |
-| `ha_admin.users` | 后台账号，当前密码为明文 | `User`、`Session` |
-| `repository.repo_list` | 知识库及内嵌 `docs_list` | `Repository`、`RepositoryMember`、`RepositoryFavorite` |
-| `repository.docs_detail` | 文档标题、HTML、摘要 | `Document`、`DocumentRevision` |
-| `ai-chat.ai_chat_detail` | 当前运行时会话及内嵌消息数组 | `Conversation`、`Message`、`Asset`、`MessageAsset` |
-| `ai-chat.ai_mission_detail` | 旧种子脚本写入的会话详情 | 作为迁移补充源，不单独建表 |
-| `ai-chat.latest_mission` / `collect_mission` | 当前运行时列表/收藏冗余数据 | 不迁表，由 Conversation 查询得出 |
-| `ai-chat.最近任务` / `收藏任务` | 旧种子脚本写入的列表数据 | 只用于完整性校验 |
-| `user_activity.edit_history` | 编辑历史 | `Activity` |
-| `user_activity.browse_history` | 浏览历史 | `Activity` |
-| `stroll-recommend.recommend_details` | 逛逛内容 | `ExploreArticle` |
+| MongoDB database.collection                  | 当前用途                     | PostgreSQL 目标                                        |
+| -------------------------------------------- | ---------------------------- | ------------------------------------------------------ |
+| `ha_admin.users`                             | 后台账号，当前密码为明文     | `User`、`Session`                                      |
+| `repository.repo_list`                       | 知识库及内嵌 `docs_list`     | `Repository`、`RepositoryMember`、`RepositoryFavorite` |
+| `repository.docs_detail`                     | 文档标题、HTML、摘要         | `Document`、`DocumentRevision`                         |
+| `ai-chat.ai_chat_detail`                     | 当前运行时会话及内嵌消息数组 | `Conversation`、`Message`、`Asset`、`MessageAsset`     |
+| `ai-chat.ai_mission_detail`                  | 旧种子脚本写入的会话详情     | 作为迁移补充源，不单独建表                             |
+| `ai-chat.latest_mission` / `collect_mission` | 当前运行时列表/收藏冗余数据  | 不迁表，由 Conversation 查询得出                       |
+| `ai-chat.最近任务` / `收藏任务`              | 旧种子脚本写入的列表数据     | 只用于完整性校验                                       |
+| `user_activity.edit_history`                 | 编辑历史                     | `Activity`                                             |
+| `user_activity.browse_history`               | 浏览历史                     | `Activity`                                             |
+| `stroll-recommend.recommend_details`         | 逛逛内容                     | `ExploreArticle`                                       |
 
 ### 3.3 当前 16 个 API
 
@@ -91,13 +91,13 @@
 
 ### 3.4 当前 Redux 职责
 
-| 模块 | 当前职责 | 目标 |
-| --- | --- | --- |
-| `repository.ts` | RTK Query 知识库列表/创建 | TanStack Query |
-| `user_history.ts` | RTK Query 编辑/浏览历史 | TanStack Query |
-| `repoDetail.ts` | 手写 TTL、请求去重、收藏同步、目录缓存 | TanStack Query |
-| `chat.ts` | AI 请求状态 | AI Hook 局部状态或 Zustand UI Store |
-| `temp.ts` | 临时 AI 输入 | URL 参数或非持久化 Zustand |
+| 模块              | 当前职责                               | 目标                                |
+| ----------------- | -------------------------------------- | ----------------------------------- |
+| `repository.ts`   | RTK Query 知识库列表/创建              | TanStack Query                      |
+| `user_history.ts` | RTK Query 编辑/浏览历史                | TanStack Query                      |
+| `repoDetail.ts`   | 手写 TTL、请求去重、收藏同步、目录缓存 | TanStack Query                      |
+| `chat.ts`         | AI 请求状态                            | AI Hook 局部状态或 Zustand UI Store |
+| `temp.ts`         | 临时 AI 输入                           | URL 参数或非持久化 Zustand          |
 
 `repoDetail.ts` 已经在手动解决服务端缓存、失效和乐观更新问题，因此不能原样迁入 Zustand。
 
@@ -153,11 +153,13 @@ scripts/
   reverse-sync-cutover-data.ts
 ```
 
-约束：`src/server/**` 和 `src/lib/prisma.ts` 必须引入 `server-only`，客户端组件不得直接引用 Prisma 类型实现或数据库服务。
+约束：`src/server/**` 和 `src/lib/prisma.ts` 必须引入
+`server-only`，客户端组件不得直接引用 Prisma 类型实现或数据库服务。
 
 ## 5. 目标数据模型
 
-以下为最终态 Schema。首次迁移时 `Document.content` 可暂时设为 `Json?`，完成 HTML 转换和验证后再通过第二个 migration 改为非空。
+以下为最终态 Schema。首次迁移时 `Document.content` 可暂时设为
+`Json?`，完成 HTML 转换和验证后再通过第二个 migration 改为非空。
 
 ```prisma
 generator client {
@@ -550,7 +552,9 @@ npm install sanitize-html
 npm install prisma tsx @types/pg @types/sanitize-html --save-dev
 ```
 
-Prisma 7 使用 `prisma-client` generator 和数据库 driver adapter。迁移分支应给 `package.json` 增加 `"type": "module"`，运行现有 scripts 和 `next build` 验证 ESM 兼容性，并锁定 `prisma` 与 `@prisma/client` 相同主版本。
+Prisma 7 使用 `prisma-client` generator 和数据库 driver adapter。迁移分支应给 `package.json` 增加
+`"type": "module"`，运行现有 scripts 和 `next build` 验证 ESM 兼容性，并锁定 `prisma` 与
+`@prisma/client` 相同主版本。
 
 ### 6.3 环境变量
 
@@ -670,10 +674,7 @@ const document = await prisma.document.findFirst({
     id: documentId,
     deletedAt: null,
     repository: {
-      OR: [
-        { ownerId: session.userId },
-        { members: { some: { userId: session.userId } } },
-      ],
+      OR: [{ ownerId: session.userId }, { members: { some: { userId: session.userId } } }],
     },
   },
 });
@@ -719,62 +720,68 @@ pg_dump "$MIGRATION_DATABASE_URL" --format=custom --file=postgres-before-cutover
 
 #### 用户
 
-| Mongo 字段 | PostgreSQL 字段 | 处理 |
-| --- | --- | --- |
-| `username` | `User.username` | 保留并唯一化 |
-| `password` | `User.passwordHash` | 迁移脚本内哈希，禁止落盘明文 |
-| `nickname` | `User.nickname` | 原样保留 |
-| `role` | `User.role` | `admin` -> `ADMIN`，其他 -> `USER` |
-| `enabled` | `User.enabled` | 原样保留 |
-| `created_at/updated_at` | DateTime | 严格解析，失败进入报告 |
+| Mongo 字段              | PostgreSQL 字段     | 处理                               |
+| ----------------------- | ------------------- | ---------------------------------- |
+| `username`              | `User.username`     | 保留并唯一化                       |
+| `password`              | `User.passwordHash` | 迁移脚本内哈希，禁止落盘明文       |
+| `nickname`              | `User.nickname`     | 原样保留                           |
+| `role`                  | `User.role`         | `admin` -> `ADMIN`，其他 -> `USER` |
+| `enabled`               | `User.enabled`      | 原样保留                           |
+| `created_at/updated_at` | DateTime            | 严格解析，失败进入报告             |
 
 #### 知识库和文档
 
-| Mongo 字段 | PostgreSQL 字段 | 处理 |
-| --- | --- | --- |
-| repository `_id` | `Repository.id` | 原样保留 |
-| `title` | `Repository.title` | trim，空值拒绝 |
-| `repo_desc`/`description` | `Repository.description` | 以 `repo_desc` 优先 |
-| `isPublic` | `Repository.visibility` | true -> PUBLIC，false -> PRIVATE |
-| `isCollect` | `RepositoryFavorite` | 为迁移归属用户创建关系 |
-| `avatar[0]` | `Repository.coverUrl` | 有值才写入 |
-| `docs_list` | 不直接落表 | 用于和 `docs_detail` 做一致性校验 |
-| document `_id` | `Document.id` | 原样保留 |
-| `repository_id` | `Document.repositoryId` | 必须存在目标 Repository |
-| `title` | `Document.title` | 原样保留 |
-| `content_html` | `contentHtml` + `content` | 先过滤 HTML，再用 TipTap schema-aware parser 转 JSON |
-| `summary` | `Document.summary` | 原样保留 |
-| `author` | 不作为身份 | `creatorId` 使用迁移归属用户 |
-| `updated_at` | `Document.updatedAt` | 支持当前多种日期格式，失败进入报告 |
+| Mongo 字段                | PostgreSQL 字段           | 处理                                                 |
+| ------------------------- | ------------------------- | ---------------------------------------------------- |
+| repository `_id`          | `Repository.id`           | 原样保留                                             |
+| `title`                   | `Repository.title`        | trim，空值拒绝                                       |
+| `repo_desc`/`description` | `Repository.description`  | 以 `repo_desc` 优先                                  |
+| `isPublic`                | `Repository.visibility`   | true -> PUBLIC，false -> PRIVATE                     |
+| `isCollect`               | `RepositoryFavorite`      | 为迁移归属用户创建关系                               |
+| `avatar[0]`               | `Repository.coverUrl`     | 有值才写入                                           |
+| `docs_list`               | 不直接落表                | 用于和 `docs_detail` 做一致性校验                    |
+| document `_id`            | `Document.id`             | 原样保留                                             |
+| `repository_id`           | `Document.repositoryId`   | 必须存在目标 Repository                              |
+| `title`                   | `Document.title`          | 原样保留                                             |
+| `content_html`            | `contentHtml` + `content` | 先过滤 HTML，再用 TipTap schema-aware parser 转 JSON |
+| `summary`                 | `Document.summary`        | 原样保留                                             |
+| `author`                  | 不作为身份                | `creatorId` 使用迁移归属用户                         |
+| `updated_at`              | `Document.updatedAt`      | 支持当前多种日期格式，失败进入报告                   |
 
-`docs_list` 中存在但 `docs_detail` 缺失的条目：创建空的 `DRAFT` 文档，并在报告中标记 `MISSING_DETAIL`。`docs_detail` 存在但目录中缺失的条目：以 `docs_detail.repository_id` 为准迁移，并标记 `MISSING_DIRECTORY_ENTRY`。
+`docs_list` 中存在但 `docs_detail` 缺失的条目：创建空的 `DRAFT` 文档，并在报告中标记
+`MISSING_DETAIL`。`docs_detail` 存在但目录中缺失的条目：以 `docs_detail.repository_id`
+为准迁移，并标记 `MISSING_DIRECTORY_ENTRY`。
 
-每个迁移成功的文档创建初始 `DocumentRevision(version=1)`；后续保存从 version 2 开始。Mongo 没有可靠 `created_at` 时，`createdAt` 使用可解析的 `updated_at`，并在报告中标记时间来源。
+每个迁移成功的文档创建初始 `DocumentRevision(version=1)`；后续保存从 version 2 开始。Mongo 没有可靠
+`created_at` 时，`createdAt` 使用可解析的 `updated_at`，并在报告中标记时间来源。
 
 #### AI 会话
 
-| Mongo 字段 | PostgreSQL 字段 | 处理 |
-| --- | --- | --- |
-| `_id` | `Conversation.id` | 原样保留 |
-| `title` | `Conversation.title` | 原样保留 |
-| `summary` | `Conversation.summary` | 原样保留 |
-| `category=favorite` | `Conversation.isFavorite` | 转为布尔值 |
-| `types[]` | `Message[]` | 按原顺序拆行 |
-| message `id` | `Message.id` | 原样保留，冲突时报告 |
-| message `role` | `Message.role` | 映射枚举 |
-| message `parts` | `Message.parts` | 保留结构化 JSON |
-| text/markdown part | `Message.content` | 提取可搜索纯文本 |
-| image URL | `Asset.externalUrl` | 建立 `Asset` 和 `MessageAsset` |
+| Mongo 字段          | PostgreSQL 字段           | 处理                           |
+| ------------------- | ------------------------- | ------------------------------ |
+| `_id`               | `Conversation.id`         | 原样保留                       |
+| `title`             | `Conversation.title`      | 原样保留                       |
+| `summary`           | `Conversation.summary`    | 原样保留                       |
+| `category=favorite` | `Conversation.isFavorite` | 转为布尔值                     |
+| `types[]`           | `Message[]`               | 按原顺序拆行                   |
+| message `id`        | `Message.id`              | 原样保留，冲突时报告           |
+| message `role`      | `Message.role`            | 映射枚举                       |
+| message `parts`     | `Message.parts`           | 保留结构化 JSON                |
+| text/markdown part  | `Message.content`         | 提取可搜索纯文本               |
+| image URL           | `Asset.externalUrl`       | 建立 `Asset` 和 `MessageAsset` |
 
 会话详情来源优先级如下：
 
 1. `ai_chat_detail` 是当前运行时写入源，优先级最高。
 2. `ai_mission_detail` 只补充运行时集合中不存在的 ID。
 3. 同一 ID 在两个详情集合中的正文不一致时，不自动合并，记录 `CHAT_DETAIL_CONFLICT` 并人工确认。
-4. `latest_mission`、`collect_mission`、`最近任务`、`收藏任务` 只用于核对标题和收藏状态，不迁移为独立表。
+4. `latest_mission`、`collect_mission`、`最近任务`、`收藏任务`
+   只用于核对标题和收藏状态，不迁移为独立表。
 5. 只有列表项而没有任何详情的会话进入 quarantine；不得创建内容不明的“假会话”。
 
-旧会话没有模型字段时统一迁移为 `provider=deepseek`、`model=deepseek-chat`。旧外链图片无法获得可靠大小时允许 `Asset.sizeBytes=null`，但新上传资源必须有大小。
+旧会话没有模型字段时统一迁移为
+`provider=deepseek`、`model=deepseek-chat`。旧外链图片无法获得可靠大小时允许
+`Asset.sizeBytes=null`，但新上传资源必须有大小。
 
 #### 活动和逛逛
 
@@ -784,7 +791,8 @@ pg_dump "$MIGRATION_DATABASE_URL" --format=custom --file=postgres-before-cutover
 
 ### 8.5 HTML 到 TipTap JSON
 
-禁止使用正则表达式把 HTML 转成编辑器 JSON。应使用 TipTap 支持的 HTML parser 和与编辑器完全一致的 extension 集合。
+禁止使用正则表达式把 HTML 转成编辑器 JSON。应使用 TipTap 支持的 HTML
+parser 和与编辑器完全一致的 extension 集合。
 
 处理顺序：
 
@@ -838,23 +846,23 @@ content conversion failures: 0
 
 ### 9.2 接口映射
 
-| 当前接口 | 迁移后行为 |
-| --- | --- |
-| `GET /api/repository` | 查询当前用户拥有或加入的 Repository |
-| `POST /api/repository` | 服务端写入 ownerId，并创建 OWNER member |
-| `GET /api/repo-detail/:id` | 权限过滤后查询 Repository 和 Documents |
-| `POST /api/repo-detail/:id` | 兼容期转为收藏 upsert/delete，之后改 `PUT /favorite` |
-| `GET /api/docs-detail/:id` | 权限过滤后返回 Document DTO |
-| `POST /api/docs-detail/:id` | 兼容期保存，之后改为 `PUT` 并要求 `baseVersion` |
-| `POST /api/docs-summary/:id` | 从服务端读取指定 version 的正文后生成摘要 |
-| `GET /api/start/edited` | 从 Activity 查询当前用户最近编辑 |
-| `GET /api/start/browsed` | 从 Activity 查询当前用户最近浏览 |
-| `GET /api/chat-latest-mission` | 查询当前用户 Conversation，按 updatedAt 排序 |
-| `GET /api/chat-collect-mission` | 查询当前用户 `isFavorite=true` 会话 |
-| `GET /api/chat/:id` | 读取当前用户会话、消息和附件 DTO |
-| `POST /api/chat-detail` | 校验会话归属、附件归属后流式生成并落库 |
-| `GET /api/public-note/:id` | 兼容旧公开内容；正式分享改为不可预测 token |
-| `GET /api/stroll/left` | 从 ExploreArticle 分页查询 |
+| 当前接口                        | 迁移后行为                                           |
+| ------------------------------- | ---------------------------------------------------- |
+| `GET /api/repository`           | 查询当前用户拥有或加入的 Repository                  |
+| `POST /api/repository`          | 服务端写入 ownerId，并创建 OWNER member              |
+| `GET /api/repo-detail/:id`      | 权限过滤后查询 Repository 和 Documents               |
+| `POST /api/repo-detail/:id`     | 兼容期转为收藏 upsert/delete，之后改 `PUT /favorite` |
+| `GET /api/docs-detail/:id`      | 权限过滤后返回 Document DTO                          |
+| `POST /api/docs-detail/:id`     | 兼容期保存，之后改为 `PUT` 并要求 `baseVersion`      |
+| `POST /api/docs-summary/:id`    | 从服务端读取指定 version 的正文后生成摘要            |
+| `GET /api/start/edited`         | 从 Activity 查询当前用户最近编辑                     |
+| `GET /api/start/browsed`        | 从 Activity 查询当前用户最近浏览                     |
+| `GET /api/chat-latest-mission`  | 查询当前用户 Conversation，按 updatedAt 排序         |
+| `GET /api/chat-collect-mission` | 查询当前用户 `isFavorite=true` 会话                  |
+| `GET /api/chat/:id`             | 读取当前用户会话、消息和附件 DTO                     |
+| `POST /api/chat-detail`         | 校验会话归属、附件归属后流式生成并落库               |
+| `GET /api/public-note/:id`      | 兼容旧公开内容；正式分享改为不可预测 token           |
+| `GET /api/stroll/left`          | 从 ExploreArticle 分页查询                           |
 
 ### 9.3 文档保存契约
 
@@ -906,7 +914,8 @@ localStorage.getItem('final-note-data');
 1. 用户完成登录后只检测 `final-note-data` 是否存在，不在登录前读取或上传正文。
 2. 在内存中使用 Zod 校验旧结构；解析失败只提示清理，不把原值写入日志。
 3. 明确让用户选择“导入当前账号”或“删除旧本地草稿”，禁止自动上传。
-4. 选择导入时，先创建云端 Document；只有服务端确认保存成功后才执行 `localStorage.removeItem('final-note-data')`。
+4. 选择导入时，先创建云端 Document；只有服务端确认保存成功后才执行
+   `localStorage.removeItem('final-note-data')`。
 5. 选择删除时二次确认后清理该 key。
 6. 兼容入口保留一个发布周期，之后删除读取逻辑和本地保存实现。
 
@@ -941,11 +950,13 @@ Cache-Control: private, no-store
 Pragma: no-cache
 ```
 
-客户端请求设置 `cache: 'no-store'`。Service Worker 不缓存私有 API 响应。Sentry breadcrumb、埋点和日志不得记录正文、Prompt 原文、Base64 图片或音频内容。
+客户端请求设置 `cache: 'no-store'`。Service Worker 不缓存私有 API 响应。Sentry
+breadcrumb、埋点和日志不得记录正文、Prompt 原文、Base64 图片或音频内容。
 
 ### 10.4 可以持久化的内容
 
-允许本地持久化的仅限非敏感偏好：主题、侧栏折叠、默认模型、摄像头开关偏好。Zustand `persist` 必须使用 `partialize` 白名单，不能持久化编辑器内容、会话消息、Token、`File`、Blob 或设备流。
+允许本地持久化的仅限非敏感偏好：主题、侧栏折叠、默认模型、摄像头开关偏好。Zustand `persist` 必须使用
+`partialize` 白名单，不能持久化编辑器内容、会话消息、Token、`File`、Blob 或设备流。
 
 TanStack Query 仅使用内存缓存，不接入 `persistQueryClient` 或其他 Query Cache 持久化插件。
 
@@ -953,19 +964,19 @@ TanStack Query 仅使用内存缓存，不接入 `persistQueryClient` 或其他 
 
 ### 11.1 状态归属
 
-| 状态 | 目标位置 |
-| --- | --- |
-| Repository 列表/详情 | TanStack Query |
-| Document 详情/版本/保存 | TanStack Query |
-| 收藏、历史、会话列表 | TanStack Query |
-| AI 消息历史 | TanStack Query |
-| AI 当前流式内容 | AI SDK Hook/页面局部状态，结束后写 Query Cache |
-| 侧栏、弹窗、面板宽度 | Zustand |
-| 当前模型、是否需要视觉输入 | Zustand，可选择只持久化偏好 |
-| 编辑器实例、selection、dirty ref | 编辑器 Hook/React ref |
-| `MediaStream`、Recorder、AudioContext | 专用 Hook/Context/ref，不持久化 |
-| repoId、documentId、conversationId | URL |
-| 临时 AI 首条输入 | URL state 或非持久化 Zustand |
+| 状态                                  | 目标位置                                       |
+| ------------------------------------- | ---------------------------------------------- |
+| Repository 列表/详情                  | TanStack Query                                 |
+| Document 详情/版本/保存               | TanStack Query                                 |
+| 收藏、历史、会话列表                  | TanStack Query                                 |
+| AI 消息历史                           | TanStack Query                                 |
+| AI 当前流式内容                       | AI SDK Hook/页面局部状态，结束后写 Query Cache |
+| 侧栏、弹窗、面板宽度                  | Zustand                                        |
+| 当前模型、是否需要视觉输入            | Zustand，可选择只持久化偏好                    |
+| 编辑器实例、selection、dirty ref      | 编辑器 Hook/React ref                          |
+| `MediaStream`、Recorder、AudioContext | 专用 Hook/Context/ref，不持久化                |
+| repoId、documentId、conversationId    | URL                                            |
+| 临时 AI 首条输入                      | URL state 或非持久化 Zustand                   |
 
 ### 11.2 Query Key 规范
 
@@ -1019,7 +1030,8 @@ type ChatUiState = {
 };
 ```
 
-不要在 Store 中保存 `messages`、Repository、Document、Query loading/error，也不要保存 `MediaStream`。
+不要在 Store 中保存 `messages`、Repository、Document、Query loading/error，也不要保存
+`MediaStream`。
 
 ## 12. vision-talk 多模态接入
 
@@ -1116,20 +1128,20 @@ Sentry `beforeSend` 过滤：
 
 ### 14.2 生产时间线
 
-| 时间 | 操作 |
-| --- | --- |
+| 时间  | 操作                                                   |
+| ----- | ------------------------------------------------------ |
 | T-24h | 检查备份、迁移脚本版本、数据库容量、对象存储和环境变量 |
-| T-30m | 通知维护，暂停发布，记录 Mongo 最新写入时间 |
-| T-15m | 应用进入只读/维护模式，禁止文档和会话新写入 |
-| T-12m | 执行 MongoDB 完整快照 |
-| T-10m | `prisma migrate deploy` 创建/升级生产表 |
-| T-8m | 执行 `data:migrate`，生成报告 |
-| T-4m | 执行 `data:validate`，要求关键失败数为 0 |
-| T-2m | 部署 `DATA_BACKEND=prisma` 的新应用 |
-| T | 冒烟测试通过后解除维护模式 |
-| T+30m | 检查错误率、保存成功率、DB 连接、AI 流状态 |
-| T+24h | 再次运行关系和计数校验，Mongo 保持只读 |
-| T+14d | 确认无回滚需求后撤销 Mongo 应用凭证并归档备份 |
+| T-30m | 通知维护，暂停发布，记录 Mongo 最新写入时间            |
+| T-15m | 应用进入只读/维护模式，禁止文档和会话新写入            |
+| T-12m | 执行 MongoDB 完整快照                                  |
+| T-10m | `prisma migrate deploy` 创建/升级生产表                |
+| T-8m  | 执行 `data:migrate`，生成报告                          |
+| T-4m  | 执行 `data:validate`，要求关键失败数为 0               |
+| T-2m  | 部署 `DATA_BACKEND=prisma` 的新应用                    |
+| T     | 冒烟测试通过后解除维护模式                             |
+| T+30m | 检查错误率、保存成功率、DB 连接、AI 流状态             |
+| T+24h | 再次运行关系和计数校验，Mongo 保持只读                 |
+| T+14d | 确认无回滚需求后撤销 Mongo 应用凭证并归档备份          |
 
 ### 14.3 冒烟测试顺序
 
@@ -1162,7 +1174,8 @@ Sentry `beforeSend` 过滤：
 
 1. 重新进入维护模式。
 2. 记录 cutover timestamp。
-3. 运行 `reverse-sync-cutover-data.ts`，仅同步 `updatedAt >= cutover` 的 Repository、Document、Conversation、Message 和收藏关系。
+3. 运行 `reverse-sync-cutover-data.ts`，仅同步 `updatedAt >= cutover`
+   的 Repository、Document、Conversation、Message 和收藏关系。
 4. 运行反向校验报告。
 5. 人工抽查新增/修改内容后切回旧应用。
 
@@ -1196,7 +1209,8 @@ Sentry `beforeSend` 过滤：
 - 分享 token 过期/撤销。
 - 跨用户读取和更新必须返回 404/403。
 
-CI 使用隔离的云 PostgreSQL test branch，不使用 SQLite 替代 PostgreSQL，因为 SQL 方言和约束行为并不等价。
+CI 使用隔离的云 PostgreSQL test
+branch，不使用 SQLite 替代 PostgreSQL，因为 SQL 方言和约束行为并不等价。
 
 ### 16.3 API contract test
 
@@ -1310,18 +1324,18 @@ npm run build
 
 ## 19. 风险清单
 
-| 风险 | 概率/影响 | 缓解措施 |
-| --- | --- | --- |
-| 旧数据没有真实 ownerId | 高/高 | 切换前确定 legacy owner，未知数据不公开 |
-| `docs_list` 与详情不一致 | 高/中 | 双向比对，缺失条目显式报告 |
-| HTML 无法完整转 TipTap JSON | 中/高 | 相同 extension parser、quarantine、100% 转换要求 |
-| 同时改数据库和状态库导致范围失控 | 中/高 | API 先迁，状态逐模块迁，每步可构建 |
-| 禁止本地存储导致断网丢草稿 | 高/中 | 高频保存、状态提示、重试、离页阻止，明确无离线能力 |
-| Prisma/Serverless 连接耗尽 | 中/高 | 单例 Client、池化 URL、监控连接和慢查询 |
-| 回滚丢失切换后新数据 | 低/高 | 维护窗口、cutover timestamp、反向同步演练 |
-| Base64 多媒体撑大数据库和请求 | 高/高 | 二进制直传对象存储，数据库仅存引用 |
-| AI 流完成但消息未落库 | 中/中 | 先建 STREAMING 行，onFinish 更新，失败状态可恢复 |
-| 迁移把私有内容写入日志/Sentry | 中/高 | 日志字段白名单、正文零日志、迁移报告只含 ID/指纹 |
+| 风险                             | 概率/影响 | 缓解措施                                           |
+| -------------------------------- | --------- | -------------------------------------------------- |
+| 旧数据没有真实 ownerId           | 高/高     | 切换前确定 legacy owner，未知数据不公开            |
+| `docs_list` 与详情不一致         | 高/中     | 双向比对，缺失条目显式报告                         |
+| HTML 无法完整转 TipTap JSON      | 中/高     | 相同 extension parser、quarantine、100% 转换要求   |
+| 同时改数据库和状态库导致范围失控 | 中/高     | API 先迁，状态逐模块迁，每步可构建                 |
+| 禁止本地存储导致断网丢草稿       | 高/中     | 高频保存、状态提示、重试、离页阻止，明确无离线能力 |
+| Prisma/Serverless 连接耗尽       | 中/高     | 单例 Client、池化 URL、监控连接和慢查询            |
+| 回滚丢失切换后新数据             | 低/高     | 维护窗口、cutover timestamp、反向同步演练          |
+| Base64 多媒体撑大数据库和请求    | 高/高     | 二进制直传对象存储，数据库仅存引用                 |
+| AI 流完成但消息未落库            | 中/中     | 先建 STREAMING 行，onFinish 更新，失败状态可恢复   |
+| 迁移把私有内容写入日志/Sentry    | 中/高     | 日志字段白名单、正文零日志、迁移报告只含 ID/指纹   |
 
 ## 20. 完成标准
 
@@ -1346,7 +1360,8 @@ npm run build
 
 不要把项目描述成“为了使用新技术，把 MongoDB 和 Redux 换掉”。推荐表述：
 
-> 随着产品从单用户笔记扩展到权限、版本、分享和多模态会话，原 MongoDB 内嵌结构出现重复数据和归属不清问题。我将模型重构为 PostgreSQL 关系模型，用 Prisma 管理类型和迁移；同时区分服务端状态与客户端状态，由 TanStack Query 管理缓存同步，Zustand 管理 UI。迁移通过幂等脚本、内容转换校验、维护窗口和反向同步方案控制风险，并使用版本号解决多标签页保存冲突。图片和音频改为对象存储，数据库只保存元数据和权限关系。
+> 随着产品从单用户笔记扩展到权限、版本、分享和多模态会话，原 MongoDB 内嵌结构出现重复数据和归属不清问题。我将模型重构为 PostgreSQL 关系模型，用 Prisma 管理类型和迁移；同时区分服务端状态与客户端状态，由 TanStack
+> Query 管理缓存同步，Zustand 管理 UI。迁移通过幂等脚本、内容转换校验、维护窗口和反向同步方案控制风险，并使用版本号解决多标签页保存冲突。图片和音频改为对象存储，数据库只保存元数据和权限关系。
 
 面试时应准备展示：
 

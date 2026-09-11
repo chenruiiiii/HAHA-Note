@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 interface RepoDetailContextValue {
   docTitles: Record<string, string>;
@@ -32,16 +25,9 @@ export function RepoDetailProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const value = useMemo(
-    () => ({ docTitles, setDocTitle }),
-    [docTitles, setDocTitle]
-  );
+  const value = useMemo(() => ({ docTitles, setDocTitle }), [docTitles, setDocTitle]);
 
-  return (
-    <RepoDetailContext.Provider value={value}>
-      {children}
-    </RepoDetailContext.Provider>
-  );
+  return <RepoDetailContext.Provider value={value}>{children}</RepoDetailContext.Provider>;
 }
 
 export function useRepoDetailContext() {

@@ -40,10 +40,7 @@ const ChatStore = createSlice({
   initialState,
   reducers: {
     /** 切换会话级 isPosting 状态（需携带 chatId） */
-    setPostingAction(
-      state,
-      { payload }: PayloadAction<{ chatId: string; isPosting: boolean }>
-    ) {
+    setPostingAction(state, { payload }: PayloadAction<{ chatId: string; isPosting: boolean }>) {
       const session = (state.byId[payload.chatId] ??= createInitialSessionState());
       session.isPosting = payload.isPosting;
     },

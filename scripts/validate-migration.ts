@@ -22,7 +22,12 @@ const SOURCE_SPEC = [
     collections: ['edit_history', 'browse_history'],
     target: 'activity',
   },
-  { entity: 'exploreArticles', db: 'stroll-recommend', collection: 'recommend_details', target: 'exploreArticle' },
+  {
+    entity: 'exploreArticles',
+    db: 'stroll-recommend',
+    collection: 'recommend_details',
+    target: 'exploreArticle',
+  },
 ];
 
 interface Counters {
@@ -46,9 +51,7 @@ async function countBy(dbName: string, collections: string[]): Promise<number> {
 
 // 兼容单集合(collection)与多集合并集(collections)两种源声明
 function sourceCollections(spec: (typeof SOURCE_SPEC)[number]): string[] {
-  return 'collections' in spec && spec.collections
-    ? spec.collections
-    : [spec.collection as string];
+  return 'collections' in spec && spec.collections ? spec.collections : [spec.collection as string];
 }
 
 async function main() {
@@ -77,7 +80,9 @@ async function main() {
   console.log('实体           源      目标   ');
   SOURCE_SPEC.forEach((spec, i) => {
     const c = counts[i];
-    console.log(`${spec.entity.padEnd(14)} ${String(c.source).padEnd(7)} ${String(c.target).padEnd(7)}`);
+    console.log(
+      `${spec.entity.padEnd(14)} ${String(c.source).padEnd(7)} ${String(c.target).padEnd(7)}`
+    );
     if (c.source !== c.target) {
       critical.push(`${spec.entity} count mismatch: source=${c.source} target=${c.target}`);
     }

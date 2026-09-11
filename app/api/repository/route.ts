@@ -24,7 +24,10 @@ export async function GET(request: Request): Promise<Response> {
       return NextResponse.json(data);
     } catch (error) {
       const response = dalErrorResponse(error);
-      return response ?? privateJson({ code: 500, data: null, message: '查询知识库失败' }, { status: 500 });
+      return (
+        response ??
+        privateJson({ code: 500, data: null, message: '查询知识库失败' }, { status: 500 })
+      );
     }
   }
 
@@ -78,7 +81,10 @@ export async function POST(request: Request): Promise<Response> {
       });
     } catch (error) {
       const response = dalErrorResponse(error);
-      return response ?? privateJson({ code: 500, data: null, message: '创建知识库失败' }, { status: 500 });
+      return (
+        response ??
+        privateJson({ code: 500, data: null, message: '创建知识库失败' }, { status: 500 })
+      );
     }
   }
 
