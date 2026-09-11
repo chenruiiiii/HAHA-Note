@@ -47,6 +47,7 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.7",
     "echarts": "^6.0.0",
+    "htmlparser2": "^10.1.0",
     "mitt": "^3.0.1",
     "mongodb": "^7.1.1",
     "nanoid": "^5.1.7",

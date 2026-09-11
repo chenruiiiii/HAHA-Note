@@ -177,21 +177,30 @@ instance.interceptors.response.use(
   }
 );
 
+/**
+ * 响应拦截器已经直接返回 `response.data`，这里只负责把类型收敛成业务数据类型。
+ *
+ * 不再使用 `instance.get<T, T>()`：axios 1.19 起第二个泛型不再是返回类型，
+ * 未绑定的条件类型 `AxiosResponseResult<T, T, ...>` 无法赋给 `Promise<T>`。
+ */
+const unwrap = <T>(promise: Promise<unknown>): Promise<T> => promise as Promise<T>;
+
 const http = {
-  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> => instance.get<T, T>(url, config),
+  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    unwrap<T>(instance.get(url, config)),
 
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.post<T, T>(url, data, config),
+    unwrap<T>(instance.post(url, data, config)),
 
   delete: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
-    instance.delete<T, T>(url, config),
+    unwrap<T>(instance.delete(url, config)),
 
   put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.put<T, T>(url, data, config),
+    unwrap<T>(instance.put(url, data, config)),
 
   // 额外增加一个 patch，很多 RESTful 接口会用到
   patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
-    instance.patch<T, T>(url, data, config),
+    unwrap<T>(instance.patch(url, data, config)),
 };
 
 export default http;
