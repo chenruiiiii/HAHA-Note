@@ -60,6 +60,7 @@ const HAEditor = ({
   const [messageApi, contextHolder] = message.useMessage();
   const titleRef = useRef(initialTitle);
   const onSaveRef = useRef(onSave);
+  const isSavingRef = useRef(false);
   const editorMountStartedAtRef = useRef(now());
   const hasReportedEditorReadyRef = useRef(false);
 
@@ -82,7 +83,8 @@ const HAEditor = ({
   });
 
   const handleSave = useCallback(async () => {
-    if (!editor) return;
+    if (!editor || isSavingRef.current) return;
+    isSavingRef.current = true;
     const html = injectHeadingIds(editor.getHTML());
     const saveStartedAt = now();
 
@@ -112,6 +114,8 @@ const HAEditor = ({
         error_type: 'save_error',
       });
       messageApi.error('保存失败，请稍后重试');
+    } finally {
+      isSavingRef.current = false;
     }
   }, [editor, messageApi]);
 

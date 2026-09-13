@@ -17,6 +17,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useParams } from 'next/navigation';
 import styles from './page.module.scss';
 import { useRepoDetailContext } from '@/components/layout/Repository/context';
+import { debounce } from '@/utils/debounce';
 
 const FileDetail = () => {
   const params = useParams();
@@ -59,6 +60,23 @@ const FileDetail = () => {
   const hasFlushedDocRef = useRef(false);
   const summaryDirtyRef = useRef(false);
   const hasFlushedSummaryRef = useRef(false);
+  const debouncedSyncDocTitleRef = useRef(
+    debounce((nextTitle: string) => {
+      setDocTitle(docsId, nextTitle);
+      dispatch(
+        upsertRepoDetailDocAction({
+          repoId,
+          docsId,
+          docsName: nextTitle,
+        })
+      );
+    }, 800)
+  );
+
+  useEffect(() => {
+    const debouncedSyncDocTitle = debouncedSyncDocTitleRef.current;
+    return () => debouncedSyncDocTitle.cancel();
+  }, []);
 
   const flushDocBeforeLeave = useCallback(() => {
     if (hasFlushedDocRef.current || !docDirtyRef.current || !docsId) {
@@ -337,15 +355,7 @@ const FileDetail = () => {
             hasFlushedDocRef.current = false;
             summaryDirtyRef.current = true;
             setIsSummaryDirty(true);
-            setDocTitle(docsId, nextTitle);
-
-            dispatch(
-              upsertRepoDetailDocAction({
-                repoId,
-                docsId,
-                docsName: nextTitle,
-              })
-            );
+            debouncedSyncDocTitleRef.current(nextTitle);
           }}
           onChange={(html) => {
             contentRef.current = html;
@@ -367,6 +377,7 @@ const FileDetail = () => {
             });
 
             invalidateDocumentLists(dispatch);
+            debouncedSyncDocTitleRef.current.flush(title || '新建文档');
 
             docDirtyRef.current = false;
             hasFlushedDocRef.current = false;

@@ -1,4 +1,4 @@
-type Procedure = (...args: readonly unknown[]) => void;
+type Procedure = (...args: never[]) => unknown;
 
 export type DebouncedFunction<T extends Procedure> = ((...args: Parameters<T>) => void) & {
   cancel: () => void;
