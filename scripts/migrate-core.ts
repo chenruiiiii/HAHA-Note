@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MongoDB → PostgreSQL 迁移核心（与 server-only 解耦，可被 CLI / Vitest 复用）。
  *
  * 以「运行时实际使用的集合」为准（见各 API 路由），而非 demo seed 脚本中的集合名：
@@ -42,7 +42,10 @@ export interface QuarantineEntry {
 
 export type DbLike = {
   user: { upsert: (args: unknown) => Promise<unknown> };
-  repository: { upsert: (args: unknown) => Promise<unknown> };
+  repository: {
+    upsert: (args: unknown) => Promise<unknown>;
+    findFirst: (args: unknown) => Promise<unknown>;
+  };
   document: {
     upsert: (args: unknown) => Promise<unknown>;
     findFirst: (args: unknown) => Promise<unknown>;
@@ -51,7 +54,10 @@ export type DbLike = {
     upsert: (args: unknown) => Promise<unknown>;
     findFirst: (args: unknown) => Promise<unknown>;
   };
-  message: { create: (args: unknown) => Promise<unknown> };
+  message: {
+    upsert: (args: unknown) => Promise<unknown>;
+    create: (args: unknown) => Promise<unknown>;
+  };
   activity: { create: (args: unknown) => Promise<unknown> };
   exploreArticle: { upsert: (args: unknown) => Promise<unknown> };
 };
@@ -252,6 +258,15 @@ export async function convertDocument(
     return;
   }
 
+  const repository = await db.repository.findFirst({ where: { id: row.repository_id!.trim() } });
+  if (!repository) {
+    state.quarantine('documents', row._id!, 'ORPHAN_DOCUMENT', {
+      repository_id: row.repository_id,
+    });
+    counts.skipped++;
+    return;
+  }
+
   if (state.mode === 'execute') {
     await db.document.upsert({
       where: { id: row._id },
@@ -348,16 +363,43 @@ export async function convertConversation(
         .filter((p) => p?.type === 'text' && typeof p.text === 'string')
         .map((p) => p.text as string)
         .join('\n');
-      await db.message.create({
-        data: {
-          conversationId: id,
-          clientMessageId: isBlank(msg.id) ? null : msg.id!.slice(0, 120),
-          role,
-          status: 'COMPLETED',
-          content: text,
-          parts,
-        },
-      });
+      const clientMessageId = isBlank(msg.id) ? null : msg.id!.slice(0, 120);
+      if (clientMessageId) {
+        // 幂等：重跑时已有相同 (conversationId, clientMessageId) 的消息则更新而非插入
+        await db.message.upsert({
+          where: {
+            conversationId_clientMessageId: {
+              conversationId: id,
+              clientMessageId,
+            },
+          },
+          update: {
+            role,
+            status: 'COMPLETED',
+            content: text,
+            parts,
+          },
+          create: {
+            conversationId: id,
+            clientMessageId,
+            role,
+            status: 'COMPLETED',
+            content: text,
+            parts,
+          },
+        });
+      } else {
+        await db.message.create({
+          data: {
+            conversationId: id,
+            clientMessageId: null,
+            role,
+            status: 'COMPLETED',
+            content: text,
+            parts,
+          },
+        });
+      }
     }
   }
 }
@@ -515,3 +557,8 @@ export function summarize(report: MigrationReport): string {
 export function isConvertibleHtml(v: unknown): boolean {
   return typeof v === 'string' && convertDocumentHtml(v).ok;
 }
+
+
+
+
+

@@ -116,6 +116,12 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 pnpm install
 ```
 
+按 `.env.example` 配置 `.env.local`，然后为当前开发数据库应用迁移：
+
+```bash
+pnpm db:deploy
+```
+
 启动开发服务器：
 
 ```bash
@@ -155,8 +161,17 @@ Schema 与迁移：
 pnpm db:generate    # 生成 Prisma Client
 pnpm db:migrate     # 本地开发：创建并应用迁移（prisma migrate dev）
 pnpm db:deploy      # 生产环境应用既有迁移（prisma migrate deploy）
+pnpm db:check       # 检查池化/直连连接、表数量与 Prisma migration 状态
+pnpm db:bootstrap-owner # 创建迁移所有者账号（需要 BOOTSTRAP_OWNER_PASSWORD）
 pnpm db:validate    # 校验 Prisma schema
 ```
+
+跨电脑开发时，`.env.*`
+和本地数据库不会跟随 Git 同步。每台电脑必须通过安全的密钥渠道配置同一个开发数据库，并保持
+`AUTH_TOKEN_SECRET`、`PASSWORD_PEPPER`
+一致。否则登录可能返回 401，Prisma 查询可能因连接失败或表不存在返回 500。新数据库只执行 `db:migrate`
+/ `db:deploy` 不会自动创建演示账号；`pnpm db:seed`
+当前是空实现，需要先迁移已有 PostgreSQL 用户，或单独创建 `User` 记录。
 
 MongoDB → PostgreSQL 的一次性迁移与回滚：
 
@@ -168,6 +183,61 @@ pnpm rollback:reverse-sync  # 回滚：把 cutover 之后的改动反向同步�
 ```
 
 迁移阶段划分、验收标准与回滚预案见 `docs/HAHA-Note-Migration-Guide.md`。
+
+### Neon PostgreSQL
+
+Neon 项目建议把 development、preview/test 和 production 放在独立分支。应用运行时使用 pooled 连接串，Prisma
+CLI、数据迁移和管理工具使用 direct 连接串；两者的主机名和用途不能混用。
+
+在 Neon Console 的 Connect 页面复制连接信息，填入本机 `.env.local`：
+
+```env
+DATA_BACKEND=prisma
+DATABASE_URL=postgresql://USER:PASSWORD@ep-xxx-pooler.REGION.aws.neon.tech/DB?sslmode=require
+MIGRATION_DATABASE_URL=postgresql://USER:PASSWORD@ep-xxx.REGION.aws.neon.tech/DB?sslmode=require
+```
+
+首次接入和每次迁移前执行：
+
+```bash
+pnpm db:check
+pnpm db:deploy
+pnpm db:check
+```
+
+第一次 `db:check` 应能连接并显示 `prisma_migrations=false`；`db:deploy` 后应显示表数量和
+`prisma_migrations=true`。迁移旧数据前需要先创建迁移所有者账号：
+
+```env
+BOOTSTRAP_OWNER_ID=usr_legacy_owner
+BOOTSTRAP_OWNER_USERNAME=migration_owner
+BOOTSTRAP_OWNER_PASSWORD=临时强密码
+```
+
+```bash
+pnpm db:bootstrap-owner
+```
+
+然后配置 `LEGACY_OWNER_ID=usr_legacy_owner`、`APP_MONGODB_MONGODB_URI`，并严格按 `data:migrate:dry`
+→ `data:migrate` → `data:validate`
+的顺序执行。临时密码只在初始化时使用，迁移完成后应轮换或删除该账号。
+
+切换 Vercel Production 前，先在 Vercel 项目中配置：
+
+```env
+DATA_BACKEND=prisma
+DATABASE_URL=<Neon pooled URL>
+MIGRATION_DATABASE_URL=<Neon direct URL>
+AUTH_TOKEN_SECRET=<long random secret>
+PASSWORD_PEPPER=<long random pepper>
+DEEPSEEK_API_KEY=<DeepSeek key>
+NEXT_PUBLIC_APP_API_URL=https://<production-domain>/api
+NEXT_PUBLIC_BASE_URL=https://<production-domain>
+```
+
+`MIGRATION_DATABASE_URL`
+只在迁移时使用，不要把它暴露给浏览器端变量。应用部署完成且旧数据校验通过后，再让 Production 使用
+`DATA_BACKEND=prisma`；在此之前保留旧 MongoDB 配置作为回滚路径。
 
 ## 数据初始化
 

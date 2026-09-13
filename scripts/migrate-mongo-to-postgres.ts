@@ -11,7 +11,7 @@
  *
  * 先 `pnpm db:generate`（src/generated 已被 gitignore，新 clone 需先生成）。
  */
-import 'dotenv/config';
+import './load-env';
 import { MongoClient } from 'mongodb';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';

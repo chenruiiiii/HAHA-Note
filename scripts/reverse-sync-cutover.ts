@@ -8,7 +8,7 @@
  * 仅同步 repositories/documents/conversations+messages/activities；users/sessions/
  * favorites/explore 不回写（见 design.md boundary 22）。
  */
-import 'dotenv/config';
+import './load-env';
 import { MongoClient } from 'mongodb';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';

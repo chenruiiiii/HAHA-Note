@@ -1,11 +1,11 @@
-/**
+﻿/**
  * 迁移校验 CLI：核对源(Mongo)与目标(PostgreSQL)计数 + 隔离区，任何关键不一致退出非零。
  *
  * 用法：pnpm data:validate
  * 依赖：APP_MONGODB_MONGODB_URI、MIGRATION_DATABASE_URL/DATABASE_URL。
  * 在切 DATA_BACKEND=prisma 前执行；critical > 0 时 SHALL 停止 cutover。
  */
-import 'dotenv/config';
+import './load-env';
 import { MongoClient } from 'mongodb';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -70,7 +70,16 @@ async function main() {
     for (let i = 0; i < SOURCE_SPEC.length; i++) {
       const target = SOURCE_SPEC[i].target;
       const model = (prisma as unknown as Record<string, { count: () => Promise<number> }>)[target];
-      counts[i].target = await model.count();
+      // 迁移所有者账号（db:bootstrap-owner 创建的基础设施账号）不属于业务数据，
+      // 校验时从 users 目标计数中排除，避免与 MongoDB 源用户数不一致。
+      if (SOURCE_SPEC[i].entity === 'users') {
+        const userModel = prisma as unknown as Record<string, { count: (args: { where: unknown }) => Promise<number> }>;
+        counts[i].target = await userModel.user.count({
+          where: { username: { not: 'migration_owner' } },
+        });
+      } else {
+        counts[i].target = await model.count();
+      }
     }
   } finally {
     await prisma.$disconnect().catch(() => undefined);
@@ -115,3 +124,5 @@ main().catch((err) => {
   console.error('✗ 校验失败：', err);
   process.exit(1);
 });
+
+

@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './scripts/load-env';
 import { defineConfig } from 'prisma/config';
 
 const fallbackUrl = 'postgresql://user:password@localhost:5432/haha_note?sslmode=require';
