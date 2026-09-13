@@ -2,7 +2,7 @@ import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
 import { requireUser } from '@/server/dal/require-user';
-import { findDocumentById } from '@/server/dal/documents';
+import { findDocumentById, markDocumentViewed } from '@/server/dal/documents';
 import { dalErrorResponse, privateJson } from '@/server/http/private-json';
 import { upsertDocsDetailForRequest, type DocsDetailBody } from '@/server/http/document-upsert';
 
@@ -36,6 +36,11 @@ export async function GET(
           { status: 404 }
         );
       }
+
+      // 浏览记录是旁路逻辑：写失败不应影响详情返回
+      await markDocumentViewed(docsId, user.userId).catch((error: unknown) => {
+        console.error('record document view failed', error);
+      });
 
       return privateJson({
         code: 200,

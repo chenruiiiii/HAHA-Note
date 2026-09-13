@@ -13,6 +13,7 @@ import {
 } from '@/store/modules/repoDetail';
 import { useRouter } from 'next/navigation';
 import { createDocsDetailData } from '@/services/docs-detail';
+import { invalidateDocumentLists } from '@/store/invalidate';
 import { nanoid } from 'nanoid';
 import { message } from 'antd';
 
@@ -54,6 +55,7 @@ const RepoDetailHome = () => {
           docsName: response.data.title || '新建文档',
         })
       );
+      invalidateDocumentLists(dispatch);
       router.push(`/repo-detail/${repoId}/${docsId}`);
     } catch (createError) {
       messageApi.error(createError instanceof Error ? createError.message : '新建文档失败');
