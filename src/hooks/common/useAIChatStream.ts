@@ -11,6 +11,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useCallback, useEffect, useRef } from 'react';
 import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
+import { redirectToLogin, refreshAuthSession } from '@/lib/http';
 
 interface UseAIChatStreamProps {
   chatId: string;
@@ -94,7 +95,7 @@ function getFriendlyError(error: unknown): string {
   const statusCode = (error as { statusCode?: number })?.statusCode;
 
   if (statusCode === 401) {
-    return '密钥鉴权失败，请检查配置后重试';
+    return '登录状态已失效，请重新登录';
   }
   if (statusCode === 429) {
     return '请求过于频繁，请稍后重试';
@@ -111,6 +112,37 @@ function getFriendlyError(error: unknown): string {
 
   return '网络连接中断，请检查网络后重试';
 }
+
+// 聊天流走原生 fetch，不经 axios 拦截器：这里在 transport 层补齐 401 处理。
+// 401 时先静默刷新（与 axios 通道共享同一刷新请求），成功则自动重试一次；
+// 刷新失败说明登录态彻底失效，跳转登录页。
+let lastAuthRefreshAt = 0;
+
+const transportFetch: typeof fetch = async (input, init) => {
+  const response = await fetch(input, init);
+
+  if (response.status !== 401) {
+    return response;
+  }
+
+  const now = Date.now();
+
+  // 已刚刷新过又 401（重试仍失败）：直接报错，避免无限重试/跳转
+  if (now - lastAuthRefreshAt < 60_000) {
+    throw new Error('登录状态已失效，请重新登录');
+  }
+
+  lastAuthRefreshAt = now;
+
+  try {
+    await refreshAuthSession();
+  } catch {
+    redirectToLogin();
+    throw new Error('登录状态已失效，请重新登录');
+  }
+
+  return fetch(input, init);
+};
 
 export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   const dispatch = useAppDispatch();
@@ -134,6 +166,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
       id: chatId,
       transport: new DefaultChatTransport({
         api: '/api/chat-detail',
+        fetch: transportFetch,
         body: {
           chatId,
         },

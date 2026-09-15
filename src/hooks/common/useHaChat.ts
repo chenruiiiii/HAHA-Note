@@ -1,6 +1,7 @@
 import { useAppDispatch, useAppSelector } from '@/store';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
+import { useRef } from 'react';
 import emitter from '@/lib/mitt';
 import {
   selectChatState,
@@ -12,11 +13,17 @@ import {
 } from '@/store/modules/chat';
 import { errorMessage } from '@/utils/message_reminder';
 
+// 首页发送防抖窗口：双击发送按钮 / 点击+回车同时触发时，React 状态（isPosting）
+// 尚未刷新，会连发两次 router.push 到同一个新 URL——同路由状态下会产生两次
+// 完全相同的 RSC 导航请求。用短窗口防抖拦截毫秒级重复，不影响正常的重复发送。
+const HOME_SEND_DEBOUNCE_MS = 500;
+
 export function useHaChat() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
+  const lastHomeSendAtRef = useRef(0);
 
   // 当前会话 id：对话页取 URL 中的 [id]，首页取跳转前写入的 currentChatId
   const urlChatId = typeof params?.id === 'string' ? params.id : null;
@@ -54,6 +61,13 @@ export function useHaChat() {
 
     if (pathname === '/ai-chat-home') {
       // 首页：生成会话 id，写入会话级状态，消息随 URL searchParams 带到对话页（刷新不丢）
+      const now = Date.now();
+
+      if (now - lastHomeSendAtRef.current < HOME_SEND_DEBOUNCE_MS) {
+        return;
+      }
+
+      lastHomeSendAtRef.current = now;
       const id = nanoid();
       dispatch(setCurrentChatIdAction(id));
       dispatch(

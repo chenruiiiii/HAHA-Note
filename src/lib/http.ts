@@ -81,7 +81,12 @@ const instance = axios.create({
 
 let refreshPromise: Promise<unknown> | null = null;
 
-async function refreshAccessToken() {
+/**
+ * 统一的"刷新登录态"入口：并发 401 共享同一个刷新请求（避免重复刷新），
+ * 刷新成功后由调用方重试原请求。axios 拦截器与 AI 聊天流（原生 fetch）
+ * 两个通道共用，保证任意接口 401 时都能无感刷新。
+ */
+export async function refreshAuthSession(): Promise<unknown> {
   if (!refreshPromise) {
     refreshPromise = axios.post(refreshEndpoint, undefined, {
       withCredentials: true,
@@ -97,6 +102,16 @@ async function refreshAccessToken() {
   }
 
   return refreshPromise;
+}
+
+/** 未登录 / 登录态彻底失效：保留当前页面路径与查询参数跳转登录页。 */
+export function redirectToLogin(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const redirect = `${window.location.pathname}${window.location.search}`;
+  window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`;
 }
 
 instance.interceptors.request.use(
@@ -132,14 +147,10 @@ instance.interceptors.response.use(
     ) {
       originalRequest._retry = true;
 
-      return refreshAccessToken()
+      return refreshAuthSession()
         .then(() => instance(originalRequest))
         .catch((refreshError) => {
-          if (typeof window !== 'undefined') {
-            const redirect = `${window.location.pathname}${window.location.search}`;
-            window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`;
-          }
-
+          redirectToLogin();
           return Promise.reject(refreshError);
         });
     }

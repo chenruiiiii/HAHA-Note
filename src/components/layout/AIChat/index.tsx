@@ -71,6 +71,9 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   const pendingMessage = searchParams.get('q');
   const pendingModel = searchParams.get('model') ?? undefined;
   const pendingConsumedRef = useRef(false);
+  // 首次渲染时 URL 是否带 ?q=（首页发送直达的新会话）：此时会话详情必然还不存在，
+  // 直接跳过首次详情拉取，避免一次必现的 404；消息发送完成后 onPersisted 会再拉取。
+  const hasPendingMessageOnMountRef = useRef(pendingMessage !== null);
 
   const { messages, status, sendMessage, setMessages, stopStream, retryStream } = useAIChatStream({
     chatId: _id,
@@ -295,7 +298,9 @@ const AiChat = ({ id: _id }: AiChatProps) => {
 
     const initChatDetail = async () => {
       try {
-        await loadChatDetail();
+        if (!hasPendingMessageOnMountRef.current) {
+          await loadChatDetail();
+        }
       } finally {
         if (!cancelled) {
           setIsInitialLoading(false);
