@@ -69,6 +69,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pendingMessage = searchParams.get('q');
+  const pendingModel = searchParams.get('model') ?? undefined;
   const pendingConsumedRef = useRef(false);
 
   const { messages, status, sendMessage, setMessages, stopStream, retryStream } = useAIChatStream({
@@ -328,13 +329,13 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     };
   }, [handlePostingClose, stopStream, _id]);
 
-  // chat-put组件发布 chat-message 消息时候发送消息（携带 chatId，只处理当前会话）
+  // chat-put组件发布 chat-message 消息时候发送消息（携带 chatId 与模型，只处理当前会话）
   useEffect(() => {
-    const handler = (payload: { message: string; chatId: string }) => {
-      const { message, chatId } = payload;
+    const handler = (payload: { message: string; chatId: string; model?: string }) => {
+      const { message, chatId, model } = payload;
       if (chatId !== _id) return;
       if (checkDuplicate(message, {})) return;
-      sendMessage({ text: message });
+      sendMessage({ text: message }, { body: { chatId, model } });
     };
     emitter.on('chat-message', handler);
     return () => {
@@ -349,9 +350,9 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     if (checkDuplicate(pendingMessage, {})) return;
     pendingConsumedRef.current = true;
     handlePostingOpen();
-    sendMessage({ text: pendingMessage });
+    sendMessage({ text: pendingMessage }, { body: { chatId: _id, model: pendingModel } });
     router.replace(`/ai-chat/${_id}`);
-  }, [_id, handlePostingOpen, isInitialLoading, pendingMessage, router, sendMessage]);
+  }, [_id, handlePostingOpen, isInitialLoading, pendingMessage, pendingModel, router, sendMessage]);
 
   return (
     <div className="ai-chat-container">

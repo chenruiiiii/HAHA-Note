@@ -1,0 +1,33 @@
+{
+  "id": "llm-provider-config",
+  "name": "llm-provider-config",
+  "title": "LLM 多模型接入：默认切换 deepseek-v4-flash 并支持多供应商",
+  "description": "把 AI 对话默认模型从 deepseek-chat 切换为 deepseek-v4-flash，并为后续接入其他公司模型（OpenAI 兼容网关）做好可配置化抽象。",
+  "status": "design-done",
+  "dev_type": null,
+  "scope": "ai-chat",
+  "package": null,
+  "priority": "P1",
+  "creator": "chenrui",
+  "assignee": "chenrui",
+  "createdAt": "2026-09-15",
+  "completedAt": null,
+  "branch": "fix/llm-chat-bugfix",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "app/api/chat-detail/route.ts",
+    "app/api/docs-summary/[docsId]/route.ts",
+    "src/components/layout/AIWritingHome/components/ChatInput/index.tsx",
+    "src/hooks/common/useAIChatStream.ts",
+    "src/server/dal/conversations.ts",
+    ".env.example"
+  ],
+  "notes": "",
+  "meta": {}
+}

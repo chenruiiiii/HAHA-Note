@@ -45,7 +45,7 @@ export function useHaChat() {
   };
 
   // 发送消息
-  const handleSend = (message: string) => {
+  const handleSend = (message: string, model?: string) => {
     const trimmed = message.trim();
 
     if (!trimmed) {
@@ -64,9 +64,10 @@ export function useHaChat() {
           lastError: '',
         })
       );
-      router.push(`/ai-chat/${id}?q=${encodeURIComponent(trimmed)}`);
+      const query = `?q=${encodeURIComponent(trimmed)}${model ? `&model=${encodeURIComponent(model)}` : ''}`;
+      router.push(`/ai-chat/${id}${query}`);
     } else if (urlChatId) {
-      // 对话页：事件携带 chatId，接收端过滤，只处理属于当前会话的事件
+      // 对话页：事件携带 chatId 与模型，接收端过滤，只处理属于当前会话的事件
       dispatch(
         setChatRequestStateAction({
           chatId: urlChatId,
@@ -75,7 +76,7 @@ export function useHaChat() {
           lastError: '',
         })
       );
-      emitter.emit('chat-message', { message: trimmed, chatId: urlChatId });
+      emitter.emit('chat-message', { message: trimmed, chatId: urlChatId, model });
     }
   };
 

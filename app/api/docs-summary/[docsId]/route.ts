@@ -1,9 +1,9 @@
-import { createDeepSeek } from '@ai-sdk/deepseek';
 import { generateText } from 'ai';
 import { DocumentDetail } from '@/models/docs';
 import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
 import { upsertDocsDetailForRequest, type DocsDetailBody } from '@/server/http/document-upsert';
+import { getSummaryModel } from '@/lib/ai/provider';
 
 const DB_NAME = 'repository';
 const COLLECTION_NAME = 'docs_detail';
@@ -40,9 +40,8 @@ async function generateDocumentSummary(title: string, contentHtml: string) {
   const truncatedContent = plainText.slice(0, 6000);
 
   try {
-    const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
     const result = await generateText({
-      model: deepseek('deepseek-chat'),
+      model: getSummaryModel(),
       prompt: [
         '请根据下面的文档内容生成一段中文总结。',
         '要求：',

@@ -1,18 +1,64 @@
 'use client';
-import React, { KeyboardEvent, useState } from 'react';
+import React, { KeyboardEvent, useEffect, useState } from 'react';
 import './style.scss';
 import { Input, Dropdown, MenuProps, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { warningMessage } from '@/utils/message_reminder';
 import { useHaChat } from '@/hooks/common/useHaChat';
+import http from '@/lib/http';
+import type { ResponseData } from '@/types/response';
+
+interface AiModelOption {
+  id: string;
+  name: string;
+}
 
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');
+  const [modelOptions, setModelOptions] = useState<AiModelOption[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
   const { isPosting, handleSend, stopSendMessage } = useHaChat();
+
+  // 拉取服务端白名单模型列表，驱动下拉；失败时静默回退（展示默认文案，不阻断输入）
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadModels = async () => {
+      try {
+        const response = await http.get<ResponseData<AiModelOption[]>>('/ai-models');
+
+        if (!cancelled && response.code === 200 && Array.isArray(response.data)) {
+          setModelOptions(response.data);
+          if (response.data.length > 0) {
+            setSelectedModel(response.data[0].id);
+          }
+        }
+      } catch {
+        // 忽略：下拉保持空，回退默认模型
+      }
+    };
+
+    void loadModels();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const currentModelLabel =
+    modelOptions.find((item) => item.id === selectedModel)?.name ?? '默认模型';
+
+  const dropdownItems: MenuProps['items'] =
+    modelOptions.length > 0
+      ? modelOptions.map((item) => ({
+          key: item.id,
+          label: item.name,
+        }))
+      : [{ key: 'default', label: '默认模型', disabled: true }];
 
   // 通知兄弟组件发送消息并展示流式数据内容
   const handleSendMessage = () => {
-    handleSend(inputValue);
+    handleSend(inputValue, selectedModel);
     setInputValue('');
   };
 
@@ -50,13 +96,6 @@ const ChatInput = () => {
     }
   };
 
-  const dropdownItems: MenuProps['items'] = [
-    {
-      key: '1',
-      label: 'deepseek v3.2',
-    },
-  ];
-
   return (
     <>
       <div className="chat-input-container">
@@ -83,10 +122,16 @@ const ChatInput = () => {
           </div>
           <div className="actions-r">
             <div className="drop-down cursor-pointer transition-all">
-              <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
+              <Dropdown
+                menu={{
+                  items: dropdownItems,
+                  onClick: ({ key }) => setSelectedModel(key),
+                }}
+                trigger={['click']}
+              >
                 <Space>
                   <img src="../../../../../assets/images/avatar.png" alt="" />
-                  deepseek v3.2
+                  {currentModelLabel}
                   <DownOutlined />
                 </Space>
               </Dropdown>

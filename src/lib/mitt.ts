@@ -9,7 +9,7 @@ import mitt from 'mitt';
  * 以保证 emit / on / off 的类型安全。
  */
 export type AppEventMap = {
-  'chat-message': { chatId: string; message: string };
+  'chat-message': { chatId: string; message: string; model?: string };
   'stop-send-message': { chatId: string };
   'start-streaming': { chatId: string };
   'quit-streaming': { chatId: string };
