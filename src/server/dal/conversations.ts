@@ -135,6 +135,7 @@ export async function upsertConversationMessages(params: {
   title?: string;
   summary?: string;
   model?: string;
+  provider?: string;
   messages: Array<{
     id?: string;
     role: string;
@@ -144,7 +145,8 @@ export async function upsertConversationMessages(params: {
   }>;
 }): Promise<AiMissionDetail> {
   const prisma = getPrisma();
-  const model = params.model ?? 'deepseek-chat';
+  const model = params.model ?? 'deepseek-v4-flash';
+  const provider = params.provider ?? 'deepseek';
 
   const conversation = await prisma.$transaction(async (tx) => {
     const existing = await tx.conversation.findFirst({
@@ -160,6 +162,7 @@ export async function upsertConversationMessages(params: {
           summary: params.summary ?? '',
           status: ConversationStatus.ACTIVE,
           model,
+          provider,
         },
       });
     } else {
@@ -196,7 +199,7 @@ export async function upsertConversationMessages(params: {
               clientMessageId,
             },
           },
-          update: { role, status, content, parts },
+          update: { role, status, content, parts, model, provider },
           create: {
             conversationId: params.conversationId,
             clientMessageId,
@@ -204,6 +207,8 @@ export async function upsertConversationMessages(params: {
             status,
             content,
             parts,
+            model,
+            provider,
           },
         });
         keptIds.push(row.id);
@@ -215,6 +220,8 @@ export async function upsertConversationMessages(params: {
             status,
             content,
             parts,
+            model,
+            provider,
           },
         });
         keptIds.push(row.id);

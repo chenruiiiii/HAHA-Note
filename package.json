@@ -28,7 +28,6 @@
     "prebuild": "prisma generate"
   },
   "dependencies": {
-    "@ai-sdk/deepseek": "^2.0.26",
     "@ai-sdk/openai": "^2.0.122",
     "@ai-sdk/react": "^3.0.136",
     "@ant-design/icons": "^6.1.0",

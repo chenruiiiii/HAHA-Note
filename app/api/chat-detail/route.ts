@@ -1,5 +1,4 @@
 import { generateText, streamText, UIMessage, convertToModelMessages } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import {
   type AiChatListItem,
@@ -10,63 +9,19 @@ import {
 import { isPrismaBackend } from '@/server/auth/backend';
 import { requireUser } from '@/server/dal/require-user';
 import { findConversationById, upsertConversationMessages } from '@/server/dal/conversations';
+import {
+  getChatModel,
+  getProviderName,
+  getSummaryModel,
+  resolveModelName,
+} from '@/lib/ai/provider';
 
 const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'ai_chat_detail';
 const CHAT_LIST_COLLECTION_NAME = 'latest_mission';
 
-// 模型与 Provider 配置（多模型统一封装，切换只需改环境变量）
-const DEFAULT_BASE_URL = 'https://api.deepseek.com/v1';
-const DEFAULT_CHAT_MODEL = 'deepseek-chat';
-const ALLOWED_MODELS = ['deepseek-chat', 'deepseek-reasoner'];
-
-let providerCache: ReturnType<typeof createOpenAI> | null = null;
-
 /**
- * 获取共享的 OpenAI 兼容 Provider 实例。
- *
- * 通过 `createOpenAI` 统一封装 OpenAI 兼容接口（DeepSeek 等），
- * 切换模型只需更换 `apiKey` + `baseURL`，API key 只存在于服务端。
- *
- * @returns OpenAI 兼容的 Provider 实例。
- * @throws 当 `DEEPSEEK_API_KEY` 未配置时抛出错误。
- */
-function getProvider() {
-  if (!providerCache) {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-
-    if (!apiKey) {
-      throw new Error('DEEPSEEK_API_KEY is not configured');
-    }
-
-    providerCache = createOpenAI({
-      apiKey,
-      baseURL: process.env.AI_PROVIDER_BASE_URL || DEFAULT_BASE_URL,
-    });
-  }
-
-  return providerCache;
-}
-
-/**
- * 解析并校验模型名，防止前端传入任意模型。
- *
- * @param name - 请求中携带的模型名；缺省时读取 `AI_CHAT_MODEL`，再回退默认模型。
- * @returns 通过白名单校验的模型名。
- * @throws 当模型名不在白名单中时抛出错误。
- */
-function resolveModel(name?: string) {
-  const model = name || process.env.AI_CHAT_MODEL || DEFAULT_CHAT_MODEL;
-
-  if (!ALLOWED_MODELS.includes(model)) {
-    throw new Error(`model "${model}" is not allowed`);
-  }
-
-  return model;
-}
-
-/**
- * 请求体校验 Schema：`chatId` 非空字符串，`messages` 为非空消息数组。
+ * 请求体校验 Schema：`chatId` 非空字符串，`messages` 为非空消息数组，`model` 可选。
  */
 const ChatRequestBodySchema = z.object({
   chatId: z.string().min(1, 'chatId is required'),
@@ -79,6 +34,7 @@ const ChatRequestBodySchema = z.object({
       })
     )
     .min(1, 'messages must not be empty'),
+  model: z.string().optional(),
 });
 
 /**
@@ -192,9 +148,10 @@ function getMessagePlainText(message: AiMissionMessage) {
  * 基于首轮问答调用 LLM 生成会话文档标题。
  *
  * @param messages - 标准化后的会话消息数组。
+ * @param model - 本次对话实际使用的模型名（供摘要模型默认跟随）。
  * @returns AI 生成的标题；生成失败或内容为空时返回默认标题。
  */
-async function generateDocumentTitle(messages: AiMissionMessage[]) {
+async function generateDocumentTitle(messages: AiMissionMessage[], model?: string) {
   const firstUserMessage = messages.find((message) => message.role === 'user');
   const firstAssistantMessage = messages.find((message) => message.role === 'assistant');
   const userText = firstUserMessage ? getMessagePlainText(firstUserMessage) : '';
@@ -206,7 +163,7 @@ async function generateDocumentTitle(messages: AiMissionMessage[]) {
 
   try {
     const result = await generateText({
-      model: getProvider()(resolveModel()),
+      model: getSummaryModel(model),
       prompt: [
         '请根据下面的对话内容提取关键词，生成一个适合作为文档标题的中文标题。',
         '要求：',
@@ -234,9 +191,10 @@ async function generateDocumentTitle(messages: AiMissionMessage[]) {
  * 基于会话内容调用 LLM 生成摘要。
  *
  * @param messages - 标准化后的会话消息数组。
+ * @param model - 本次对话实际使用的模型名（供摘要模型默认跟随）。
  * @returns AI 生成的会话摘要；生成失败时返回截断后的原始对话文本。
  */
-async function generateConversationSummary(messages: AiMissionMessage[]) {
+async function generateConversationSummary(messages: AiMissionMessage[], model?: string) {
   const conversation = messages
     .filter((message) => message.role !== 'system')
     .map(
@@ -251,7 +209,7 @@ async function generateConversationSummary(messages: AiMissionMessage[]) {
 
   try {
     const result = await generateText({
-      model: getProvider()(resolveModel()),
+      model: getSummaryModel(model),
       prompt: [
         '请基于下面的对话内容，生成一段适合作为会话摘要的中文总结。',
         '要求：',
@@ -361,7 +319,7 @@ async function shouldGenerateTitle(chatId: string) {
  * @param userId - 当前登录用户 ID，作为会话拥有者。
  * @param chatId - 会话 ID。
  * @param messages - AI SDK UI 消息数组。
- * @param options - 可选覆盖字段，用于写入生成后的标题或摘要。
+ * @param options - 可选覆盖字段：写入生成后的标题/摘要、记录实际使用的模型与供应商。
  */
 async function saveChatDetailPrisma(
   userId: string,
@@ -370,6 +328,8 @@ async function saveChatDetailPrisma(
   options?: {
     titleOverride?: string;
     summaryOverride?: string;
+    model?: string;
+    provider?: string;
   }
 ) {
   await upsertConversationMessages({
@@ -377,6 +337,8 @@ async function saveChatDetailPrisma(
     conversationId: chatId,
     title: options?.titleOverride,
     summary: options?.summaryOverride,
+    model: options?.model,
+    provider: options?.provider,
     messages: normalizeMessages(messages),
   });
 }
@@ -430,7 +392,20 @@ export async function POST(req: Request) {
   }
 
   // zod 已校验基本形状，此处按 AI SDK UI 消息类型收窄
-  const { messages, chatId } = parsed.data as { messages: UIMessage[]; chatId: string };
+  const { messages, chatId, model: requestedModel } = parsed.data as {
+    messages: UIMessage[];
+    chatId: string;
+    model?: string;
+  };
+  const provider = getProviderName();
+  let model: string;
+
+  try {
+    model = resolveModelName(requestedModel);
+  } catch (err) {
+    // 白名单校验失败：请求前阶段直接返回 400 JSON，不发起 LLM 调用
+    return jsonError(400, err instanceof Error ? err.message : '模型不合法');
+  }
 
   if (isPrismaBackend()) {
     let userId: string;
@@ -443,13 +418,11 @@ export async function POST(req: Request) {
     }
 
     try {
-      const model = getProvider()(resolveModel());
-
       // 流开始前先持久化（含用户消息与历史），abort 时不覆盖，避免半截内容落库
-      await saveChatDetailPrisma(userId, chatId, messages);
+      await saveChatDetailPrisma(userId, chatId, messages, { model, provider });
 
       const result = streamText({
-        model,
+        model: getChatModel(model),
         messages: await convertToModelMessages(messages),
         // 透传 abortSignal：前端 stop 时真正终止上游 LLM 请求，避免继续消耗 token
         abortSignal: req.signal,
@@ -465,19 +438,23 @@ export async function POST(req: Request) {
 
           const needsTitleGeneration = await shouldGenerateTitlePrisma(userId, chatId);
           const normalizedMessages = normalizeMessages(finalMessages);
-          const summary = await generateConversationSummary(normalizedMessages);
+          const summary = await generateConversationSummary(normalizedMessages, model);
 
           if (needsTitleGeneration) {
-            const generatedTitle = await generateDocumentTitle(normalizedMessages);
+            const generatedTitle = await generateDocumentTitle(normalizedMessages, model);
             await saveChatDetailPrisma(userId, chatId, finalMessages, {
               titleOverride: generatedTitle,
               summaryOverride: summary,
+              model,
+              provider,
             });
             return;
           }
 
           await saveChatDetailPrisma(userId, chatId, finalMessages, {
             summaryOverride: summary,
+            model,
+            provider,
           });
         },
       });
@@ -499,13 +476,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const model = getProvider()(resolveModel());
-
     // 流开始前先持久化（含用户消息与历史），abort 时不覆盖，避免半截内容落库
     await saveChatDetail(chatId, messages);
 
     const result = streamText({
-      model,
+      model: getChatModel(model),
       messages: await convertToModelMessages(messages),
       // 透传 abortSignal：前端 stop 时真正终止上游 LLM 请求，避免继续消耗 token
       abortSignal: req.signal,
@@ -521,10 +496,10 @@ export async function POST(req: Request) {
 
         const needsTitleGeneration = await shouldGenerateTitle(chatId);
         const normalizedMessages = normalizeMessages(finalMessages);
-        const summary = await generateConversationSummary(normalizedMessages);
+        const summary = await generateConversationSummary(normalizedMessages, model);
 
         if (needsTitleGeneration) {
-          const generatedTitle = await generateDocumentTitle(normalizedMessages);
+          const generatedTitle = await generateDocumentTitle(normalizedMessages, model);
           await saveChatDetail(chatId, finalMessages, {
             titleOverride: generatedTitle,
             summaryOverride: summary,

@@ -120,6 +120,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   const requestStartedAtRef = useRef<number | null>(null);
   const hasReportedFirstTokenRef = useRef(false);
   const isMountedRef = useRef(true);
+  const lastModelRef = useRef<string | undefined>(undefined);
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimerRef.current) {
@@ -196,6 +197,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
               void regenerate({
                 body: {
                   chatId,
+                  model: lastModelRef.current,
                 },
               });
             }, RETRY_DELAY_MS);
@@ -320,20 +322,30 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     await regenerate({
       body: {
         chatId,
+        model: lastModelRef.current,
       },
     });
     infoMessage('已重新发起本轮回答');
   }, [chatId, clearError, clearRetryTimer, dispatch, regenerate]);
 
   const trackedSendMessage = useCallback(
-    (...args: Parameters<typeof sendMessage>) => {
+    (
+      message?: Parameters<typeof sendMessage>[0],
+      options?: Parameters<typeof sendMessage>[1]
+    ) => {
       requestStartedAtRef.current = now();
       hasReportedFirstTokenRef.current = false;
       retryCountRef.current = 0;
 
+      // 记录本次请求的模型，断线重试/手动重试时保持同一模型
+      const body = options?.body as { model?: string } | undefined;
+      if (body?.model) {
+        lastModelRef.current = body.model;
+      }
+
       reportStarted(0);
 
-      return sendMessage(...args);
+      return sendMessage(message, options);
     },
     [sendMessage]
   );
