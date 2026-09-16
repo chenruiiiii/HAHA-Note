@@ -5,6 +5,8 @@ import type { LanguageModel } from 'ai';
 // 模型与 Provider 配置（多模型统一封装，切换只需改环境变量）
 const DEFAULT_CHAT_MODEL = 'deepseek-v4-flash';
 const DEFAULT_ALLOWED_MODELS = ['deepseek-v4-flash'];
+// DEEPSEEK_API_KEY 回退时的官方 API 地址（与 readApiKey 的回退语义配套）
+const DEEPSEEK_OFFICIAL_BASE_URL = 'https://api.deepseek.com';
 
 // 落库用的供应商标识（OpenAI 兼容网关，未来接其他厂商时按模型归属维护）
 const DEFAULT_PROVIDER = 'deepseek';
@@ -20,7 +22,9 @@ function readBaseURL(): string {
   const baseURL = process.env.AI_PROVIDER_BASE_URL;
 
   if (!baseURL) {
-    throw new Error('AI_PROVIDER_BASE_URL is not configured');
+    // 未配置网关地址时回退 DeepSeek 官方 API，与 DEEPSEEK_API_KEY 回退配套，
+    // 避免"配了 key 却因缺 baseURL 直接 500"的断层。
+    return DEEPSEEK_OFFICIAL_BASE_URL;
   }
 
   return baseURL;

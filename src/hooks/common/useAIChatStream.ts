@@ -11,6 +11,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useCallback, useEffect, useRef } from 'react';
 import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
+import { redirectToLogin, refreshAuthSession } from '@/lib/http';
 
 interface UseAIChatStreamProps {
   chatId: string;
@@ -83,7 +84,9 @@ function reportCancelled(opts: { totalMs?: number; retryCount: number }) {
  * 错误文案分类（Q9 / 2.3）。
  *
  * 优先按 AI SDK 错误对象自带的 `statusCode` 分类（后端双通道透传）；
- * 其余情况回退到后端透传的用户可读 message；都不满足时给出保守文案。
+ * 其次尝试解析后端以 JSON 文本形式透传的错误（如 `{ code, message }`），
+ * 提取其中的 `message` 作为用户可读文案，避免把整段接口信息直白暴露；
+ * 其余情况回退到 error.message；都不满足时给出保守文案。
  * 用户手动停止产生的 AbortError 返回空字符串，由调用方决定不展示。
  */
 function getFriendlyError(error: unknown): string {
@@ -94,7 +97,7 @@ function getFriendlyError(error: unknown): string {
   const statusCode = (error as { statusCode?: number })?.statusCode;
 
   if (statusCode === 401) {
-    return '密钥鉴权失败，请检查配置后重试';
+    return '登录状态已失效，请重新登录';
   }
   if (statusCode === 429) {
     return '请求过于频繁，请稍后重试';
@@ -106,11 +109,60 @@ function getFriendlyError(error: unknown): string {
   const message = (error as { message?: string })?.message;
 
   if (typeof message === 'string' && message) {
+    // DefaultChatTransport 在非 2xx 时会把响应文本整体塞进 Error.message，
+    // 后端约定 JSON 错误为 { code, message }：解析出 message 字段再展示。
+    try {
+      const parsed = JSON.parse(message) as { code?: unknown; message?: unknown };
+
+      if (typeof parsed?.message === 'string' && parsed.message) {
+        return parsed.message;
+      }
+    } catch {
+      // 不是 JSON：继续按普通错误文案处理
+    }
+
+    // 网络层原生错误（fetch failed 等）不要直白展示英文原文，
+    // 统一回落为保守的可读文案。
+    if (/fetch|network/i.test(message)) {
+      return '网络连接中断，请检查网络后重试';
+    }
+
     return message;
   }
 
   return '网络连接中断，请检查网络后重试';
 }
+
+// 聊天流走原生 fetch，不经 axios 拦截器：这里在 transport 层补齐 401 处理。
+// 401 时先静默刷新（与 axios 通道共享同一刷新请求），成功则自动重试一次；
+// 刷新失败说明登录态彻底失效，跳转登录页。
+let lastAuthRefreshAt = 0;
+
+const transportFetch: typeof fetch = async (input, init) => {
+  const response = await fetch(input, init);
+
+  if (response.status !== 401) {
+    return response;
+  }
+
+  const now = Date.now();
+
+  // 已刚刷新过又 401（重试仍失败）：直接报错，避免无限重试/跳转
+  if (now - lastAuthRefreshAt < 60_000) {
+    throw new Error('登录状态已失效，请重新登录');
+  }
+
+  lastAuthRefreshAt = now;
+
+  try {
+    await refreshAuthSession();
+  } catch {
+    redirectToLogin();
+    throw new Error('登录状态已失效，请重新登录');
+  }
+
+  return fetch(input, init);
+};
 
 export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   const dispatch = useAppDispatch();
@@ -134,6 +186,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
       id: chatId,
       transport: new DefaultChatTransport({
         api: '/api/chat-detail',
+        fetch: transportFetch,
         body: {
           chatId,
         },
@@ -223,7 +276,9 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
               chatId,
               requestStatus: isDisconnect || isError ? 'error' : 'success',
               isPosting: false,
-              lastError: isDisconnect || isError ? '生成失败，可点击重试' : '',
+              // 失败时不覆盖 onError 已写入的友好文案（如"对话服务异常，请稍后重试"），
+              // 由页面 banner 展示具体原因；成功时清空历史错误。
+              lastError: isDisconnect || isError ? undefined : '',
             })
           );
           await onPersisted?.();

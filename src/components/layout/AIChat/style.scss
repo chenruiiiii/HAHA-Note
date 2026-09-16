@@ -94,6 +94,35 @@
     }
   }
 
+  .chat-pending-box {
+    min-width: 180px;
+  }
+
+  .chat-error-box {
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: rgba(254, 242, 242, 0.9);
+
+    .chat-error-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #b91c1c;
+      font-size: var.$font-size-sm;
+
+      button {
+        flex-shrink: 0;
+        border: 0;
+        background: #ef4444;
+        color: #fff;
+        padding: 6px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: var.$font-size-sm;
+      }
+    }
+  }
+
   .message-part {
     font-size: var.$font-size-md;
     margin-bottom: 12px;
