@@ -1,9 +1,10 @@
 'use client';
-import React, { KeyboardEvent, useEffect, useState } from 'react';
+import React, { KeyboardEvent, useEffect, useRef, useState } from 'react';
 import './style.scss';
 import { Input, Dropdown, MenuProps, Space, Tooltip } from 'antd';
-import { DownOutlined, BorderOutlined } from '@ant-design/icons';
-import { warningMessage } from '@/utils/message_reminder';
+import { DownOutlined } from '@ant-design/icons';
+import { usePathname } from 'next/navigation';
+import { infoMessage, warningMessage } from '@/utils/message_reminder';
 import { useHaChat } from '@/hooks/common/useHaChat';
 import http from '@/lib/http';
 import type { ResponseData } from '@/types/response';
@@ -13,11 +14,20 @@ interface AiModelOption {
   name: string;
 }
 
+interface QueuedMessage {
+  message: string;
+  model?: string;
+}
+
 const ChatInput = () => {
   const [inputValue, setInputValue] = useState<string>('');
   const [modelOptions, setModelOptions] = useState<AiModelOption[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
-  const { isPosting, handleSend, stopSendMessage } = useHaChat();
+  const pathname = usePathname();
+  const isChatPage = typeof pathname === 'string' && pathname.startsWith('/ai-chat/');
+  const { isPosting, requestStatus, activeChatId, handleSend } = useHaChat();
+  // 回答中发送的新问题进入等待队列，当前回答结束后自动依次回答
+  const queueRef = useRef<QueuedMessage[]>([]);
 
   // 拉取服务端白名单模型列表，驱动下拉；失败时静默回退（展示默认文案，不阻断输入）
   useEffect(() => {
@@ -45,6 +55,26 @@ const ChatInput = () => {
     };
   }, []);
 
+  // 切换会话时清空上一个会话遗留的等待队列
+  useEffect(() => {
+    queueRef.current = [];
+  }, [activeChatId]);
+
+  // 当前回答结束后，自动回答等待队列中的下一条
+  useEffect(() => {
+    if (!isChatPage) return;
+
+    const busy =
+      requestStatus === 'submitted' ||
+      requestStatus === 'streaming' ||
+      requestStatus === 'retrying';
+    if (busy || queueRef.current.length === 0) return;
+
+    const [next, ...rest] = queueRef.current;
+    queueRef.current = rest;
+    handleSend(next.message, next.model);
+  }, [isChatPage, requestStatus, handleSend]);
+
   const currentModelLabel =
     modelOptions.find((item) => item.id === selectedModel)?.name ?? '默认模型';
 
@@ -56,16 +86,23 @@ const ChatInput = () => {
         }))
       : [{ key: 'default', label: '默认模型', disabled: true }];
 
-  // 通知兄弟组件发送消息并展示流式数据内容
-  const handleSendMessage = () => {
-    handleSend(inputValue, selectedModel);
-    setInputValue('');
+  // 通知兄弟组件发送消息并展示流式数据内容；回答中发送则进入等待队列
+  const handleSendMessage = (message: string, model?: string) => {
+    if (isChatPage && isPosting) {
+      queueRef.current = [...queueRef.current, { message, model }];
+      infoMessage('已加入等待队列，当前回答结束后自动发送');
+      return;
+    }
+
+    handleSend(message, model);
   };
 
-  // 发送按钮点击事件：发送中点击 = 停止当前生成（防止重复提交）
+  // 回答中且输入框为空：icon 置灰，不可打断本次回答
+  const iconDisabled = isPosting && inputValue.trim() === '';
+
+  // 发送按钮点击事件
   const handleSendClick = () => {
-    if (isPosting) {
-      stopSendMessage();
+    if (iconDisabled) {
       return;
     }
 
@@ -74,27 +111,30 @@ const ChatInput = () => {
       return;
     }
 
-    handleSendMessage();
+    handleSendMessage(inputValue, selectedModel);
+    setInputValue('');
   };
 
-  // 输入框回车事件：发送中禁止再次发送
+  // 输入框回车事件：回答中发送会进入等待队列
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-
-      if (isPosting) {
-        warningMessage('内容正在生成中，请稍候或点击停止');
-        return;
-      }
 
       if (inputValue.trim() === '') {
         warningMessage('请输入内容！');
         return;
       }
 
-      handleSendMessage();
+      handleSendMessage(inputValue, selectedModel);
+      setInputValue('');
     }
   };
+
+  const sendTooltip = iconDisabled
+    ? 'AI 回答中，不可打断'
+    : isPosting
+      ? '发送消息（回答结束后自动回答）'
+      : '发送消息';
 
   return (
     <>
@@ -136,16 +176,12 @@ const ChatInput = () => {
                 </Space>
               </Dropdown>
             </div>
-            <Tooltip title={isPosting ? '停止生成' : '发送消息'} placement="top">
+            <Tooltip title={sendTooltip} placement="top">
               <div
-                className={`circle-post cursor-pointer ${isPosting ? 'is-posting' : ''}`}
+                className={`circle-post cursor-pointer ${iconDisabled ? 'is-disabled' : ''}`}
                 onClick={handleSendClick}
               >
-                {isPosting ? (
-                  <BorderOutlined className="stop-icon" />
-                ) : (
-                  <i className="iconfont icon-jijianfasong"></i>
-                )}
+                <i className="iconfont icon-jijianfasong"></i>
               </div>
             </Tooltip>
           </div>

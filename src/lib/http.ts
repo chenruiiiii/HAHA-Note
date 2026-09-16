@@ -84,11 +84,12 @@ let refreshPromise: Promise<unknown> | null = null;
 
 /** 判断业务响应体是否携带"未登录/登录过期"标记（HTTP 200 + code 401）。 */
 function isBusinessUnauthorized(data: unknown): boolean {
-  return (
-    typeof data === 'object' &&
-    data !== null &&
-    (data as ResponseData<unknown>).code === 401
-  );
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  // 兼容 code 为数字 401 或字符串 '401' 两种形态
+  return Number((data as ResponseData<unknown>).code) === 401;
 }
 
 /**
@@ -211,6 +212,12 @@ instance.interceptors.response.use(
           redirectToLogin();
           return Promise.reject(refreshError);
         });
+    }
+
+    // 走到这里仍为 401 的只剩两类：刷新后重试依然 401（登录态彻底失效），
+    // 或刷新接口自身 401。两种都必须跳转登录，不能静默放行。
+    if (status === 401) {
+      redirectToLogin();
     }
 
     if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {

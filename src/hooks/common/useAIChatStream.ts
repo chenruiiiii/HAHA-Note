@@ -147,8 +147,9 @@ const transportFetch: typeof fetch = async (input, init) => {
 
   const now = Date.now();
 
-  // 已刚刷新过又 401（重试仍失败）：直接报错，避免无限重试/跳转
+  // 已刚刷新过又 401（重试仍失败）：登录态彻底失效，跳转登录
   if (now - lastAuthRefreshAt < 60_000) {
+    redirectToLogin();
     throw new Error('登录状态已失效，请重新登录');
   }
 

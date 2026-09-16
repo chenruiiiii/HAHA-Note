@@ -11,7 +11,9 @@ import ChatBottom from '../AIWritingHome/components/ChatBottom';
 import { useHaChat } from '@/hooks/common/useHaChat';
 import { checkDuplicate } from '@/hooks/common/useOneRequest';
 import PostingBox from './components/PostingBox';
-import { formatTime } from '@/utils/timeFormatter';
+import { formatMessageTime } from '@/utils/timeFormatter';
+import { infoMessage } from '@/utils/message_reminder';
+import { CopyOutlined } from '@ant-design/icons';
 import type { AiMissionDetail, AiMissionPart } from '@/models/ai-mission';
 import http from '@/lib/http';
 import type { ResponseData } from '@/types/response';
@@ -59,6 +61,13 @@ type RenderBlock =
       part: RenderablePart;
     };
 
+// 展示层扩展字段：服务端持久化的 createdAt（ISO 字符串/时间戳）或
+// 客户端发送时注入的 metadata.sentAt（毫秒时间戳），用于消息时间展示。
+type ChatDisplayMessage = UIMessage & {
+  createdAt?: string | number;
+  metadata?: { sentAt?: number } | Record<string, unknown>;
+};
+
 const AiChat = ({ id: _id }: AiChatProps) => {
   const [chatTitle, setChatTitle] = useState('新建文档');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -79,6 +88,37 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     chatId: _id,
     onPersisted: () => loadChatDetailRef.current(),
   });
+
+  // 消息展示时间兜底：流式回复等无确定时间来源的消息，记录首次出现在界面时的时间
+  const [messageTimes, setMessageTimes] = useState<Record<string, number>>({});
+  const [observedMessages, setObservedMessages] = useState(messages);
+
+  // 渲染期间派生并回填首次观察时间（React 推荐的 adjusting-state-during-render 模式）：
+  // 新出现的、没有确定时间来源的消息（如流式中的 AI 回复）用首次渲染时刻兜底
+  if (observedMessages !== messages) {
+    setObservedMessages(messages);
+    setMessageTimes((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      messages.forEach((message) => {
+        if (message.id in next) {
+          return;
+        }
+
+        const displayMessage = message as ChatDisplayMessage;
+        const sentAt = (displayMessage.metadata as { sentAt?: number } | undefined)?.sentAt;
+        if (typeof sentAt === 'number' || displayMessage.createdAt != null) {
+          return;
+        }
+
+        next[message.id] = Date.now();
+        changed = true;
+      });
+
+      return changed ? next : prev;
+    });
+  }
 
   const loadChatDetail = useCallback(async () => {
     try {
@@ -148,6 +188,59 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     }
 
     return '';
+  }, []);
+
+  // 归一化消息展示时间：客户端发送注入的 sentAt > 服务端持久化 createdAt > 首次观察时间
+  const getMessageTime = useCallback(
+    (message: UIMessage): number => {
+      const displayMessage = message as ChatDisplayMessage;
+      const sentAt = (displayMessage.metadata as { sentAt?: number } | undefined)?.sentAt;
+
+      if (typeof sentAt === 'number' && Number.isFinite(sentAt)) {
+        return sentAt;
+      }
+
+      if (displayMessage.createdAt != null) {
+        const parsed = new Date(displayMessage.createdAt).getTime();
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+
+      return messageTimes[message.id] ?? Date.now();
+    },
+    [messageTimes]
+  );
+
+  // 提取消息纯文本（用于复制）
+  const getMessagePlainText = useCallback(
+    (parts: Array<RenderablePart>): string =>
+      parts
+        .map((part) => getTextContent(part))
+        .filter((text) => text.trim() !== '')
+        .join('\n')
+        .trim(),
+    [getTextContent]
+  );
+
+  // 复制消息内容到剪贴板（兼容不支持 Clipboard API 的环境）
+  const handleCopy = useCallback(async (text: string) => {
+    const content = text || '';
+
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = content;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+
+    infoMessage('已复制到剪贴板');
   }, []);
 
   const getRenderableBlocks = useCallback(
@@ -255,13 +348,35 @@ const AiChat = ({ id: _id }: AiChatProps) => {
 
   // 处理信息展示为为用户还是ai类型
   const handleContent = useCallback(
-    (id: string, role: string, parts: Array<RenderablePart>, showPostingBox: boolean) => (
-      <div className={[role === 'user' ? 'ask-box' : 'answer-box'].join('')} key={id}>
-        {handleParts(id, parts, role, showPostingBox)}
-        {role === 'user' && <div className="chat-time-user">{formatTime(Date.now())}</div>}
-      </div>
-    ),
-    [handleParts]
+    (
+      id: string,
+      role: string,
+      parts: Array<RenderablePart>,
+      showPostingBox: boolean,
+      time: number
+    ) => {
+      const plainText = getMessagePlainText(parts);
+
+      return (
+        <div className={[role === 'user' ? 'ask-box' : 'answer-box'].join('')} key={id}>
+          {handleParts(id, parts, role, showPostingBox)}
+          <div className={role === 'user' ? 'ask-meta' : 'answer-meta'}>
+            {plainText && (
+              <button
+                type="button"
+                className="message-copy-btn"
+                onClick={() => void handleCopy(plainText)}
+              >
+                <CopyOutlined />
+                <span>复制</span>
+              </button>
+            )}
+            <span className="message-time">{formatMessageTime(time)}</span>
+          </div>
+        </div>
+      );
+    },
+    [getMessagePlainText, handleCopy, handleParts]
   );
 
   // 处理页面滚动
@@ -340,7 +455,10 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       const { message, chatId, model } = payload;
       if (chatId !== _id) return;
       if (checkDuplicate(message, {})) return;
-      sendMessage({ text: message }, { body: { chatId, model } });
+      sendMessage(
+        { text: message, metadata: { sentAt: Date.now() } },
+        { body: { chatId, model } }
+      );
     };
     emitter.on('chat-message', handler);
     return () => {
@@ -355,7 +473,10 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     if (checkDuplicate(pendingMessage, {})) return;
     pendingConsumedRef.current = true;
     handlePostingOpen();
-    sendMessage({ text: pendingMessage }, { body: { chatId: _id, model: pendingModel } });
+    sendMessage(
+      { text: pendingMessage, metadata: { sentAt: Date.now() } },
+      { body: { chatId: _id, model: pendingModel } }
+    );
     router.replace(`/ai-chat/${_id}`);
   }, [_id, handlePostingOpen, isInitialLoading, pendingMessage, pendingModel, router, sendMessage]);
 
@@ -366,17 +487,12 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       </div>
       <div className="chat-box" ref={chatRef}>
         <div className="container">
-          {(requestStatus === 'error' || requestStatus === 'retrying') && lastError && (
+          {requestStatus === 'retrying' && lastError && (
             <div className="chat-status-banner">
               <span>
                 {lastError}
                 {retryCount > 0 ? `（第 ${retryCount} 次）` : ''}
               </span>
-              {requestStatus === 'error' && (
-                <button type="button" onClick={() => void retryStream()}>
-                  重新生成
-                </button>
-              )}
             </div>
           )}
           {isInitialLoading ? (
@@ -390,7 +506,8 @@ const AiChat = ({ id: _id }: AiChatProps) => {
                   message.id,
                   message.role,
                   (message.parts ?? []) as Array<RenderablePart>,
-                  message.role === 'assistant' && index === messages.length - 1 && status !== 'ready'
+                  message.role === 'assistant' && index === messages.length - 1 && status !== 'ready',
+                  getMessageTime(message)
                 )
               )}
 
@@ -405,13 +522,16 @@ const AiChat = ({ id: _id }: AiChatProps) => {
                   </div>
                 )}
 
-              {/* 本轮回答失败：AI 侧展示友好失败气泡 + 重试（不直白暴露接口信息） */}
+              {/* 本轮回答失败：AI 侧展示固定友好文案 + 重试（不直白暴露接口信息） */}
               {requestStatus === 'error' &&
                 messages.length > 0 &&
                 messages[messages.length - 1].role === 'user' && (
                   <div className="answer-box chat-error-box">
                     <div className="chat-error-content">
-                      <span>{lastError || '回答生成失败，请稍后重试'}</span>
+                      <span>啊欧～出错了，稍后再试吧～</span>
+                      <button type="button" onClick={() => void retryStream()}>
+                        重新生成
+                      </button>
                     </div>
                   </div>
                 )}

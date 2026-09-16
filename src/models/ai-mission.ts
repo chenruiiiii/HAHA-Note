@@ -41,6 +41,7 @@ export const AiMissionMessageSchema = z.object({
   id: z.string(),
   role: z.enum(['system', 'user', 'assistant']),
   parts: z.array(AiMissionPartSchema),
+  createdAt: z.string().optional(),
 });
 
 export const AiMissionDetailSchema = z.object({

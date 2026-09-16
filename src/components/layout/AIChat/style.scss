@@ -39,13 +39,42 @@
       }
     }
 
-    .chat-time-user {
-      position: absolute;
-      right: 10px;
+    .ask-meta {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 2px;
+      padding: 0 16px;
     }
-    .chat-time-ai {
-      position: absolute;
-      left: 15px;
+    .answer-meta {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      margin-top: 2px;
+      padding: 0 16px;
+    }
+    .message-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var.$text-color-shallow;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+
+      &:hover {
+        color: var.$theme-color;
+      }
+    }
+    .message-time {
+      font-size: 12px;
+      color: var.$text-color-shallow;
+      white-space: nowrap;
     }
 
     .chat-status-banner {

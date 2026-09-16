@@ -33,6 +33,7 @@ function toMissionDetail(conversation: {
     role: MessageRole;
     content: string;
     parts: unknown;
+    createdAt: Date;
   }>;
 }): AiMissionDetail {
   return {
@@ -51,6 +52,7 @@ function toMissionDetail(conversation: {
         id: message.clientMessageId || message.id,
         role: roleFromMessage(message.role),
         parts,
+        createdAt: toIsoDateTime(message.createdAt),
       };
     }),
     created_at: toIsoDateTime(conversation.createdAt),
