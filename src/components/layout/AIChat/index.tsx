@@ -384,14 +384,38 @@ const AiChat = ({ id: _id }: AiChatProps) => {
               <HALoading type="simple" />
             </div>
           ) : (
-            messages.map((message, index) =>
-              handleContent(
-                message.id,
-                message.role,
-                (message.parts ?? []) as Array<RenderablePart>,
-                message.role === 'assistant' && index === messages.length - 1 && status !== 'ready'
-              )
-            )
+            <>
+              {messages.map((message, index) =>
+                handleContent(
+                  message.id,
+                  message.role,
+                  (message.parts ?? []) as Array<RenderablePart>,
+                  message.role === 'assistant' && index === messages.length - 1 && status !== 'ready'
+                )
+              )}
+
+              {/* 等待 AI 首轮回复 / 回复过程中：独立 loading 气泡（最后一条是用户消息时） */}
+              {(requestStatus === 'submitted' ||
+                requestStatus === 'retrying' ||
+                requestStatus === 'streaming') &&
+                messages.length > 0 &&
+                messages[messages.length - 1].role === 'user' && (
+                  <div className="answer-box chat-pending-box">
+                    <PostingBox chatId={_id} />
+                  </div>
+                )}
+
+              {/* 本轮回答失败：AI 侧展示友好失败气泡 + 重试（不直白暴露接口信息） */}
+              {requestStatus === 'error' &&
+                messages.length > 0 &&
+                messages[messages.length - 1].role === 'user' && (
+                  <div className="answer-box chat-error-box">
+                    <div className="chat-error-content">
+                      <span>{lastError || '回答生成失败，请稍后重试'}</span>
+                    </div>
+                  </div>
+                )}
+            </>
           )}
         </div>
       </div>

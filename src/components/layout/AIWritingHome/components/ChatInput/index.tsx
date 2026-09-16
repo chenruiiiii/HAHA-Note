@@ -1,8 +1,8 @@
 'use client';
 import React, { KeyboardEvent, useEffect, useState } from 'react';
 import './style.scss';
-import { Input, Dropdown, MenuProps, Space } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { Input, Dropdown, MenuProps, Space, Tooltip } from 'antd';
+import { DownOutlined, BorderOutlined } from '@ant-design/icons';
 import { warningMessage } from '@/utils/message_reminder';
 import { useHaChat } from '@/hooks/common/useHaChat';
 import http from '@/lib/http';
@@ -136,13 +136,18 @@ const ChatInput = () => {
                 </Space>
               </Dropdown>
             </div>
-            <div className="circle-post cursor-pointer" onClick={handleSendClick}>
-              {isPosting ? (
-                <i className="iconfont icon-loading-solid"></i>
-              ) : (
-                <i className="iconfont icon-jijianfasong"></i>
-              )}
-            </div>
+            <Tooltip title={isPosting ? '停止生成' : '发送消息'} placement="top">
+              <div
+                className={`circle-post cursor-pointer ${isPosting ? 'is-posting' : ''}`}
+                onClick={handleSendClick}
+              >
+                {isPosting ? (
+                  <BorderOutlined className="stop-icon" />
+                ) : (
+                  <i className="iconfont icon-jijianfasong"></i>
+                )}
+              </div>
+            </Tooltip>
           </div>
         </div>
       </div>

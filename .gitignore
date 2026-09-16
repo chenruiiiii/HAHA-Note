@@ -86,3 +86,6 @@ next-env.d.ts
 
 /openspec
 /trellis
+
+# Neon CLI 本地连接配置
+.neon

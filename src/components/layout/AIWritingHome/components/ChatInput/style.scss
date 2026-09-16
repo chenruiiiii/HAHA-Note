@@ -91,15 +91,27 @@
       width: 32px;
       height: 32px;
       margin-left: 10px;
+      border-radius: 8px;
+      transition: all 0.3s ease-in-out;
+
       i {
         font-size: 25px !important;
         transition: all 0.3s ease-in-out;
         color: var.$theme-color !important;
       }
-      .icon-loading-solid {
-        color: var.$bg-deep-color;
-        &::before {
-          animation: rotating 3s infinite linear;
+
+      &.is-posting {
+        background: #fde2e2;
+        border: 1px solid rgba(239, 68, 68, 0.45);
+
+        .stop-icon {
+          font-size: 15px !important;
+          color: #ef4444 !important;
+        }
+
+        &:hover {
+          background: #fca5a5;
+          border-color: #ef4444;
         }
       }
     }

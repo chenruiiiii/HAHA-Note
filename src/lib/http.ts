@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
+import type { ResponseData } from '@/types/response';
 
 // NEXT_PUBLIC_APP_API_URL 约定为 API origin（须以 /api 结尾）。
 // 未配置或缺少 /api 后缀时自动规整，避免相对路径的 API 调用
@@ -81,6 +82,15 @@ const instance = axios.create({
 
 let refreshPromise: Promise<unknown> | null = null;
 
+/** 判断业务响应体是否携带"未登录/登录过期"标记（HTTP 200 + code 401）。 */
+function isBusinessUnauthorized(data: unknown): boolean {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    (data as ResponseData<unknown>).code === 401
+  );
+}
+
 /**
  * 统一的"刷新登录态"入口：并发 401 共享同一个刷新请求（避免重复刷新），
  * 刷新成功后由调用方重试原请求。axios 拦截器与 AI 聊天流（原生 fetch）
@@ -88,13 +98,29 @@ let refreshPromise: Promise<unknown> | null = null;
  */
 export async function refreshAuthSession(): Promise<unknown> {
   if (!refreshPromise) {
-    refreshPromise = axios.post(refreshEndpoint, undefined, {
-      withCredentials: true,
-      timeout: TIME_OUT,
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+    refreshPromise = axios
+      .post(refreshEndpoint, undefined, {
+        withCredentials: true,
+        timeout: TIME_OUT,
+        headers: {
+          Accept: 'application/json',
+        },
+      })
+      .then((response) => {
+        // 刷新接口也可能返回"HTTP 200 + 业务 code=401"：此时登录态已彻底失效，
+        // 统一按刷新失败处理，由调用方决定跳转，避免被当成成功静默放行。
+        if (isBusinessUnauthorized(response.data)) {
+          throw new AxiosError(
+            (response.data as ResponseData<unknown>).message ||
+              '登录状态已失效，请重新登录',
+            'ERR_UNAUTHORIZED',
+            undefined,
+            response
+          );
+        }
+
+        return response.data;
+      });
 
     refreshPromise.finally(() => {
       refreshPromise = null;
@@ -132,6 +158,38 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response) => {
     reportApiPerformance(response.config as RetryableAxiosRequestConfig, true, response.status);
+
+    const originalRequest = response.config as RetryableAxiosRequestConfig;
+    const businessUnauthorized =
+      isBusinessUnauthorized(response.data) && originalRequest.url !== '/auth/refresh';
+
+    // 兼容"HTTP 200 但业务 code=401"的登录态失效：复用与 HTTP 401 一致的
+    // 刷新 + 重试 + 跳转流程，保证两种通道行为统一。
+    if (businessUnauthorized) {
+      if (!originalRequest._retry) {
+        originalRequest._retry = true;
+
+        return refreshAuthSession()
+          .then(() => instance(originalRequest))
+          .catch((refreshError) => {
+            redirectToLogin();
+            return Promise.reject(refreshError);
+          });
+      }
+
+      // 已重试过一次仍然业务 401：登录态彻底失效，跳转并将错误抛给业务侧
+      // （避免把 code=401 的数据静默当作成功返回）。
+      const message =
+        (response.data as ResponseData<unknown>).message ||
+        '登录状态已失效，请重新登录';
+      redirectToLogin();
+      console.error('[API Error 401]:', message);
+      reportApiPerformance(originalRequest, false, 401, 'business_unauthorized');
+      return Promise.reject(
+        new AxiosError(message, 'ERR_UNAUTHORIZED', originalRequest, response.request, response)
+      );
+    }
+
     return response.data;
   },
   (error: AxiosError<{ message?: string }>) => {

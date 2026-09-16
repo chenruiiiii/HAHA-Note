@@ -84,7 +84,9 @@ function reportCancelled(opts: { totalMs?: number; retryCount: number }) {
  * 错误文案分类（Q9 / 2.3）。
  *
  * 优先按 AI SDK 错误对象自带的 `statusCode` 分类（后端双通道透传）；
- * 其余情况回退到后端透传的用户可读 message；都不满足时给出保守文案。
+ * 其次尝试解析后端以 JSON 文本形式透传的错误（如 `{ code, message }`），
+ * 提取其中的 `message` 作为用户可读文案，避免把整段接口信息直白暴露；
+ * 其余情况回退到 error.message；都不满足时给出保守文案。
  * 用户手动停止产生的 AbortError 返回空字符串，由调用方决定不展示。
  */
 function getFriendlyError(error: unknown): string {
@@ -107,6 +109,24 @@ function getFriendlyError(error: unknown): string {
   const message = (error as { message?: string })?.message;
 
   if (typeof message === 'string' && message) {
+    // DefaultChatTransport 在非 2xx 时会把响应文本整体塞进 Error.message，
+    // 后端约定 JSON 错误为 { code, message }：解析出 message 字段再展示。
+    try {
+      const parsed = JSON.parse(message) as { code?: unknown; message?: unknown };
+
+      if (typeof parsed?.message === 'string' && parsed.message) {
+        return parsed.message;
+      }
+    } catch {
+      // 不是 JSON：继续按普通错误文案处理
+    }
+
+    // 网络层原生错误（fetch failed 等）不要直白展示英文原文，
+    // 统一回落为保守的可读文案。
+    if (/fetch|network/i.test(message)) {
+      return '网络连接中断，请检查网络后重试';
+    }
+
     return message;
   }
 
@@ -256,7 +276,9 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
               chatId,
               requestStatus: isDisconnect || isError ? 'error' : 'success',
               isPosting: false,
-              lastError: isDisconnect || isError ? '生成失败，可点击重试' : '',
+              // 失败时不覆盖 onError 已写入的友好文案（如"对话服务异常，请稍后重试"），
+              // 由页面 banner 展示具体原因；成功时清空历史错误。
+              lastError: isDisconnect || isError ? undefined : '',
             })
           );
           await onPersisted?.();
