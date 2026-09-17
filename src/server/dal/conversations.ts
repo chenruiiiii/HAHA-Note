@@ -150,100 +150,99 @@ export async function upsertConversationMessages(params: {
   const model = params.model ?? 'deepseek-v4-flash';
   const provider = params.provider ?? 'deepseek';
 
-  const conversation = await prisma.$transaction(async (tx) => {
-    const existing = await tx.conversation.findFirst({
-      where: { id: params.conversationId, ownerId: params.userId },
-    });
+  const existing = await prisma.conversation.findFirst({
+    where: { id: params.conversationId, ownerId: params.userId },
+  });
 
-    if (!existing) {
-      await tx.conversation.create({
-        data: {
-          id: params.conversationId,
-          ownerId: params.userId,
-          title: params.title ?? params.messages[0]?.content?.slice(0, 80) ?? '新对话',
-          summary: params.summary ?? '',
-          status: ConversationStatus.ACTIVE,
+  if (!existing) {
+    await prisma.conversation.create({
+      data: {
+        id: params.conversationId,
+        ownerId: params.userId,
+        title: params.title ?? params.messages[0]?.content?.slice(0, 80) ?? '新对话',
+        summary: params.summary ?? '',
+        status: ConversationStatus.ACTIVE,
+        model,
+        provider,
+      },
+    });
+  } else {
+    await prisma.conversation.update({
+      where: { id: existing.id },
+      data: {
+        title: params.title ?? existing.title,
+        summary: params.summary ?? existing.summary,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  const keptIds: string[] = [];
+
+  for (const message of params.messages) {
+    const role =
+      message.role === 'assistant'
+        ? MessageRole.ASSISTANT
+        : message.role === 'system'
+          ? MessageRole.SYSTEM
+          : MessageRole.USER;
+    const clientMessageId = message.id?.slice(0, 120) || null;
+    const content = message.content ?? messagePlainText(message.parts);
+    // 空消息也要有合法 part；content 兜底为 text part，保持 AiMissionPartSchema 可解析
+    const parts = (message.parts as object) ?? (content ? [{ type: 'text', text: content }] : []);
+    const status = message.status ?? MessageStatus.COMPLETED;
+
+    if (clientMessageId) {
+      const row = await prisma.message.upsert({
+        where: {
+          conversationId_clientMessageId: {
+            conversationId: params.conversationId,
+            clientMessageId,
+          },
+        },
+        update: { role, status, content, parts, model, provider },
+        create: {
+          conversationId: params.conversationId,
+          clientMessageId,
+          role,
+          status,
+          content,
+          parts,
           model,
           provider,
         },
       });
+      keptIds.push(row.id);
     } else {
-      await tx.conversation.update({
-        where: { id: existing.id },
+      const row = await prisma.message.create({
         data: {
-          title: params.title ?? existing.title,
-          summary: params.summary ?? existing.summary,
-          updatedAt: new Date(),
-        },
-      });
-    }
-
-    const keptIds: string[] = [];
-
-    for (const message of params.messages) {
-      const role =
-        message.role === 'assistant'
-          ? MessageRole.ASSISTANT
-          : message.role === 'system'
-            ? MessageRole.SYSTEM
-            : MessageRole.USER;
-      const clientMessageId = message.id?.slice(0, 120) || null;
-      const content = message.content ?? messagePlainText(message.parts);
-      // 空消息也要有合法 part；content 兜底为 text part，保持 AiMissionPartSchema 可解析
-      const parts = (message.parts as object) ?? (content ? [{ type: 'text', text: content }] : []);
-      const status = message.status ?? MessageStatus.COMPLETED;
-
-      if (clientMessageId) {
-        const row = await tx.message.upsert({
-          where: {
-            conversationId_clientMessageId: {
-              conversationId: params.conversationId,
-              clientMessageId,
-            },
-          },
-          update: { role, status, content, parts, model, provider },
-          create: {
-            conversationId: params.conversationId,
-            clientMessageId,
-            role,
-            status,
-            content,
-            parts,
-            model,
-            provider,
-          },
-        });
-        keptIds.push(row.id);
-      } else {
-        const row = await tx.message.create({
-          data: {
-            conversationId: params.conversationId,
-            role,
-            status,
-            content,
-            parts,
-            model,
-            provider,
-          },
-        });
-        keptIds.push(row.id);
-      }
-    }
-
-    if (keptIds.length > 0) {
-      await tx.message.deleteMany({
-        where: {
           conversationId: params.conversationId,
-          id: { notIn: keptIds },
+          role,
+          status,
+          content,
+          parts,
+          model,
+          provider,
         },
       });
+      keptIds.push(row.id);
     }
+  }
 
-    return tx.conversation.findFirst({
-      where: { id: params.conversationId, ownerId: params.userId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
+  if (keptIds.length > 0) {
+    await prisma.message.deleteMany({
+      where: {
+        conversationId: params.conversationId,
+        id: { notIn: keptIds },
+      },
     });
+  }
+
+  const conversation = await prisma.conversation.findFirst({
+    where: { id: params.conversationId, ownerId: params.userId },
+    include: { messages: { orderBy: { createdAt: 'asc' } } },
   });
+
 
   if (!conversation) {
     throw new NotFoundError('未找到对应聊天详情');
