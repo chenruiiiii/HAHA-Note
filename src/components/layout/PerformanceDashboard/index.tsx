@@ -8,8 +8,14 @@ import type {
 } from '@/lib/performance';
 import { Alert, Button, Select, Space, Table, Tag } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { MetricChartDatum } from './MetricChart';
 import styles from './style.module.scss';
+
+const MetricChart = dynamic(() => import('./MetricChart'), {
+  ssr: false,
+});
 
 interface ResponseData<T> {
   code: number;
@@ -35,18 +41,6 @@ const EMPTY_DATA: PerformanceDashboardData = {
   },
 };
 
-const RATING_COLOR = {
-  good: 'green',
-  'needs-improvement': 'gold',
-  poor: 'red',
-  unknown: 'default',
-} as const;
-
-const CONFIDENCE_COLOR = {
-  reliable: 'blue',
-  insufficient: 'default',
-} as const;
-
 function formatMs(value?: number) {
   if (typeof value !== 'number') {
     return '-';
@@ -61,6 +55,29 @@ function formatMs(value?: number) {
 
 function formatRate(value: number | null) {
   return typeof value === 'number' ? `${value}%` : '-';
+}
+
+const CHART_COLORS = {
+  p75: '#1677ff',
+  p95: '#faad14',
+  budget: '#cbd5e1',
+} as const;
+
+function buildChartData(metric?: PerformanceSummaryItem): MetricChartDatum[] {
+  if (!metric) {
+    return [];
+  }
+
+  const data: MetricChartDatum[] = [
+    { name: 'P75', value: metric.p75, color: CHART_COLORS.p75 },
+    { name: 'P95', value: metric.p95, color: CHART_COLORS.p95 },
+  ];
+
+  if (typeof metric.budget === 'number') {
+    data.push({ name: '预算', value: metric.budget, color: CHART_COLORS.budget });
+  }
+
+  return data;
 }
 
 export default function PerformanceDashboard() {
@@ -139,45 +156,76 @@ export default function PerformanceDashboard() {
       {
         label: 'LCP P75',
         value: formatMs(findMetric('web_vital', 'LCP')?.p75),
-        rating: findMetric('web_vital', 'LCP')?.rating,
       },
       {
         label: 'INP P75',
         value: formatMs(findMetric('web_vital', 'INP')?.p75),
-        rating: findMetric('web_vital', 'INP')?.rating,
       },
       {
         label: 'CLS P75',
         value: findMetric('web_vital', 'CLS')?.p75?.toFixed(3) ?? '-',
-        rating: findMetric('web_vital', 'CLS')?.rating,
       },
       {
         label: 'AI 首 token P75',
         value: formatMs(findMetric('ai_first_token', 'ai_first_token_ms')?.p75),
-        rating: findMetric('ai_first_token', 'ai_first_token_ms')?.rating,
       },
       {
         label: 'AI 总耗时 P75',
         value: formatMs(findMetric('ai_generation_completed', 'ai_total_ms')?.p75),
-        rating: findMetric('ai_generation_completed', 'ai_total_ms')?.rating,
       },
       {
         label: 'API 成功率',
         value: formatRate(data.totals.api_success_rate),
-        rating: undefined,
       },
       {
         label: 'AI 成功率',
         value: formatRate(data.totals.ai_success_rate),
-        rating: undefined,
       },
       {
         label: '事件数',
         value: String(data.totals.count),
-        rating: undefined,
       },
     ];
   }, [data]);
+
+  const coreMetricCharts = useMemo(() => {
+    const findMetric = (event: string, metricName: string) =>
+      data.summary.find((item) => item.event === event && item.metric_name === metricName);
+
+    return [
+      {
+        key: 'lcp',
+        title: 'LCP',
+        description: '最大内容绘制',
+        unit: 'ms' as const,
+        metric: findMetric('web_vital', 'LCP'),
+      },
+      {
+        key: 'inp',
+        title: 'INP',
+        description: '交互响应延迟',
+        unit: 'ms' as const,
+        metric: findMetric('web_vital', 'INP'),
+      },
+      {
+        key: 'cls',
+        title: 'CLS',
+        description: '布局位移',
+        unit: 'score' as const,
+        metric: findMetric('web_vital', 'CLS'),
+      },
+      {
+        key: 'ai-first-token',
+        title: 'AI 首 token',
+        description: '首字响应延迟',
+        unit: 'ms' as const,
+        metric: findMetric('ai_first_token', 'ai_first_token_ms'),
+      },
+    ].map(({ metric, ...chart }) => ({
+      ...chart,
+      data: buildChartData(metric),
+    }));
+  }, [data.summary]);
 
   const summaryColumns = [
     {
@@ -235,22 +283,6 @@ export default function PerformanceDashboard() {
       key: 'budget',
       render: (value?: number, record?: PerformanceSummaryItem) =>
         record?.metric_name === 'CLS' ? value?.toFixed(3) : formatMs(value),
-    },
-    {
-      title: '评级',
-      dataIndex: 'rating',
-      key: 'rating',
-      render: (value: keyof typeof RATING_COLOR) => (
-        <Tag color={RATING_COLOR[value] ?? 'default'}>{value}</Tag>
-      ),
-    },
-    {
-      title: '置信度',
-      dataIndex: 'confidence',
-      key: 'confidence',
-      render: (value: keyof typeof CONFIDENCE_COLOR) => (
-        <Tag color={CONFIDENCE_COLOR[value] ?? 'default'}>{value}</Tag>
-      ),
     },
     {
       title: '设备',
@@ -327,7 +359,7 @@ export default function PerformanceDashboard() {
             <h1>性能检测</h1>
             <p>按 P75 查看页面、接口、编辑器和 AI 流式生成体验。</p>
           </div>
-          <Space>
+          <Space wrap size={[8, 8]} className={styles.filters}>
             <Select
               value={hours}
               onChange={setHours}
@@ -391,42 +423,63 @@ export default function PerformanceDashboard() {
             <div className={styles.metric} key={metric.label}>
               <span>{metric.label}</span>
               <strong>{metric.value}</strong>
-              {metric.rating && (
-                <Tag color={RATING_COLOR[metric.rating] ?? 'default'}>{metric.rating}</Tag>
-              )}
             </div>
           ))}
-          <div className={styles.metric}>
-            <span>样本置信度</span>
-            <strong>{data.totals.confidence}</strong>
-            <Tag color={CONFIDENCE_COLOR[data.totals.confidence] ?? 'default'}>
-              {data.totals.confidence}
-            </Tag>
-          </div>
         </div>
 
         <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2>核心指标</h2>
+            <span>P75 / P95 / 预算</span>
+          </div>
+          <div className={styles.charts}>
+            {coreMetricCharts.map((chart) => (
+              <article className={styles.chartCard} key={chart.key}>
+                <div className={styles.chartHeader}>
+                  <div>
+                    <h3>{chart.title}</h3>
+                    <p>{chart.description}</p>
+                  </div>
+                  <span>{chart.unit === 'ms' ? '毫秒' : 'CLS'}</span>
+                </div>
+                {chart.data.length > 0 ? (
+                  <MetricChart data={chart.data} unit={chart.unit} />
+                ) : (
+                  <div className={styles.chartEmpty}>暂无数据</div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
           <h2>指标 P75</h2>
-          <Table<PerformanceSummaryItem>
-            rowKey={(record) =>
-              `${record.event}-${record.metric_name}-${record.route}-${record.device_type}-${record.network_type}-${record.release}`
-            }
-            columns={summaryColumns}
-            dataSource={data.summary}
-            pagination={{ pageSize: 8 }}
-            size="middle"
-          />
+          <div className={styles.tableWrap}>
+            <Table<PerformanceSummaryItem>
+              rowKey={(record) =>
+                `${record.event}-${record.metric_name}-${record.route}-${record.device_type}-${record.network_type}-${record.release}`
+              }
+              columns={summaryColumns}
+              dataSource={data.summary}
+              pagination={{ pageSize: 8 }}
+              scroll={{ x: 'max-content' }}
+              size="middle"
+            />
+          </div>
         </section>
 
         <section className={styles.section}>
           <h2>慢事件 Top 10</h2>
-          <Table<PerformanceSlowItem>
-            rowKey={(record) => `${record.event}-${record.metric_name}-${record.timestamp}`}
-            columns={slowColumns}
-            dataSource={data.slow}
-            pagination={false}
-            size="middle"
-          />
+          <div className={styles.tableWrap}>
+            <Table<PerformanceSlowItem>
+              rowKey={(record) => `${record.event}-${record.metric_name}-${record.timestamp}`}
+              columns={slowColumns}
+              dataSource={data.slow}
+              pagination={false}
+              scroll={{ x: 'max-content' }}
+              size="middle"
+            />
+          </div>
         </section>
       </div>
     </MainContent>
