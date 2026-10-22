@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { message } from 'antd';
 import EditorHeader from './components/EditorHeader';
 import EditorToolbar from './components/EditorToolbar';
 import EditorOutline from './components/EditorOutline';
@@ -21,6 +20,8 @@ import {
 } from '../../../utils/editor';
 import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
 
+type SaveReason = 'manual' | 'auto';
+
 type HAEditorProps = {
   initialTitle?: string;
   initialContent?: string;
@@ -33,7 +34,10 @@ type HAEditorProps = {
   onTitleChange?: (title: string) => void;
   onTitleSubmit?: (title: string) => void;
   onChange?: (html: string) => void;
-  onSave?: (payload: { title: string; content: string }) => Promise<void> | void;
+  onSave?: (
+    payload: { title: string; content: string },
+    options: { reason: SaveReason }
+  ) => Promise<void> | void;
 };
 
 function now() {
@@ -57,10 +61,34 @@ const HAEditor = ({
   const [title, setTitle] = useState(initialTitle);
   const [outlineItems, setOutlineItems] = useState<HAEditorOutlineItem[]>([]);
   const [saveStatusText, setSaveStatusText] = useState(getInitialSaveStatusText(initialSavedAt));
-  const [messageApi, contextHolder] = message.useMessage();
   const titleRef = useRef(initialTitle);
   const onSaveRef = useRef(onSave);
+  const onChangeRef = useRef(onChange);
+  const onTitleChangeRef = useRef(onTitleChange);
+  const onTitleSubmitRef = useRef(onTitleSubmit);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSaveRef = useRef<(reason: SaveReason) => Promise<void>>(async () => {});
+  const editVersionRef = useRef(0);
+  const savedVersionRef = useRef(0);
+  const pendingManualSaveRef = useRef(false);
+  const pendingAutoSaveRef = useRef(false);
   const isSavingRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  const clearAutosaveTimer = useCallback(() => {
+    if (!autosaveTimerRef.current) return;
+    clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = null;
+  }, []);
+
+  const scheduleAutosave = useCallback(() => {
+    clearAutosaveTimer();
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      void handleSaveRef.current('auto');
+    }, 3000);
+  }, [clearAutosaveTimer]);
+
   const editorMountStartedAtRef = useRef(now());
   const hasReportedEditorReadyRef = useRef(false);
 
@@ -76,48 +104,115 @@ const HAEditor = ({
     },
     onUpdate: ({ editor: currentEditor }) => {
       const html = injectHeadingIds(currentEditor.getHTML());
+      editVersionRef.current += 1;
       setOutlineItems(getOutlineFromEditor(currentEditor.getJSON()));
       setSaveStatusText('编辑中...');
-      onChange?.(html);
+      scheduleAutosave();
+      onChangeRef.current?.(html);
     },
   });
 
-  const handleSave = useCallback(async () => {
-    if (!editor || isSavingRef.current) return;
-    isSavingRef.current = true;
-    const html = injectHeadingIds(editor.getHTML());
-    const saveStartedAt = now();
+  const handleSave = useCallback(
+    async (reason: SaveReason) => {
+      if (!editor) return;
 
-    try {
-      await onSaveRef.current?.({
-        title: titleRef.current.trim() || '新建文档',
-        content: html,
-      });
+      if (isSavingRef.current) {
+        if (reason === 'manual') {
+          pendingManualSaveRef.current = true;
+        } else {
+          pendingAutoSaveRef.current = true;
+        }
+        return;
+      }
 
-      const duration = Math.round(now() - saveStartedAt);
-      trackPerformance('note_save_completed', {
-        metric_name: 'save_note_ms',
-        duration_ms: duration,
-        value: duration,
-        rating: rateMetric(duration, getBudget('save_note_ms')),
-        success: true,
-      });
-      setSaveStatusText(getSaveStatusText());
-    } catch {
-      const duration = Math.round(now() - saveStartedAt);
-      trackPerformance('note_save_completed', {
-        metric_name: 'save_note_ms',
-        duration_ms: duration,
-        value: duration,
-        rating: rateMetric(duration, getBudget('save_note_ms')),
-        success: false,
-        error_type: 'save_error',
-      });
-      messageApi.error('保存失败，请稍后重试');
-    } finally {
-      isSavingRef.current = false;
-    }
-  }, [editor, messageApi]);
+      if (reason === 'auto' && editVersionRef.current === savedVersionRef.current) {
+        return;
+      }
+
+      clearAutosaveTimer();
+      isSavingRef.current = true;
+
+      const versionAtStart = editVersionRef.current;
+      const html = injectHeadingIds(editor.getHTML());
+      const saveStartedAt = now();
+
+      try {
+        await onSaveRef.current?.(
+          {
+            title: titleRef.current.trim() || '新建文档',
+            content: html,
+          },
+          { reason }
+        );
+
+        savedVersionRef.current = Math.max(savedVersionRef.current, versionAtStart);
+
+        const duration = Math.round(now() - saveStartedAt);
+        trackPerformance('note_save_completed', {
+          metric_name: 'save_note_ms',
+          duration_ms: duration,
+          value: duration,
+          rating: rateMetric(duration, getBudget('save_note_ms')),
+          success: true,
+        });
+
+        if (editVersionRef.current > versionAtStart) {
+          if (isMountedRef.current) {
+            setSaveStatusText('编辑中...');
+          }
+          scheduleAutosave();
+        } else if (isMountedRef.current) {
+          setSaveStatusText(getSaveStatusText());
+        }
+      } catch {
+        const duration = Math.round(now() - saveStartedAt);
+        trackPerformance('note_save_completed', {
+          metric_name: 'save_note_ms',
+          duration_ms: duration,
+          value: duration,
+          rating: rateMetric(duration, getBudget('save_note_ms')),
+          success: false,
+          error_type: 'save_error',
+        });
+
+        if (isMountedRef.current) {
+          setSaveStatusText('保存失败');
+        }
+      } finally {
+        isSavingRef.current = false;
+
+        if (pendingManualSaveRef.current) {
+          pendingManualSaveRef.current = false;
+          pendingAutoSaveRef.current = false;
+          void handleSaveRef.current('manual');
+        } else if (pendingAutoSaveRef.current) {
+          pendingAutoSaveRef.current = false;
+          void handleSaveRef.current('auto');
+        }
+      }
+    },
+    [clearAutosaveTimer, editor, scheduleAutosave]
+  );
+
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
+
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    onTitleChangeRef.current = onTitleChange;
+  }, [onTitleChange]);
+
+  useEffect(() => {
+    onTitleSubmitRef.current = onTitleSubmit;
+  }, [onTitleSubmit]);
 
   useEffect(() => {
     if (!editor) return;
@@ -127,21 +222,26 @@ const HAEditor = ({
   useEffect(() => {
     if (!editor) return;
     editor.commands.setContent(injectHeadingIds(initialContent), { emitUpdate: false });
-    setOutlineItems(getOutlineFromEditor(editor.getJSON()));
+    queueMicrotask(() => {
+      if (!isMountedRef.current) return;
+      setOutlineItems(getOutlineFromEditor(editor.getJSON()));
+    });
   }, [editor, initialContent]);
 
   useEffect(() => {
-    setTitle(initialTitle);
     titleRef.current = initialTitle;
+    queueMicrotask(() => {
+      if (!isMountedRef.current) return;
+      setTitle(initialTitle);
+    });
   }, [initialTitle]);
 
   useEffect(() => {
-    setSaveStatusText(getInitialSaveStatusText(initialSavedAt));
+    queueMicrotask(() => {
+      if (!isMountedRef.current) return;
+      setSaveStatusText(getInitialSaveStatusText(initialSavedAt));
+    });
   }, [initialSavedAt]);
-
-  useEffect(() => {
-    onSaveRef.current = onSave;
-  }, [onSave]);
 
   useEffect(() => {
     if (!editor) return;
@@ -158,7 +258,10 @@ const HAEditor = ({
       });
     }
 
-    setOutlineItems(getOutlineFromEditor(editor.getJSON()));
+    queueMicrotask(() => {
+      if (!isMountedRef.current) return;
+      setOutlineItems(getOutlineFromEditor(editor.getJSON()));
+    });
   }, [editor]);
 
   useEffect(() => {
@@ -166,12 +269,21 @@ const HAEditor = ({
       if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return;
 
       event.preventDefault();
-      await handleSave();
+      await handleSave('manual');
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSave]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      clearAutosaveTimer();
+    };
+  }, [clearAutosaveTimer]);
 
   if (readonly) {
     return (
@@ -185,7 +297,6 @@ const HAEditor = ({
 
   return (
     <div className="ha-editor">
-      {contextHolder}
       {showHeader && (
         <EditorHeader
           title={title}
@@ -193,22 +304,26 @@ const HAEditor = ({
           saveStatusText={saveStatusText}
           onTitleChange={(nextTitle) => {
             const normalizedTitle = nextTitle.slice(0, MAX_TITLE_LENGTH);
+            editVersionRef.current += 1;
             setTitle(normalizedTitle);
             titleRef.current = normalizedTitle;
             setSaveStatusText('编辑中...');
-            onTitleChange?.(normalizedTitle);
+            scheduleAutosave();
+            onTitleChangeRef.current?.(normalizedTitle);
           }}
-          onTitleSubmit={async (nextTitle) => {
+          onTitleSubmit={(nextTitle) => {
             const normalizedTitle = nextTitle.trim().slice(0, MAX_TITLE_LENGTH);
             setTitle(normalizedTitle);
             titleRef.current = normalizedTitle;
-            onTitleSubmit?.(normalizedTitle);
-            await handleSave();
+            onTitleSubmitRef.current?.(normalizedTitle);
+            scheduleAutosave();
           }}
         />
       )}
 
-      {showToolbar && editor && <EditorToolbar editor={editor} title={title} onSave={handleSave} />}
+      {showToolbar && editor && (
+        <EditorToolbar editor={editor} title={title} onSave={() => handleSave('manual')} />
+      )}
 
       <div className="ha-editor-shell">
         <main className="ha-editor-main">

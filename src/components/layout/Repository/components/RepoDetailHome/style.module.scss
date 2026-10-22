@@ -1,16 +1,17 @@
 @use "@/assets/styles/var.scss";
 
 .repo-detail-home {
-  // min-height: 100vh;
   height: 100%;
-  padding-top: 32px;
+  min-height: 0;
+  padding: 32px 20px;
+  overflow-y: auto;
 }
 
 .repo-card {
   width: min(100%, 1020px);
-  min-height: calc(100vh - 72px);
+  min-height: calc(100% - 32px);
   margin: 0 auto;
-  min-width: 600px;
+  min-width: 0;
   padding: 40px 34px 28px;
   background: #fff;
   border: 1px solid #f0f1f4;
@@ -366,5 +367,19 @@
 
   .document-title {
     font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .repo-detail-home {
+    padding: 16px 12px 24px;
+  }
+
+  .repo-card {
+    min-height: calc(100% - 24px);
+  }
+
+  .repo-title {
+    margin-left: 0;
   }
 }

@@ -18,6 +18,7 @@ import { useParams } from 'next/navigation';
 import styles from './page.module.scss';
 import { useRepoDetailContext } from '@/components/layout/Repository/context';
 import { debounce } from '@/utils/debounce';
+import { errorMessage, successMessage } from '@/utils/message_reminder';
 
 const FileDetail = () => {
   const params = useParams();
@@ -168,14 +169,23 @@ const FileDetail = () => {
     repositoryIdRef.current = editorData.repository_id;
     authorRef.current = editorData.author;
     summaryRef.current = editorData.summary || '';
-    setSummary(editorData.summary || '');
-    setSummaryError('');
     docDirtyRef.current = false;
     hasFlushedDocRef.current = false;
     summaryDirtyRef.current = false;
     hasFlushedSummaryRef.current = false;
-    setIsSummaryDirty(false);
-    setSummaryExpanded(false);
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setSummary(editorData.summary || '');
+      setSummaryError('');
+      setIsSummaryDirty(false);
+      setSummaryExpanded(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     editorData.author,
     editorData.content_html,
@@ -289,12 +299,22 @@ const FileDetail = () => {
   }, [flushDocBeforeLeave, flushSummaryBeforeLeave]);
 
   if (isLoading) {
-    return <HALoading type="simple" />;
+    return (
+      <div className="file-detail-loading">
+        <HALoading type="simple" />
+      </div>
+    );
   }
 
   return (
-    <Suspense fallback={<HALoading type="simple" />}>
-      <div className="file-detail" style={{ height: '100%', overflowY: 'scroll' }}>
+    <Suspense
+      fallback={
+        <div className="file-detail-loading">
+          <HALoading type="simple" />
+        </div>
+      }
+    >
+      <div className="file-detail">
         <HAEditor
           initialTitle={editorData.title}
           initialContent={editorData.content_html}
@@ -364,31 +384,46 @@ const FileDetail = () => {
             summaryDirtyRef.current = true;
             setIsSummaryDirty(true);
           }}
-          onSave={async ({ title, content }) => {
+          onSave={async ({ title, content }, { reason }) => {
             titleRef.current = title;
             contentRef.current = content;
 
-            await updateDocsDetailData(docsId, {
-              title: title || '新建文档',
-              content_html: content,
-              repository_id: repoId,
-              author: editorData.author || '当前用户',
-              summary: summaryRef.current,
-            });
+            try {
+              const response = await updateDocsDetailData(docsId, {
+                title: title || '新建文档',
+                content_html: content,
+                repository_id: repoId,
+                author: editorData.author || '当前用户',
+                summary: summaryRef.current,
+              });
 
-            invalidateDocumentLists(dispatch);
-            debouncedSyncDocTitleRef.current.flush(title || '新建文档');
+              if (response.code !== 200) {
+                throw new Error(response.message || '保存失败');
+              }
 
-            docDirtyRef.current = false;
-            hasFlushedDocRef.current = false;
+              invalidateDocumentLists(dispatch);
+              debouncedSyncDocTitleRef.current.flush(title || '新建文档');
 
-            dispatch(
-              upsertRepoDetailDocAction({
-                repoId,
-                docsId,
-                docsName: title || '新建文档',
-              })
-            );
+              docDirtyRef.current = false;
+              hasFlushedDocRef.current = false;
+
+              dispatch(
+                upsertRepoDetailDocAction({
+                  repoId,
+                  docsId,
+                  docsName: title || '新建文档',
+                })
+              );
+
+              if (reason === 'manual') {
+                successMessage('保存成功');
+              }
+            } catch (saveError) {
+              if (reason === 'manual') {
+                errorMessage(saveError instanceof Error ? saveError.message : '保存失败');
+              }
+              throw saveError;
+            }
           }}
         ></HAEditor>
       </div>

@@ -3,7 +3,7 @@
 import './style.scss';
 import React, { useState } from 'react';
 import { Button, Tooltip } from 'antd';
-import { CommentOutlined, EyeOutlined } from '@ant-design/icons';
+import { CommentOutlined } from '@ant-design/icons';
 
 interface EditorHeaderProps {
   title: string;
@@ -22,7 +22,7 @@ const EditorHeader = ({
 }: EditorHeaderProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const handleLikeClick = () => {
-    console.log('like');
+    setIsLiked((value) => !value);
   };
   return (
     <header className="ha-editor-header">
@@ -36,7 +36,7 @@ const EditorHeader = ({
           onBlur={(event) => onTitleSubmit(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
-              onTitleSubmit(event.currentTarget.value);
+              event.preventDefault();
               event.currentTarget.blur();
             }
           }}

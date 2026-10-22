@@ -45,9 +45,24 @@ const RepoSide = () => {
   // useRepoDetail 的 isLoading 初始为 false，首帧 data 仍为空；若只判断
   // 首帧缓存和局部状态都为空时按加载中处理，避免先闪现空态。
   if (isLoading || (!sidebarRepoDetail && !error)) {
-    return <HASkeleton num={1} />;
+    return (
+      <aside className={styles['repo-aside']}>
+        <div className={styles['repo-loading']}>
+          <HASkeleton num={4} />
+        </div>
+      </aside>
+    );
   }
-  if (error || !sidebarRepoDetail) return <HAEmpty />;
+
+  if (error || !sidebarRepoDetail) {
+    return (
+      <aside className={styles['repo-aside']}>
+        <div className={styles['repo-empty']}>
+          <HAEmpty />
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside className={styles['repo-aside']}>

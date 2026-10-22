@@ -14,7 +14,7 @@ const RepoDetail = ({ children }: { children: ReactNode }) => {
       <RepoDetailProvider>
         <div className="repo-detail">
           <RepoSide />
-          <Content>{children}</Content>
+          <Content className="repo-detail-content">{children}</Content>
         </div>
       </RepoDetailProvider>
     </Provider>
