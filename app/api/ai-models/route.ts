@@ -36,5 +36,9 @@ export async function GET() {
     cachedAt = now;
   }
 
-  return NextResponse.json(cachedPayload as ModelsPayload);
+  return NextResponse.json(cachedPayload as ModelsPayload, {
+    headers: {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+    },
+  });
 }

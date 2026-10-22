@@ -174,6 +174,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   const hasReportedFirstTokenRef = useRef(false);
   const isMountedRef = useRef(true);
   const lastModelRef = useRef<string | undefined>(undefined);
+  const activeRequestRef = useRef(false);
+  const terminalStatusRef = useRef<'success' | 'error' | 'aborted' | null>(null);
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimerRef.current) {
@@ -197,6 +199,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
         // 用户手动停止产生的 AbortError：不展示错误提示，不计入重试
         if (chatError.name === 'AbortError') return;
 
+        terminalStatusRef.current = 'error';
         dispatch(setChatErrorAction({ chatId, error: getFriendlyError(chatError) }));
       },
       onFinish: async ({ isAbort, isDisconnect, isError }) => {
@@ -210,6 +213,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
           if (isAbort) {
             reportCancelled({ totalMs, retryCount: retryCountRef.current });
 
+            terminalStatusRef.current = 'aborted';
+            activeRequestRef.current = false;
             dispatch(
               setChatRequestStateAction({
                 chatId,
@@ -227,6 +232,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
           // 仅网络断开执行有限自动重试；业务错误（isError）不自动重试
           if (isDisconnect && retryCountRef.current < MAX_AUTO_RETRY) {
             hasPendingRetryRef.current = true;
+            terminalStatusRef.current = null;
             const nextRetryCount = retryCountRef.current + 1;
 
             dispatch(
@@ -261,6 +267,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
 
           // 正常结束 / 错误且不自动重试：进入终结态
           const completedRetryCount = retryCountRef.current;
+          terminalStatusRef.current = isDisconnect || isError ? 'error' : 'success';
+          activeRequestRef.current = false;
           retryCountRef.current = 0;
           hasPendingRetryRef.current = false;
           clearRetryTimer();
@@ -294,6 +302,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   // 全部写入均携带 chatId，同一会话内幂等覆盖，消除竞争。
   useEffect(() => {
     if (status === 'submitted') {
+      activeRequestRef.current = true;
+      terminalStatusRef.current = null;
       dispatch(
         setChatRequestStateAction({
           chatId,
@@ -306,6 +316,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     }
 
     if (status === 'streaming') {
+      activeRequestRef.current = true;
+
       if (requestStartedAtRef.current && !hasReportedFirstTokenRef.current) {
         const firstTokenMs = Math.round(now() - requestStartedAtRef.current);
         hasReportedFirstTokenRef.current = true;
@@ -323,6 +335,25 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
           lastError: '',
         })
       );
+      return;
+    }
+
+    // AI SDK 的 ready 是流结束信号：立即收起回复中样式，但错误/中止终态优先，
+    // 不能被后到的 ready 覆盖。
+    if (status === 'ready' && activeRequestRef.current) {
+      activeRequestRef.current = false;
+
+      if (!terminalStatusRef.current) {
+        terminalStatusRef.current = 'success';
+        dispatch(
+          setChatRequestStateAction({
+            chatId,
+            requestStatus: 'success',
+            isPosting: false,
+            lastError: '',
+          })
+        );
+      }
     }
   }, [chatId, dispatch, status]);
 
@@ -363,6 +394,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     clearError();
     requestStartedAtRef.current = now();
     hasReportedFirstTokenRef.current = false;
+    activeRequestRef.current = true;
+    terminalStatusRef.current = null;
 
     reportStarted(0);
 
@@ -391,6 +424,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
     ) => {
       requestStartedAtRef.current = now();
       hasReportedFirstTokenRef.current = false;
+      activeRequestRef.current = true;
+      terminalStatusRef.current = null;
       retryCountRef.current = 0;
 
       // 记录本次请求的模型，断线重试/手动重试时保持同一模型

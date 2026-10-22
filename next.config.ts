@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
   },
   // 修改这里：移除 experimental.serverComponentsExternalPackages
   // 使用 serverExternalPackages
-  serverExternalPackages: ['sass'],
+  serverExternalPackages: ['sass', 'mammoth', 'word-extractor', 'unpdf'],
 };
 
 // Sentry 仅在生产环境启用；如需临时关闭，可设置 SENTRY_DISABLED=true。

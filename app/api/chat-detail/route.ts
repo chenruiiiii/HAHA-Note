@@ -19,6 +19,12 @@ import {
 const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'ai_chat_detail';
 const CHAT_LIST_COLLECTION_NAME = 'latest_mission';
+const DEFAULT_CONVERSATION_TITLES = new Set(['新对话', '新建对话', '新建文档']);
+
+function isDefaultConversationTitle(title?: string | null) {
+  const normalized = title?.trim();
+  return !normalized || DEFAULT_CONVERSATION_TITLES.has(normalized);
+}
 
 /**
  * 请求体校验 Schema：`chatId` 非空字符串，`messages` 为非空消息数组，`model` 可选。
@@ -277,7 +283,7 @@ async function saveChatDetail(
 
   const existing = await collection.findOne({ _id: chatId });
   const title =
-    options?.titleOverride || existing?.title || getTitleFromMessages(normalizedMessages);
+    options?.titleOverride || existing?.title || '新对话';
 
   const payload: AiMissionDetail = {
     _id: chatId,
@@ -310,7 +316,7 @@ async function shouldGenerateTitle(chatId: string) {
     return true;
   }
 
-  return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
+  return isDefaultConversationTitle(existing.title);
 }
 
 /**
@@ -357,7 +363,7 @@ async function shouldGenerateTitlePrisma(userId: string, chatId: string) {
     return true;
   }
 
-  return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
+  return isDefaultConversationTitle(existing.title);
 }
 
 // Vercel 无服务器函数超时上限（流式长请求必须设置）

@@ -4,6 +4,7 @@ import { ConversationStatus, MessageRole, MessageStatus } from '@/generated/pris
 import { toIsoDateTime } from './dto';
 import { NotFoundError } from './errors';
 import type { AiMissionDetail, AiMissionMessage, ListItem } from '@/models/ai-mission';
+import { normalizeMessageRole } from '@/lib/ai/message-role';
 
 function toListItem(id: string, title: string): ListItem {
   return {
@@ -14,10 +15,7 @@ function toListItem(id: string, title: string): ListItem {
 }
 
 function roleFromMessage(role: string): AiMissionMessage['role'] {
-  if (role === 'assistant' || role === 'system') {
-    return role;
-  }
-  return 'user';
+  return normalizeMessageRole(role);
 }
 
 function toMissionDetail(conversation: {
@@ -159,7 +157,7 @@ export async function upsertConversationMessages(params: {
       data: {
         id: params.conversationId,
         ownerId: params.userId,
-        title: params.title ?? params.messages[0]?.content?.slice(0, 80) ?? '新对话',
+        title: params.title ?? '新对话',
         summary: params.summary ?? '',
         status: ConversationStatus.ACTIVE,
         model,

@@ -14,6 +14,7 @@ import PostingBox from './components/PostingBox';
 import { formatMessageTime } from '@/utils/timeFormatter';
 import { infoMessage } from '@/utils/message_reminder';
 import { CopyOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import type { AiMissionDetail, AiMissionPart } from '@/models/ai-mission';
 import http from '@/lib/http';
 import type { ResponseData } from '@/types/response';
@@ -68,10 +69,18 @@ type ChatDisplayMessage = UIMessage & {
   metadata?: { sentAt?: number } | Record<string, unknown>;
 };
 
+const DEFAULT_CONVERSATION_TITLES = new Set(['新对话', '新建对话', '新建文档']);
+
+function isDefaultConversationTitle(title?: string | null) {
+  const normalized = title?.trim();
+  return !normalized || DEFAULT_CONVERSATION_TITLES.has(normalized);
+}
+
 const AiChat = ({ id: _id }: AiChatProps) => {
-  const [chatTitle, setChatTitle] = useState('新建文档');
+  const [chatTitle, setChatTitle] = useState('新对话');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const chatRef = useRef<HTMLDivElement>(null);
+  const titleRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadChatDetailRef = useRef<() => Promise<unknown> | unknown>(() => null);
   const { handlePostingClose, handlePostingOpen, requestStatus, lastError, retryCount } =
     useHaChat();
@@ -126,14 +135,14 @@ const AiChat = ({ id: _id }: AiChatProps) => {
 
       if (response.code !== 200 || !response.data) {
         startTransition(() => {
-          setChatTitle('新建文档');
+          setChatTitle('新对话');
           setMessages([]);
         });
         return null;
       }
 
       startTransition(() => {
-        setChatTitle(response.data.title || '新建文档');
+        setChatTitle(response.data.title || '新对话');
         const snapshotMessages = (response.data.types ?? []) as unknown as UIMessage[];
         setMessages((currentMessages) =>
           mergeChatMessagesForHydration(currentMessages as UIMessage[], snapshotMessages)
@@ -143,16 +152,45 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       return response.data;
     } catch {
       startTransition(() => {
-        setChatTitle('新建文档');
+        setChatTitle('新对话');
         setMessages([]);
       });
       return null;
     }
   }, [_id, setMessages]);
 
+  // 标题由服务端在流结束后异步生成；详情刷新早于生成完成时，短间隔重试几次，
+  // 让会话标题无需整页刷新即可更新。
+  const refreshTitleUntilReady = useCallback(
+    async function refreshTitleUntilReady(attempt = 0) {
+      const detail = await loadChatDetail();
+
+      if (!detail || !isDefaultConversationTitle(detail.title) || attempt >= 3) {
+        return;
+      }
+
+      if (titleRefreshTimerRef.current) {
+        clearTimeout(titleRefreshTimerRef.current);
+      }
+
+      titleRefreshTimerRef.current = setTimeout(() => {
+        void refreshTitleUntilReady(attempt + 1);
+      }, 1200);
+    },
+    [loadChatDetail]
+  );
+
   useEffect(() => {
-    loadChatDetailRef.current = loadChatDetail;
-  }, [loadChatDetail]);
+    loadChatDetailRef.current = refreshTitleUntilReady;
+  }, [refreshTitleUntilReady]);
+
+  useEffect(() => {
+    return () => {
+      if (titleRefreshTimerRef.current) {
+        clearTimeout(titleRefreshTimerRef.current);
+      }
+    };
+  }, []);
 
   // 处理具体内容显示
   const getImageMeta = useCallback((part: RenderablePart) => {
@@ -362,14 +400,16 @@ const AiChat = ({ id: _id }: AiChatProps) => {
           {handleParts(id, parts, role, showPostingBox)}
           <div className={role === 'user' ? 'ask-meta' : 'answer-meta'}>
             {plainText && (
-              <button
-                type="button"
-                className="message-copy-btn"
-                onClick={() => void handleCopy(plainText)}
-              >
-                <CopyOutlined />
-                <span>复制</span>
-              </button>
+              <Tooltip title="复制" placement="top">
+                <button
+                  type="button"
+                  className="message-copy-btn"
+                  aria-label="复制"
+                  onClick={() => void handleCopy(plainText)}
+                >
+                  <CopyOutlined />
+                </button>
+              </Tooltip>
             )}
             <span className="message-time">{formatMessageTime(time)}</span>
           </div>
