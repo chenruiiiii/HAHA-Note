@@ -1,6 +1,9 @@
 import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
+// 本地开发可把所有 /api 请求同源代理到已部署环境，避免跨站 Cookie/CORS 问题。
+const remoteApiBaseUrl = process.env.REMOTE_API_BASE_URL?.trim().replace(/\/+$/, '');
+
 const nextConfig: NextConfig = {
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   reactStrictMode: true,
@@ -23,7 +26,23 @@ const nextConfig: NextConfig = {
   },
   // 修改这里：移除 experimental.serverComponentsExternalPackages
   // 使用 serverExternalPackages
-  serverExternalPackages: ['sass'],
+  serverExternalPackages: ['sass', 'mammoth', 'word-extractor', 'unpdf'],
+  async rewrites() {
+    if (process.env.NODE_ENV === 'production' || !remoteApiBaseUrl) {
+      return [];
+    }
+
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path*',
+          destination: `${remoteApiBaseUrl}/:path*`,
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
 };
 
 // Sentry 仅在生产环境启用；如需临时关闭，可设置 SENTRY_DISABLED=true。

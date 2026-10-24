@@ -12,6 +12,7 @@ import {
   setPostingAction,
 } from '@/store/modules/chat';
 import { errorMessage } from '@/utils/message_reminder';
+import { invalidateChatMissionCache } from '@/lib/chat-mission-cache';
 
 // 首页发送防抖窗口：双击发送按钮 / 点击+回车同时触发时，React 状态（isPosting）
 // 尚未刷新，会连发两次 router.push 到同一个新 URL——同路由状态下会产生两次
@@ -69,6 +70,7 @@ export function useHaChat() {
 
       lastHomeSendAtRef.current = now;
       const id = nanoid();
+      invalidateChatMissionCache();
       dispatch(setCurrentChatIdAction(id));
       dispatch(
         setChatRequestStateAction({

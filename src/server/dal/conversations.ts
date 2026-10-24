@@ -4,6 +4,8 @@ import { ConversationStatus, MessageRole, MessageStatus } from '@/generated/pris
 import { toIsoDateTime } from './dto';
 import { NotFoundError } from './errors';
 import type { AiMissionDetail, AiMissionMessage, ListItem } from '@/models/ai-mission';
+import { normalizeMessageRole } from '@/lib/ai/message-role';
+import { DEFAULT_CHAT_MODEL, requireRegisteredModel } from '@/lib/ai/provider-config';
 
 function toListItem(id: string, title: string): ListItem {
   return {
@@ -14,10 +16,7 @@ function toListItem(id: string, title: string): ListItem {
 }
 
 function roleFromMessage(role: string): AiMissionMessage['role'] {
-  if (role === 'assistant' || role === 'system') {
-    return role;
-  }
-  return 'user';
+  return normalizeMessageRole(role);
 }
 
 function toMissionDetail(conversation: {
@@ -123,6 +122,18 @@ export async function findConversationById(
   return toMissionDetail(conversation);
 }
 
+export async function softDeleteConversation(id: string, userId: string): Promise<boolean> {
+  const result = await getPrisma().conversation.updateMany({
+    where: { id, ownerId: userId, deletedAt: null },
+    data: {
+      status: ConversationStatus.ARCHIVED,
+      deletedAt: new Date(),
+    },
+  });
+
+  return result.count > 0;
+}
+
 export async function requireConversation(id: string, userId: string) {
   const conversation = await findConversationById(id, userId);
   if (!conversation) {
@@ -147,8 +158,8 @@ export async function upsertConversationMessages(params: {
   }>;
 }): Promise<AiMissionDetail> {
   const prisma = getPrisma();
-  const model = params.model ?? 'deepseek-v4-flash';
-  const provider = params.provider ?? 'deepseek';
+  const model = params.model ?? DEFAULT_CHAT_MODEL;
+  const provider = params.provider ?? requireRegisteredModel(model).provider;
 
   const existing = await prisma.conversation.findFirst({
     where: { id: params.conversationId, ownerId: params.userId },
@@ -159,7 +170,7 @@ export async function upsertConversationMessages(params: {
       data: {
         id: params.conversationId,
         ownerId: params.userId,
-        title: params.title ?? params.messages[0]?.content?.slice(0, 80) ?? '新对话',
+        title: params.title ?? '新对话',
         summary: params.summary ?? '',
         status: ConversationStatus.ACTIVE,
         model,
@@ -242,7 +253,6 @@ export async function upsertConversationMessages(params: {
     where: { id: params.conversationId, ownerId: params.userId },
     include: { messages: { orderBy: { createdAt: 'asc' } } },
   });
-
 
   if (!conversation) {
     throw new NotFoundError('未找到对应聊天详情');

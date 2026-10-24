@@ -14,11 +14,13 @@ import PostingBox from './components/PostingBox';
 import { formatMessageTime } from '@/utils/timeFormatter';
 import { infoMessage } from '@/utils/message_reminder';
 import { CopyOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import type { AiMissionDetail, AiMissionPart } from '@/models/ai-mission';
 import http from '@/lib/http';
 import type { ResponseData } from '@/types/response';
 import { useAIChatStream } from '@/hooks/common/useAIChatStream';
 import { mergeChatMessagesForHydration } from '@/lib/ai/snapshot';
+import { invalidateChatMissionCache } from '@/lib/chat-mission-cache';
 
 interface AiChatProps {
   id: string;
@@ -68,10 +70,20 @@ type ChatDisplayMessage = UIMessage & {
   metadata?: { sentAt?: number } | Record<string, unknown>;
 };
 
+const DEFAULT_CONVERSATION_TITLES = new Set(['新对话', '新建对话', '新建文档']);
+const TITLE_REFRESH_MAX_ATTEMPTS = 8;
+const TITLE_REFRESH_DELAY_MS = 1500;
+
+function isDefaultConversationTitle(title?: string | null) {
+  const normalized = title?.trim();
+  return !normalized || DEFAULT_CONVERSATION_TITLES.has(normalized);
+}
+
 const AiChat = ({ id: _id }: AiChatProps) => {
-  const [chatTitle, setChatTitle] = useState('新建文档');
+  const [chatTitle, setChatTitle] = useState('新对话');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const chatRef = useRef<HTMLDivElement>(null);
+  const titleRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadChatDetailRef = useRef<() => Promise<unknown> | unknown>(() => null);
   const { handlePostingClose, handlePostingOpen, requestStatus, lastError, retryCount } =
     useHaChat();
@@ -80,9 +92,11 @@ const AiChat = ({ id: _id }: AiChatProps) => {
   const pendingMessage = searchParams.get('q');
   const pendingModel = searchParams.get('model') ?? undefined;
   const pendingConsumedRef = useRef(false);
+  const previousRequestStatusRef = useRef(requestStatus);
   // 首次渲染时 URL 是否带 ?q=（首页发送直达的新会话）：此时会话详情必然还不存在，
   // 直接跳过首次详情拉取，避免一次必现的 404；消息发送完成后 onPersisted 会再拉取。
   const hasPendingMessageOnMountRef = useRef(pendingMessage !== null);
+  const hasUpdatedMissionListForNewChatRef = useRef(false);
 
   const { messages, status, sendMessage, setMessages, stopStream, retryStream } = useAIChatStream({
     chatId: _id,
@@ -120,39 +134,109 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     });
   }
 
-  const loadChatDetail = useCallback(async () => {
-    try {
-      const response = await http.get<ResponseData<AiMissionDetail>>(`/chat/${_id}`);
+  const loadChatDetail = useCallback(
+    async (options?: { preserveOnFailure?: boolean; preserveTitle?: boolean }) => {
+      const { preserveOnFailure = false, preserveTitle = false } = options ?? {};
 
-      if (response.code !== 200 || !response.data) {
+      try {
+        const response = await http.get<ResponseData<AiMissionDetail>>(`/chat/${_id}`);
+
+        if (response.code !== 200 || !response.data) {
+          startTransition(() => {
+            if (!preserveTitle) {
+              setChatTitle('新对话');
+            }
+            if (!preserveOnFailure) {
+              setMessages([]);
+            }
+          });
+          return null;
+        }
+
+        const nextTitle = response.data.title || '新对话';
+
+        if (
+          hasPendingMessageOnMountRef.current &&
+          !hasUpdatedMissionListForNewChatRef.current &&
+          !isDefaultConversationTitle(nextTitle)
+        ) {
+          hasUpdatedMissionListForNewChatRef.current = true;
+          invalidateChatMissionCache();
+        }
+
         startTransition(() => {
-          setChatTitle('新建文档');
-          setMessages([]);
+          setChatTitle(nextTitle);
+          const snapshotMessages = (response.data.types ?? []) as unknown as UIMessage[];
+          setMessages((currentMessages) =>
+            mergeChatMessagesForHydration(currentMessages as UIMessage[], snapshotMessages)
+          );
+        });
+
+        return response.data;
+      } catch {
+        startTransition(() => {
+          if (!preserveTitle) {
+            setChatTitle('新对话');
+          }
+          if (!preserveOnFailure) {
+            setMessages([]);
+          }
         });
         return null;
       }
+    },
+    [_id, setMessages]
+  );
 
-      startTransition(() => {
-        setChatTitle(response.data.title || '新建文档');
-        const snapshotMessages = (response.data.types ?? []) as unknown as UIMessage[];
-        setMessages((currentMessages) =>
-          mergeChatMessagesForHydration(currentMessages as UIMessage[], snapshotMessages)
-        );
+  // 标题由服务端在流结束后异步生成；详情刷新可能早于持久化完成（首次会 404），
+  // 因此在有界时间内重试，同时保留当前消息，避免短暂 404 清空刚完成的回答。
+  const refreshTitleUntilReady = useCallback(
+    async function refreshTitleUntilReady(attempt = 0) {
+      const detail = await loadChatDetail({
+        preserveOnFailure: true,
+        preserveTitle: true,
       });
 
-      return response.data;
-    } catch {
-      startTransition(() => {
-        setChatTitle('新建文档');
-        setMessages([]);
-      });
-      return null;
-    }
-  }, [_id, setMessages]);
+      if (
+        (detail && !isDefaultConversationTitle(detail.title)) ||
+        attempt >= TITLE_REFRESH_MAX_ATTEMPTS
+      ) {
+        return;
+      }
+
+      if (titleRefreshTimerRef.current) {
+        clearTimeout(titleRefreshTimerRef.current);
+      }
+
+      titleRefreshTimerRef.current = setTimeout(() => {
+        void refreshTitleUntilReady(attempt + 1);
+      }, TITLE_REFRESH_DELAY_MS);
+    },
+    [loadChatDetail]
+  );
 
   useEffect(() => {
-    loadChatDetailRef.current = loadChatDetail;
-  }, [loadChatDetail]);
+    loadChatDetailRef.current = refreshTitleUntilReady;
+  }, [refreshTitleUntilReady]);
+
+  // useChat 的 onFinish 在部分流式完成场景不会可靠触发；requestStatus 进入
+  // success 是已经收敛的终态信号，用它启动标题刷新可覆盖所有正常完成路径。
+  useEffect(() => {
+    const previousStatus = previousRequestStatusRef.current;
+    previousRequestStatusRef.current = requestStatus;
+
+    if (requestStatus === 'success' && previousStatus !== 'success') {
+      void loadChatDetailRef.current();
+    }
+  }, [requestStatus]);
+
+  useEffect(() => {
+    return () => {
+      if (titleRefreshTimerRef.current) {
+        clearTimeout(titleRefreshTimerRef.current);
+      }
+    };
+  }, []);
 
   // 处理具体内容显示
   const getImageMeta = useCallback((part: RenderablePart) => {
@@ -362,14 +446,16 @@ const AiChat = ({ id: _id }: AiChatProps) => {
           {handleParts(id, parts, role, showPostingBox)}
           <div className={role === 'user' ? 'ask-meta' : 'answer-meta'}>
             {plainText && (
-              <button
-                type="button"
-                className="message-copy-btn"
-                onClick={() => void handleCopy(plainText)}
-              >
-                <CopyOutlined />
-                <span>复制</span>
-              </button>
+              <Tooltip title="复制" placement="top">
+                <button
+                  type="button"
+                  className="message-copy-btn"
+                  aria-label="复制"
+                  onClick={() => void handleCopy(plainText)}
+                >
+                  <CopyOutlined />
+                </button>
+              </Tooltip>
             )}
             <span className="message-time">{formatMessageTime(time)}</span>
           </div>
@@ -455,10 +541,7 @@ const AiChat = ({ id: _id }: AiChatProps) => {
       const { message, chatId, model } = payload;
       if (chatId !== _id) return;
       if (checkDuplicate(message, {})) return;
-      sendMessage(
-        { text: message, metadata: { sentAt: Date.now() } },
-        { body: { chatId, model } }
-      );
+      sendMessage({ text: message, metadata: { sentAt: Date.now() } }, { body: { chatId, model } });
     };
     emitter.on('chat-message', handler);
     return () => {
@@ -479,6 +562,15 @@ const AiChat = ({ id: _id }: AiChatProps) => {
     );
     router.replace(`/ai-chat/${_id}`);
   }, [_id, handlePostingOpen, isInitialLoading, pendingMessage, pendingModel, router, sendMessage]);
+
+  const isRequestActive =
+    requestStatus === 'submitted' || requestStatus === 'retrying' || requestStatus === 'streaming';
+  const lastMessage = messages[messages.length - 1];
+  const hasEmptyAssistantTail =
+    requestStatus === 'error' &&
+    lastMessage?.role === 'assistant' &&
+    getRenderableBlocks((lastMessage.parts ?? []) as Array<RenderablePart>).length === 0;
+  const displayedMessages = hasEmptyAssistantTail ? messages.slice(0, -1) : messages;
 
   return (
     <div className="ai-chat-container">
@@ -501,20 +593,20 @@ const AiChat = ({ id: _id }: AiChatProps) => {
             </div>
           ) : (
             <>
-              {messages.map((message, index) =>
+              {displayedMessages.map((message, index) =>
                 handleContent(
                   message.id,
                   message.role,
                   (message.parts ?? []) as Array<RenderablePart>,
-                  message.role === 'assistant' && index === messages.length - 1 && status !== 'ready',
+                  isRequestActive &&
+                    message.role === 'assistant' &&
+                    index === displayedMessages.length - 1,
                   getMessageTime(message)
                 )
               )}
 
               {/* 等待 AI 首轮回复 / 回复过程中：独立 loading 气泡（最后一条是用户消息时） */}
-              {(requestStatus === 'submitted' ||
-                requestStatus === 'retrying' ||
-                requestStatus === 'streaming') &&
+              {isRequestActive &&
                 messages.length > 0 &&
                 messages[messages.length - 1].role === 'user' && (
                   <div className="answer-box chat-pending-box">
@@ -523,18 +615,16 @@ const AiChat = ({ id: _id }: AiChatProps) => {
                 )}
 
               {/* 本轮回答失败：AI 侧展示固定友好文案 + 重试（不直白暴露接口信息） */}
-              {requestStatus === 'error' &&
-                messages.length > 0 &&
-                messages[messages.length - 1].role === 'user' && (
-                  <div className="answer-box chat-error-box">
-                    <div className="chat-error-content">
-                      <span>啊欧～出错了，稍后再试吧～</span>
-                      <button type="button" onClick={() => void retryStream()}>
-                        重新生成
-                      </button>
-                    </div>
+              {requestStatus === 'error' && (
+                <div className="answer-box chat-error-box" role="alert">
+                  <div className="chat-error-content">
+                    <span>AI 回复生成失败，请稍后重试。</span>
+                    <button type="button" onClick={() => void retryStream()}>
+                      重新生成
+                    </button>
                   </div>
-                )}
+                </div>
+              )}
             </>
           )}
         </div>

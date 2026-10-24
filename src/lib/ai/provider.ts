@@ -1,104 +1,61 @@
 import 'server-only';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
+import {
+  readAllowedModels,
+  readProviderConfig,
+  requireRegisteredModel,
+  resolveConfiguredModel,
+  resolveConfiguredSummaryModel,
+} from '@/lib/ai/provider-config';
 
-// 模型与 Provider 配置（多模型统一封装，切换只需改环境变量）
-const DEFAULT_CHAT_MODEL = 'deepseek-v4-flash';
-const DEFAULT_ALLOWED_MODELS = ['deepseek-v4-flash'];
-// DEEPSEEK_API_KEY 回退时的官方 API 地址（与 readApiKey 的回退语义配套）
-const DEEPSEEK_OFFICIAL_BASE_URL = 'https://api.deepseek.com';
-
-// 落库用的供应商标识（OpenAI 兼容网关，未来接其他厂商时按模型归属维护）
-const DEFAULT_PROVIDER = 'deepseek';
-
-let providerCache: ReturnType<typeof createOpenAI> | null = null;
-let providerCacheKey = '';
-
-function readApiKey(): string {
-  return process.env.AI_PROVIDER_API_KEY || process.env.DEEPSEEK_API_KEY || '';
-}
-
-function readBaseURL(): string {
-  const baseURL = process.env.AI_PROVIDER_BASE_URL;
-
-  if (!baseURL) {
-    // 未配置网关地址时回退 DeepSeek 官方 API，与 DEEPSEEK_API_KEY 回退配套，
-    // 避免"配了 key 却因缺 baseURL 直接 500"的断层。
-    return DEEPSEEK_OFFICIAL_BASE_URL;
-  }
-
-  return baseURL;
-}
-
-function readAllowedModels(): string[] {
-  const raw = process.env.AI_CHAT_ALLOWED_MODELS;
-
-  if (!raw || !raw.trim()) {
-    return DEFAULT_ALLOWED_MODELS;
-  }
-
-  return raw
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
+const providerCache = new Map<string, ReturnType<typeof createOpenAI>>();
 
 /**
- * 获取共享的 OpenAI 兼容 Provider 实例（自有网关）。
+ * 获取共享的 OpenAI 兼容 Provider 实例。
  *
- * 通过 `createOpenAI` 统一封装 OpenAI 兼容接口（DeepSeek 等），
- * 切换模型/供应商只需更换 `apiKey` + `baseURL`，API key 只存在于服务端。
- * 实例按（apiKey + baseURL）缓存，避免每次请求重建。
+ * 实例按解析后的 `apiKey + baseURL` 缓存，同一模型的不同请求会复用连接配置。
  *
- * @returns OpenAI 兼容的 Provider 实例。
- * @throws 当 apiKey 或 `AI_PROVIDER_BASE_URL` 未配置时抛出可读错误。
+ * @param model - 已通过注册表与白名单校验的模型 ID。
+ * @returns OpenAI 兼容 Provider 实例。
+ * @throws 模型配置缺失时抛出包含环境变量名的可读错误。
  */
-function getProvider() {
-  const apiKey = readApiKey();
+function getProvider(model: string) {
+  const { apiKey, baseURL } = readProviderConfig(model);
+  const cacheKey = JSON.stringify([apiKey, baseURL]);
+  const cachedProvider = providerCache.get(cacheKey);
 
-  if (!apiKey) {
-    throw new Error('AI_PROVIDER_API_KEY (or DEEPSEEK_API_KEY) is not configured');
+  if (cachedProvider) {
+    return cachedProvider;
   }
 
-  const baseURL = readBaseURL();
-  const cacheKey = `${apiKey}|${baseURL}`;
-
-  if (!providerCache || providerCacheKey !== cacheKey) {
-    providerCache = createOpenAI({
-      apiKey,
-      baseURL,
-    });
-    providerCacheKey = cacheKey;
-  }
-
-  return providerCache;
+  const provider = createOpenAI({
+    apiKey,
+    baseURL,
+  });
+  providerCache.set(cacheKey, provider);
+  return provider;
 }
 
 /**
- * 解析并校验模型名，防止前端传入任意模型。
+ * 解析并校验主对话模型名，防止前端传入未注册或未授权模型。
  *
  * @param name - 请求中携带的模型名；缺省时读取 `AI_CHAT_MODEL`，再回退默认模型。
- * @returns 通过白名单校验的模型名。
- * @throws 当模型名不在白名单中时抛出错误。
+ * @returns 通过注册表与白名单校验的模型名。
  */
 export function resolveModelName(name?: string): string {
-  const model = name || process.env.AI_CHAT_MODEL || DEFAULT_CHAT_MODEL;
-
-  if (!readAllowedModels().includes(model)) {
-    throw new Error(`model "${model}" is not allowed`);
-  }
-
-  return model;
+  return resolveConfiguredModel(name);
 }
 
 /**
- * 主对话模型：校验入参后返回 AI SDK Model。
+ * 主对话模型。
  *
  * @param model - 请求携带的模型名（可选）。
  * @returns AI SDK Model。
  */
 export function getChatModel(model?: string): LanguageModel {
-  return getProvider()(resolveModelName(model));
+  const modelName = resolveModelName(model);
+  return getProvider(modelName)(modelName);
 }
 
 /**
@@ -108,24 +65,31 @@ export function getChatModel(model?: string): LanguageModel {
  * @returns AI SDK Model。
  */
 export function getSummaryModel(model?: string): LanguageModel {
-  const summaryModel = process.env.AI_SUMMARY_MODEL || resolveModelName(model);
-  return getProvider()(summaryModel);
+  const summaryModel = resolveConfiguredSummaryModel(model);
+  return getProvider(summaryModel)(summaryModel);
 }
 
 /**
- * 当前白名单模型列表，供前端下拉展示（只暴露 id/name，不含密钥/baseURL）。
+ * 当前白名单模型列表，供前端下拉展示。
  *
- * @returns 白名单模型数组。
+ * 只暴露模型 ID 与展示名，不包含密钥或 Base URL。
+ *
+ * @returns 已注册且被白名单允许的模型数组。
  */
 export function listAllowedModels(): Array<{ id: string; name: string }> {
-  return readAllowedModels().map((id) => ({ id, name: id }));
+  return readAllowedModels().map((id) => {
+    const definition = requireRegisteredModel(id);
+    return { id: definition.id, name: definition.name };
+  });
 }
 
 /**
- * 当前生效的供应商标识，用于会话/消息落库。
+ * 返回当前生效模型的实际供应商标识，用于会话与消息落库。
  *
- * @returns 供应商标识字符串。
+ * @param model - 模型名；缺省时使用默认对话模型。
+ * @returns 模型注册表中的供应商标识。
  */
-export function getProviderName(): string {
-  return DEFAULT_PROVIDER;
+export function getProviderName(model?: string): string {
+  const modelName = resolveModelName(model);
+  return requireRegisteredModel(modelName).provider;
 }

@@ -15,10 +15,17 @@ import {
   getSummaryModel,
   resolveModelName,
 } from '@/lib/ai/provider';
+import { isProviderConfigurationError } from '@/lib/ai/provider-config';
 
 const DB_NAME = 'ai-chat';
 const COLLECTION_NAME = 'ai_chat_detail';
 const CHAT_LIST_COLLECTION_NAME = 'latest_mission';
+const DEFAULT_CONVERSATION_TITLES = new Set(['新对话', '新建对话', '新建文档']);
+
+function isDefaultConversationTitle(title?: string | null) {
+  const normalized = title?.trim();
+  return !normalized || DEFAULT_CONVERSATION_TITLES.has(normalized);
+}
 
 /**
  * 请求体校验 Schema：`chatId` 非空字符串，`messages` 为非空消息数组，`model` 可选。
@@ -46,6 +53,30 @@ const ChatRequestBodySchema = z.object({
  */
 function jsonError(status: number, message: string) {
   return Response.json({ code: status, data: null, message }, { status });
+}
+
+/**
+ * 将聊天初始化/上游错误转换为不泄露内部栈的 HTTP 响应。
+ *
+ * Provider 配置错误会透出缺失的环境变量名，便于部署时直接修正；其他错误保持
+ * 原有状态码映射与脱敏文案。
+ */
+function chatErrorResponse(error: unknown) {
+  const statusCode =
+    error instanceof Error && 'statusCode' in error
+      ? (error as { statusCode?: number }).statusCode
+      : undefined;
+  const status =
+    typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
+
+  if (isProviderConfigurationError(error)) {
+    return jsonError(500, `AI 模型配置错误：${error.message}`);
+  }
+
+  return jsonError(
+    status,
+    status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试'
+  );
 }
 
 /**
@@ -276,8 +307,7 @@ async function saveChatDetail(
   const now = new Date().toISOString();
 
   const existing = await collection.findOne({ _id: chatId });
-  const title =
-    options?.titleOverride || existing?.title || getTitleFromMessages(normalizedMessages);
+  const title = options?.titleOverride || existing?.title || '新对话';
 
   const payload: AiMissionDetail = {
     _id: chatId,
@@ -310,7 +340,7 @@ async function shouldGenerateTitle(chatId: string) {
     return true;
   }
 
-  return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
+  return isDefaultConversationTitle(existing.title);
 }
 
 /**
@@ -357,7 +387,7 @@ async function shouldGenerateTitlePrisma(userId: string, chatId: string) {
     return true;
   }
 
-  return !existing.title || existing.title === '新建对话' || existing.title === '新建文档';
+  return isDefaultConversationTitle(existing.title);
 }
 
 // Vercel 无服务器函数超时上限（流式长请求必须设置）
@@ -392,16 +422,24 @@ export async function POST(req: Request) {
   }
 
   // zod 已校验基本形状，此处按 AI SDK UI 消息类型收窄
-  const { messages, chatId, model: requestedModel } = parsed.data as {
+  const {
+    messages,
+    chatId,
+    model: requestedModel,
+  } = parsed.data as {
     messages: UIMessage[];
     chatId: string;
     model?: string;
   };
-  const provider = getProviderName();
   let model: string;
+  let provider: string;
 
   try {
     model = resolveModelName(requestedModel);
+    provider = getProviderName(model);
+    // 主模型与摘要模型都必须在持久化/流开始前通过注册表与凭据校验。
+    getChatModel(model);
+    getSummaryModel(model);
   } catch (err) {
     // 白名单校验失败：请求前阶段直接返回 400 JSON，不发起 LLM 调用
     return jsonError(400, err instanceof Error ? err.message : '模型不合法');
@@ -438,20 +476,21 @@ export async function POST(req: Request) {
 
           const needsTitleGeneration = await shouldGenerateTitlePrisma(userId, chatId);
           const normalizedMessages = normalizeMessages(finalMessages);
-          const summary = await generateConversationSummary(normalizedMessages, model);
-
-          if (needsTitleGeneration) {
-            const generatedTitle = await generateDocumentTitle(normalizedMessages, model);
-            await saveChatDetailPrisma(userId, chatId, finalMessages, {
-              titleOverride: generatedTitle,
-              summaryOverride: summary,
-              model,
-              provider,
-            });
-            return;
-          }
 
           await saveChatDetailPrisma(userId, chatId, finalMessages, {
+            model,
+            provider,
+          });
+
+          const [summary, generatedTitle] = await Promise.all([
+            generateConversationSummary(normalizedMessages, model),
+            needsTitleGeneration
+              ? generateDocumentTitle(normalizedMessages, model)
+              : Promise.resolve(undefined),
+          ]);
+
+          await saveChatDetailPrisma(userId, chatId, finalMessages, {
+            titleOverride: generatedTitle,
             summaryOverride: summary,
             model,
             provider,
@@ -460,18 +499,7 @@ export async function POST(req: Request) {
       });
     } catch (err) {
       console.error('chat api error', err);
-
-      const statusCode =
-        err instanceof Error && 'statusCode' in err
-          ? (err as { statusCode?: number }).statusCode
-          : undefined;
-      const status =
-        typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
-
-      return jsonError(
-        status,
-        status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试'
-      );
+      return chatErrorResponse(err);
     }
   }
 
@@ -496,36 +524,25 @@ export async function POST(req: Request) {
 
         const needsTitleGeneration = await shouldGenerateTitle(chatId);
         const normalizedMessages = normalizeMessages(finalMessages);
-        const summary = await generateConversationSummary(normalizedMessages, model);
 
-        if (needsTitleGeneration) {
-          const generatedTitle = await generateDocumentTitle(normalizedMessages, model);
-          await saveChatDetail(chatId, finalMessages, {
-            titleOverride: generatedTitle,
-            summaryOverride: summary,
-          });
-          return;
-        }
+        // 先持久化完整回答，避免摘要/标题生成耗时让详情接口暂时查不到消息。
+        await saveChatDetail(chatId, finalMessages);
+
+        const [summary, generatedTitle] = await Promise.all([
+          generateConversationSummary(normalizedMessages, model),
+          needsTitleGeneration
+            ? generateDocumentTitle(normalizedMessages, model)
+            : Promise.resolve(undefined),
+        ]);
 
         await saveChatDetail(chatId, finalMessages, {
+          titleOverride: generatedTitle,
           summaryOverride: summary,
         });
       },
     });
   } catch (err) {
     console.error('chat api error', err);
-
-    // 上游鉴权/限流等 4xx 错误透传状态码；其余统一 500，不暴露后端细节
-    const statusCode =
-      err instanceof Error && 'statusCode' in err
-        ? (err as { statusCode?: number }).statusCode
-        : undefined;
-    const status =
-      typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500 ? statusCode : 500;
-
-    return jsonError(
-      status,
-      status === 429 ? '请求过于频繁，请稍后重试' : '对话服务异常，请稍后重试'
-    );
+    return chatErrorResponse(err);
   }
 }
