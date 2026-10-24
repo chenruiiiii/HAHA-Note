@@ -17,8 +17,16 @@ import {
 } from '@/lib/auth-token';
 import { NextRequest, NextResponse } from 'next/server';
 
+const AI_MODELS_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=300';
+
 export async function proxy(request: NextRequest) {
-  return authProxyWithLogin(request);
+  const response = await authProxyWithLogin(request);
+
+  if (request.nextUrl.pathname === '/api/ai-models' && response.status === 200) {
+    response.headers.set('Cache-Control', AI_MODELS_CACHE_CONTROL);
+  }
+
+  return response;
 }
 
 export async function authProxyWithLogin(request: NextRequest) {

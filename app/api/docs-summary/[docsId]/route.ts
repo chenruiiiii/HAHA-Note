@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { isPrismaBackend } from '@/server/auth/backend';
 import { upsertDocsDetailForRequest, type DocsDetailBody } from '@/server/http/document-upsert';
 import { getSummaryModel } from '@/lib/ai/provider';
+import { isProviderConfigurationError } from '@/lib/ai/provider-config';
 
 const DB_NAME = 'repository';
 const COLLECTION_NAME = 'docs_detail';
@@ -56,6 +57,10 @@ async function generateDocumentSummary(title: string, contentHtml: string) {
 
     return result.text.trim().slice(0, 180);
   } catch (error) {
+    if (isProviderConfigurationError(error)) {
+      throw error;
+    }
+
     console.error('generate document summary failed', error);
     return truncatedContent.slice(0, 180);
   }
@@ -158,6 +163,17 @@ export async function POST(
       message: '总结并保存成功',
     });
   } catch (error) {
+    if (isProviderConfigurationError(error)) {
+      return NextResponse.json(
+        {
+          code: 500,
+          data: null,
+          message: `AI 模型配置错误：${error.message}`,
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       {
         code: 500,

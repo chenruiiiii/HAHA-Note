@@ -14,12 +14,92 @@
     height: 100%;
     overflow-y: auto;
     .chat-list-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       min-width: 180px;
-      padding: 8px;
       border-radius: var.$border-radius-md;
+
       &:hover {
         background-color: #f2f3f4;
       }
+
+      .chat-list-open {
+        flex: 1;
+        min-width: 0;
+        padding: 8px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+
+        &:focus-visible {
+          outline: 2px solid var.$theme-color;
+          outline-offset: -2px;
+          border-radius: var.$border-radius-md;
+        }
+      }
+
+      .chat-delete-btn {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        margin-right: 5px;
+        padding: 0;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var.$text-color-shallow;
+        font-size: 13px;
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(2px);
+        transition:
+          color 0.16s ease,
+          background-color 0.16s ease,
+          opacity 0.16s ease,
+          transform 0.16s ease,
+          visibility 0.16s ease;
+
+        &:hover {
+          background: rgba(209, 67, 67, 0.1);
+          color: #d14343;
+        }
+
+        &:focus-visible {
+          outline: 2px solid #d14343;
+          outline-offset: 1px;
+          color: #d14343;
+        }
+
+        &:disabled {
+          cursor: wait;
+        }
+      }
+
+      &:hover .chat-delete-btn,
+      &:focus-within .chat-delete-btn {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateX(0);
+      }
     }
+  }
+}
+
+@media (hover: none) {
+  .chat-list-modal .list .chat-list-item .chat-delete-btn {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
   }
 }

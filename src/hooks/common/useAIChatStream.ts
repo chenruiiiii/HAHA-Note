@@ -12,6 +12,11 @@ import { DefaultChatTransport } from 'ai';
 import { useCallback, useEffect, useRef } from 'react';
 import { getBudget, rateMetric, trackPerformance } from '@/lib/performance';
 import { redirectToLogin, refreshAuthSession } from '@/lib/http';
+import {
+  resolveErrorTransition,
+  resolveReadyTransition,
+  type TerminalStreamStatus,
+} from '@/lib/ai/chat-stream-state';
 
 interface UseAIChatStreamProps {
   chatId: string;
@@ -127,6 +132,10 @@ function getFriendlyError(error: unknown): string {
       return '网络连接中断，请检查网络后重试';
     }
 
+    if (/^an error occurred\.?$/i.test(message.trim())) {
+      return '对话服务异常，请稍后重试';
+    }
+
     return message;
   }
 
@@ -175,7 +184,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   const isMountedRef = useRef(true);
   const lastModelRef = useRef<string | undefined>(undefined);
   const activeRequestRef = useRef(false);
-  const terminalStatusRef = useRef<'success' | 'error' | 'aborted' | null>(null);
+  const terminalStatusRef = useRef<TerminalStreamStatus>(null);
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimerRef.current) {
@@ -265,9 +274,11 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
             return;
           }
 
-          // 正常结束 / 错误且不自动重试：进入终结态
+          // 正常结束 / 错误且不自动重试：进入终结态。onError 已记录的失败
+          // 优先级更高，不能被随后到达的 finish 回调覆盖为成功。
           const completedRetryCount = retryCountRef.current;
-          terminalStatusRef.current = isDisconnect || isError ? 'error' : 'success';
+          const failed = isDisconnect || isError || terminalStatusRef.current === 'error';
+          terminalStatusRef.current = failed ? 'error' : 'success';
           activeRequestRef.current = false;
           retryCountRef.current = 0;
           hasPendingRetryRef.current = false;
@@ -275,7 +286,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
 
           reportFinished({
             totalMs,
-            success: !(isDisconnect || isError),
+            success: !failed,
             errorType: isDisconnect ? 'disconnect' : isError ? 'ai_error' : undefined,
             retryCount: completedRetryCount,
           });
@@ -283,11 +294,11 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
           dispatch(
             setChatRequestStateAction({
               chatId,
-              requestStatus: isDisconnect || isError ? 'error' : 'success',
+              requestStatus: failed ? 'error' : 'success',
               isPosting: false,
               // 失败时不覆盖 onError 已写入的友好文案（如"对话服务异常，请稍后重试"），
               // 由页面 banner 展示具体原因；成功时清空历史错误。
-              lastError: isDisconnect || isError ? undefined : '',
+              lastError: failed ? undefined : '',
             })
           );
           await onPersisted?.();
@@ -297,9 +308,8 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
       },
     });
 
-  // 中间态驱动（Q6）：effect 只负责 status 的中间态映射（submitted / streaming），
-  // 终结态（success / error / aborted / retrying）统一由业务回调写入，
-  // 全部写入均携带 chatId，同一会话内幂等覆盖，消除竞争。
+  // 默认由业务回调写入终结态；error effect 作为兜底，避免 SDK 进入 error
+  // 但 onError/onFinish 因渲染生命周期竞态未写入 Redux 时一直停在思考中。
   useEffect(() => {
     if (status === 'submitted') {
       activeRequestRef.current = true;
@@ -338,12 +348,44 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
       return;
     }
 
+    if (status === 'error') {
+      // 网络断开且仍有自动重试机会时，由 onFinish 接管并切换到 retrying。
+      if (resolveErrorTransition({ retryPending: hasPendingRetryRef.current }) === 'defer-retry') {
+        return;
+      }
+
+      terminalStatusRef.current = 'error';
+      activeRequestRef.current = false;
+      retryCountRef.current = 0;
+      clearRetryTimer();
+      dispatch(
+        setChatRequestStateAction({
+          chatId,
+          requestStatus: 'error',
+          isPosting: false,
+          retryCount: 0,
+          lastError: error ? getFriendlyError(error) : '对话服务异常，请稍后重试',
+        })
+      );
+      return;
+    }
+
     // AI SDK 的 ready 是流结束信号：立即收起回复中样式，但错误/中止终态优先，
     // 不能被后到的 ready 覆盖。
-    if (status === 'ready' && activeRequestRef.current) {
+    if (status === 'ready') {
+      const transition = resolveReadyTransition({
+        activeRequest: activeRequestRef.current,
+        retryPending: hasPendingRetryRef.current,
+        terminalStatus: terminalStatusRef.current,
+      });
+
+      if (transition === 'ignore') {
+        return;
+      }
+
       activeRequestRef.current = false;
 
-      if (!terminalStatusRef.current) {
+      if (transition === 'complete') {
         terminalStatusRef.current = 'success';
         dispatch(
           setChatRequestStateAction({
@@ -355,7 +397,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
         );
       }
     }
-  }, [chatId, dispatch, status]);
+  }, [chatId, clearRetryTimer, dispatch, error, status]);
 
   // 保持最新 stop 引用，供卸载清理使用（避免依赖过期的闭包）
   const stopRef = useRef(stop);
@@ -365,6 +407,10 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
 
   // 组件卸载兜底（2.2）：中止进行中的流式请求、清除定时器、只清理当前会话状态
   useEffect(() => {
+    // React Strict Mode 会执行一次 effect setup -> cleanup -> setup。
+    // 必须在 setup 时恢复挂载标记，否则后续 onError/onFinish 会被永久拦截。
+    isMountedRef.current = true;
+
     return () => {
       isMountedRef.current = false;
       clearRetryTimer();
@@ -418,10 +464,7 @@ export function useAIChatStream({ chatId, onPersisted }: UseAIChatStreamProps) {
   }, [chatId, clearError, clearRetryTimer, dispatch, regenerate]);
 
   const trackedSendMessage = useCallback(
-    (
-      message?: Parameters<typeof sendMessage>[0],
-      options?: Parameters<typeof sendMessage>[1]
-    ) => {
+    (message?: Parameters<typeof sendMessage>[0], options?: Parameters<typeof sendMessage>[1]) => {
       requestStartedAtRef.current = now();
       hasReportedFirstTokenRef.current = false;
       activeRequestRef.current = true;

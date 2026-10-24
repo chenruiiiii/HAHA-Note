@@ -198,8 +198,8 @@
 
       // 回答中且输入框为空：icon 置灰，提示当前不可打断本次回答
       &.is-disabled {
-        background: #f5f6f8;
-        border: 1px solid #e5e6eb;
+        border: 0;
+        background: transparent;
         cursor: not-allowed;
 
         i {
@@ -207,7 +207,7 @@
         }
 
         &:hover {
-          border-color: #e5e6eb;
+          background: transparent;
         }
       }
     }

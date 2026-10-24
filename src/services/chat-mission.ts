@@ -9,3 +9,9 @@ export const getLatestMissionList = async () => {
 export const getCollectMissionList = async () => {
   return await http.get<ResponseData<ListItem[]>>('/chat-collect-mission');
 };
+
+export const deleteChatMission = async (chatId: string) => {
+  return await http.delete<ResponseData<{ id: string } | null>>(
+    `/chat/${encodeURIComponent(chatId)}`
+  );
+};
